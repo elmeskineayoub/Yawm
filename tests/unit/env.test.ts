@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSupabasePublicConfig } from "@/lib/env";
+import { getAppUrl, getSupabasePublicConfig } from "@/lib/env";
 
 describe("getSupabasePublicConfig", () => {
   it("reports both values missing when unset", () => {
@@ -42,5 +42,15 @@ describe("getSupabasePublicConfig", () => {
       url: "https://abc.supabase.co",
       publishableKey: "sb_publishable_abc",
     });
+  });
+});
+
+describe("getAppUrl", () => {
+  it("normalises to an origin", () => {
+    expect(getAppUrl("https://yawm.example.com/some/path")).toBe("https://yawm.example.com");
+  });
+
+  it.each([undefined, "", "not a url", "ftp://example.com"])("rejects %j", (value) => {
+    expect(getAppUrl(value)).toBeNull();
   });
 });

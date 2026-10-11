@@ -4,9 +4,16 @@ import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { AccountMenu } from "./account-menu";
 import { SidebarNav } from "./sidebar-nav";
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  account,
+}: {
+  children: ReactNode;
+  account?: { email: string | null };
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -60,6 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
         <SidebarNav collapsed={collapsed} />
+        {account && <AccountMenu email={account.email} collapsed={collapsed} />}
       </aside>
 
       {/* Mobile drawer */}
@@ -87,6 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <SidebarNav collapsed={false} />
+            {account && <AccountMenu email={account.email} collapsed={false} />}
           </aside>
         </div>
       )}

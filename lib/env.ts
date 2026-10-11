@@ -53,3 +53,17 @@ export function getSupabasePublicConfig(env: PublicEnv = defaultEnv): SupabasePu
   if (problems.length > 0) return { configured: false, problems };
   return { configured: true, url, publishableKey };
 }
+
+/** Canonical public origin used in auth email links, e.g. `https://yawm.example.com`. */
+export function getAppUrl(
+  value: string | undefined = process.env.NEXT_PUBLIC_APP_URL,
+): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
