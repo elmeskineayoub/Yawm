@@ -8,7 +8,7 @@ This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md
 
 | Phase                                   | Status                                                                                                                                   |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, app shell, light/dark/system theme, `/api/health` |
+| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health` |
 | 1 — Supabase auth & workspace isolation | Not started                                                                                                                              |
 | 2+                                      | Not started                                                                                                                              |
 
@@ -47,7 +47,7 @@ The primary database is managed by Supabase rather than being exclusively local.
 
 ## Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 22.12 or newer (see `.nvmrc`; the test toolchain does not support Node 20)
 - npm
 - Git
 - A Supabase account/project
