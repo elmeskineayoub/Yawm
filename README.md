@@ -6,11 +6,11 @@ This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md
 
 ## Current status
 
-| Phase                                   | Status                                                                                                                                   |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase                                   | Status                                                                                                                                                      |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health` |
-| 1 — Supabase auth & workspace isolation | Not started                                                                                                                              |
-| 2+                                      | Not started                                                                                                                              |
+| 1 — Supabase auth & workspace isolation | Not started                                                                                                                                                 |
+| 2+                                      | Not started                                                                                                                                                 |
 
 What exists today:
 
