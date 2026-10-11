@@ -27,5 +27,38 @@ jobs:
       - run: npm run typecheck
       - run: npm run format:check
       - run: npm test
-      # Placeholder-free build: the app must build without Supabase credentials.
+      # No Supabase credentials here: the app must still build and show its setup guide.
       - run: npm run build
+
+  supabase:
+    # Migrations, RLS isolation tests, and the browser auth journey against a local stack.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start local Supabase (services Phase 1 does not use are excluded)
+        run: npx supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor,studio,postgres-meta
+      - name: Generated database types match the migrations
+        run: |
+          npm run db:types
+          git diff --exit-code types/database.ts
+      - run: npm run test:integration
+      - run: npm run db:env
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+      - if: always()
+        run: npx supabase stop --no-backup
