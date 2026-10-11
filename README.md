@@ -2,7 +2,30 @@
 
 A planning and self-management app for tasks, connected yearly-to-daily plans, projects, habits, goals, a vision board, brainstorming, notes, journaling, time blocking, focus sessions, and weekly reviews.
 
-This repository is a **specification and starter configuration pack** for Claude Code. It is not yet a complete working application. The app should be implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`.
+This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. It is **not yet a working productivity application**.
+
+## Current status
+
+| Phase                                   | Status                                                                                                                                                      |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health` |
+| 1 — Supabase auth & workspace isolation | Not started                                                                                                                                                 |
+| 2+                                      | Not started                                                                                                                                                 |
+
+What exists today:
+
+- Responsive app shell: collapsible desktop sidebar, mobile navigation drawer, skip link. Modules that are not implemented yet are shown as disabled ("Soon"), not linked.
+- `/dashboard` placeholder and `/settings` with a theme selector (stored in this browser only via `next-themes`).
+- A visible warning when Supabase public settings are missing or still the `.env.example` placeholders. Nothing is persisted anywhere yet.
+- `GET /api/health` returns `{"status":"ok"}` only — no configuration, version, or database details.
+
+Known limitations / notes:
+
+- No authentication, database, or persistence yet (Phase 1+).
+- `NEXT_PUBLIC_*` values are inlined at build time; rebuild/restart after changing `.env.local`.
+- `npm audit` reports high-severity advisories in `braces`/`micromatch`/`fast-glob` pulled in by `eslint-config-next` (lint-time dev dependency only, not shipped to the browser). The only automated "fix" downgrades to Next 14 lint config, so it is left until upstream updates.
+- Dependencies for later phases (FullCalendar, Dexie, googleapis, etc.) are declared in `package.json` but unused until their phase.
+- Playwright e2e tests are not written yet (`npm run test:e2e` has no suite).
 
 ## Start here
 
@@ -24,14 +47,14 @@ The primary database is managed by Supabase rather than being exclusively local.
 
 ## Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 22.12 or newer (see `.nvmrc`; the test toolchain does not support Node 20)
 - npm
 - Git
 - A Supabase account/project
 - A Vercel account for deployment
 - Google Cloud OAuth credentials only if Google Calendar sync is enabled
 
-## Local setup (after the app scaffold has been implemented)
+## Local setup
 
 ```bash
 cp .env.example .env.local
@@ -39,7 +62,7 @@ npm install
 npm run dev
 ```
 
-Fill in the Supabase URL and publishable key in `.env.local`. Do not commit that file. The app should display a clear setup error when required Supabase settings are missing, rather than silently pretending data is saved.
+Open http://localhost:3000 (redirects to `/dashboard`). Fill in the Supabase URL and publishable key in `.env.local` when you reach Phase 1; until then the app shows a "Supabase is not configured" notice. Do not commit `.env.local`.
 
 Run quality checks:
 
@@ -48,7 +71,10 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run format:check
 ```
+
+Unit tests live in `tests/unit/` (Vitest + jsdom + Testing Library, config in `vitest.config.mts`).
 
 ## Supabase setup checklist
 

@@ -53,6 +53,7 @@ Prioritize tests for: RLS isolation, date/timezone boundaries, recurring task be
 ## Required completion report
 
 At the end of every phase, report:
+
 - What was implemented.
 - Important files/migrations changed.
 - Commands/tests run and their actual results.
