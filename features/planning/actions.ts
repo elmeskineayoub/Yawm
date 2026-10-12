@@ -14,6 +14,7 @@ import {
 } from "@/lib/dates";
 import { fieldErrorsOf, formObject, optionalText } from "@/lib/form";
 import { getWorkspaceContext, type WorkspaceContext } from "@/lib/workspace-context";
+import { unlinkPlanItemInWorkspace, updatePlanNotesInWorkspace } from "./mutations";
 
 const uuid = z.uuid();
 const period = z.enum(["year", "month", "week", "day"]);
@@ -124,8 +125,13 @@ export async function savePlan(
 
   const plan = await ensurePlan(ctx, target);
   if ("error" in plan) return { status: "error", message: plan.error };
-  const { error } = await ctx.supabase.from("plans").update(parsed.data).eq("id", plan.id);
-  if (error) return { status: "error", message: "Could not save the plan. Please try again." };
+  const result = await updatePlanNotesInWorkspace(
+    ctx.supabase,
+    ctx.workspace.id,
+    plan.id,
+    parsed.data,
+  );
+  if (!result.ok) return { status: "error", message: result.error };
   refresh();
   return toSaveState(ok());
 }
@@ -157,9 +163,9 @@ export async function linkToPlan(
 
 export async function unlinkFromPlan(itemId: string): Promise<ActionResult> {
   if (!uuid.safeParse(itemId).success) return fail("Invalid request.");
-  const { supabase } = await getWorkspaceContext();
-  const { error } = await supabase.from("plan_items").delete().eq("id", itemId);
-  if (error) return fail("Could not remove the link.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await unlinkPlanItemInWorkspace(supabase, workspace.id, itemId);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }

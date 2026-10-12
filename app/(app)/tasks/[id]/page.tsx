@@ -24,6 +24,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
     .from("tasks")
     .select(`${TASK_COLUMNS}, recurs_from_task_id`)
     .eq("id", id)
+    .eq("workspace_id", ctx.workspace.id)
     .maybeSingle();
   if (error) throw new Error("Could not load the task.");
   if (!task) notFound();
@@ -47,6 +48,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
     supabase
       .from("tasks")
       .select("id, title, status")
+      .eq("workspace_id", ctx.workspace.id)
       .neq("id", id)
       .in("status", ["todo", "in_progress", "done"])
       .order("created_at", { ascending: false })

@@ -5,6 +5,12 @@ import { z } from "zod";
 import { fail, ok, toSaveState, type ActionResult, type SaveState } from "@/lib/action-result";
 import { fieldErrorsOf, formObject, parseTagNames } from "@/lib/form";
 import { getWorkspaceContext } from "@/lib/workspace-context";
+import {
+  convertIdeaInWorkspace,
+  deleteIdeaInWorkspace,
+  setIdeaStatusInWorkspace,
+  updateIdeaInWorkspace,
+} from "./mutations";
 import { ideaCaptureSchema, ideaEditSchema, ideaStatus } from "./schemas";
 
 // Idea content is private: never log titles or bodies.
@@ -45,27 +51,15 @@ export async function updateIdea(
     };
   }
 
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase
-    .from("ideas")
-    .update(parsed.data)
-    .eq("id", ideaId)
-    .select("id");
-  if (error) return { status: "error", message: "Could not save the idea. Please try again." };
-  if (!data.length) return { status: "error", message: "This idea no longer exists." };
-
-  const tags = await supabase.rpc("set_idea_tags", {
-    target_idea_id: ideaId,
-    tag_names: parseTagNames(formData.get("tags")),
-  });
-  if (tags.error) {
-    return {
-      status: "error",
-      message: tags.error.message.includes("TOO_MANY_TAGS")
-        ? "Use at most 20 tags."
-        : "Details saved, but the tags could not be updated.",
-    };
-  }
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await updateIdeaInWorkspace(
+    supabase,
+    workspace.id,
+    ideaId,
+    parsed.data,
+    parseTagNames(formData.get("tags")),
+  );
+  if (!result.ok) return { status: "error", message: result.error };
   refresh();
   return toSaveState(ok());
 }
@@ -73,24 +67,18 @@ export async function updateIdea(
 export async function setIdeaStatus(ideaId: string, status: string): Promise<ActionResult> {
   const parsed = ideaStatus.safeParse(status);
   if (!uuid.safeParse(ideaId).success || !parsed.success) return fail("Invalid request.");
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase
-    .from("ideas")
-    .update({ status: parsed.data })
-    .eq("id", ideaId)
-    .select("id");
-  if (error) return fail("Could not update the idea.");
-  if (!data.length) return fail("This idea no longer exists.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await setIdeaStatusInWorkspace(supabase, workspace.id, ideaId, parsed.data);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }
 
 export async function deleteIdea(ideaId: string): Promise<ActionResult> {
   if (!uuid.safeParse(ideaId).success) return fail("Invalid request.");
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase.from("ideas").delete().eq("id", ideaId).select("id");
-  if (error) return fail("Could not delete the idea.");
-  if (!data.length) return fail("This idea no longer exists.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await deleteIdeaInWorkspace(supabase, workspace.id, ideaId);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }
@@ -101,12 +89,9 @@ export async function convertIdea(
   target: "task" | "project",
 ): Promise<ActionResult<{ href: string }>> {
   if (!uuid.safeParse(ideaId).success) return fail("Invalid request.");
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } =
-    target === "task"
-      ? await supabase.rpc("convert_idea_to_task", { idea_id: ideaId })
-      : await supabase.rpc("convert_idea_to_project", { idea_id: ideaId });
-  if (error || !data) return fail(`Could not convert the idea into a ${target}.`);
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await convertIdeaInWorkspace(supabase, workspace.id, ideaId, target);
+  if (!result.ok) return result;
   refresh();
-  return ok({ href: target === "task" ? `/tasks/${data}` : `/projects/${data}` });
+  return ok({ href: `/${target === "task" ? "tasks" : "projects"}/${result.data.id}` });
 }

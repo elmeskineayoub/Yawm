@@ -69,7 +69,7 @@ export default async function TasksPage({
   const filters = parseTaskFilters(await searchParams);
   const ctx = await getWorkspaceContext();
   const lookups = await loadLookups(ctx);
-  const { tasks, truncated } = await loadFilteredTasks(ctx, filters, lookups);
+  const { tasks, total, truncated } = await loadFilteredTasks(ctx, filters, lookups);
   const groups = groupTasks(tasks, filters.group).filter((g) => g.tasks.length > 0);
 
   return (
@@ -99,7 +99,8 @@ export default async function TasksPage({
 
         {truncated && (
           <p role="status" className="text-sm text-muted-foreground">
-            Showing the first 1,000 matching tasks. Narrow the filters to see the rest.
+            Showing the {tasks.length.toLocaleString("en-US")} most recently created of{" "}
+            {total.toLocaleString("en-US")} matching tasks. Narrow the filters to see the rest.
           </p>
         )}
 

@@ -43,6 +43,7 @@ Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase
 
 - RLS is enabled on every table, in the same migration that creates it.
 - Every reference between rows is a composite foreign key on `(id, workspace_id)`, so a row can only point at rows in its own workspace, even with a guessed UUID.
+- Server actions also scope every ID-based update and delete (and the idea-conversion and tag functions) to the active workspace resolved on the server, so a member of several workspaces cannot change another workspace's rows by passing their IDs from this one. Those writes live in `features/*/mutations.ts` and are covered by `tests/integration/active-workspace-scope.test.ts`.
 - Table and column privileges are granted explicitly: `workspace_id` can never be changed, and trigger-managed columns (`completed_at`, recurrence series fields) cannot be written by clients.
 - Database functions called from the app (`convert_idea_to_task/project`, `set_task_tags`, `set_idea_tags`) run with the caller's permissions, so RLS applies. Membership checks are `security definer` helpers in a non-exposed `private` schema.
 - `anon` (signed-out) has no privileges on any of these tables.
@@ -57,7 +58,7 @@ Known limitations / notes:
 - Saving a task's details and its tags are two server calls; if the tag update fails, the form says so and the details are already saved.
 - No drag-and-drop on the board yet (status picker instead); no manual ordering of tasks.
 - Tags are created from the task/idea forms; there is no screen to rename or delete tags yet.
-- Lists show up to 1,000 tasks / 500 ideas at once (the page says when results are truncated).
+- The Tasks list shows at most the 1,000 most recently created matching tasks (all filters, including tags, run in the database first); the page then says how many matched in total. The Inbox is paginated, 50 ideas per page.
 - Workspace creation, switching, and membership management (invites) are not exposed yet; the schema supports multiple workspaces and roles for the collaboration phase.
 - Profile editing (name, timezone, week start) has no UI yet; Settings shows the values. The database validates them.
 - Account and workspace deletion flows are not built (required before public release).
