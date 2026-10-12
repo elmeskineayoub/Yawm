@@ -1,4 +1,6 @@
+import { loadBlocks, type CalendarBlock } from "@/features/calendar/queries";
 import { loadPlanPage } from "@/features/planning/queries";
+import { zonedDayRange } from "@/lib/dates/zoned";
 import { addDays, dateOfInstant, periodStart, type IsoDate } from "@/lib/dates";
 import type { WorkspaceContext } from "@/lib/workspace-context";
 import { compareTasks } from "./logic";
@@ -6,6 +8,8 @@ import { enrichTasks, loadDueTasks, TASK_COLUMNS, type Lookups, type TaskView } 
 
 export type TodayData = {
   priorities: Awaited<ReturnType<typeof loadPlanPage>>["items"];
+  /** Time blocks overlapping today, in the user's timezone. */
+  scheduled: CalendarBlock[];
   dayPlanId: string | null;
   overdue: TaskView[];
   dueToday: TaskView[];
@@ -23,7 +27,7 @@ export async function loadToday(ctx: WorkspaceContext, lookups: Lookups): Promis
   // a completion that happened "today" locally.
   const since = new Date(Date.now() - 8 * 86_400_000).toISOString();
 
-  const [dayPlan, due, completedRows] = await Promise.all([
+  const [dayPlan, due, completedRows, scheduled] = await Promise.all([
     loadPlanPage(ctx, "day", today, "week", lookups),
     loadDueTasks(ctx, lookups, { from: today, to: addDays(today, 8), includeOverdue: true }),
     supabase
@@ -33,6 +37,7 @@ export async function loadToday(ctx: WorkspaceContext, lookups: Lookups): Promis
       .eq("status", "done")
       .gte("completed_at", since)
       .limit(1000),
+    loadBlocks(ctx, zonedDayRange(today, timezone)),
   ]);
   if (completedRows.error) throw new Error("Could not load completed tasks.");
 
@@ -47,6 +52,7 @@ export async function loadToday(ctx: WorkspaceContext, lookups: Lookups): Promis
 
   return {
     priorities: dayPlan.items,
+    scheduled,
     dayPlanId: dayPlan.plan?.id ?? null,
     overdue: due.filter((t) => t.due_date! < today),
     dueToday: due.filter((t) => t.due_date === today),

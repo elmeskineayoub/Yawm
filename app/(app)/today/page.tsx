@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { ScheduledList } from "@/components/planner/scheduled-list";
 import { QuickAddTask } from "@/components/tasks/quick-add-task";
 import { TaskList, TaskRow } from "@/components/tasks/task-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { loadLookups } from "@/features/tasks/queries";
+import { plannerHref } from "@/features/planning/view";
 import { loadToday } from "@/features/tasks/today";
 import { formatDate } from "@/lib/dates";
 import { getWorkspaceContext } from "@/lib/workspace-context";
@@ -30,7 +32,7 @@ export default async function TodayPage() {
               Today&apos;s priorities
             </h2>
             <Link
-              href={`/planner?period=day&date=${ctx.today}`}
+              href={plannerHref("day", ctx.today)}
               className="text-sm text-accent hover:underline"
             >
               {data.dayPlanId ? "Edit day plan" : "Plan the day"}
@@ -64,6 +66,25 @@ export default async function TodayPage() {
               )}
             </ul>
           )}
+        </section>
+
+        <section aria-labelledby="scheduled-heading">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <h2 id="scheduled-heading" className="text-sm font-semibold">
+              Scheduled
+            </h2>
+            <Link
+              href={plannerHref("day", ctx.today)}
+              className="text-sm text-accent hover:underline"
+            >
+              Open timeline
+            </Link>
+          </div>
+          <ScheduledList
+            blocks={data.scheduled}
+            timezone={ctx.timezone}
+            dayHref={plannerHref("day", ctx.today)}
+          />
         </section>
 
         {data.overdue.length > 0 && (

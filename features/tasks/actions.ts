@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fail, ok, toSaveState, type ActionResult, type SaveState } from "@/lib/action-result";
+import { isIsoDate } from "@/lib/dates";
 import { fieldErrorsOf, formObject, parseTagNames } from "@/lib/form";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 import { friendlyTaskError } from "./logic";
@@ -10,6 +11,7 @@ import {
   addDependencyInWorkspace,
   deleteTaskInWorkspace,
   removeDependencyInWorkspace,
+  setTaskDueDateInWorkspace,
   setTaskStatusInWorkspace,
   updateTaskInWorkspace,
 } from "./mutations";
@@ -132,6 +134,20 @@ export async function removeDependency(taskId: string, dependsOnId: string): Pro
   }
   const { supabase, workspace } = await getWorkspaceContext();
   const result = await removeDependencyInWorkspace(supabase, workspace.id, taskId, dependsOnId);
+  if (!result.ok) return result;
+  refresh();
+  return ok();
+}
+
+/** "Move deadline…": the only way the Planner changes a due date, always on explicit request. */
+export async function moveTaskDeadline(
+  taskId: string,
+  dueDate: string | null,
+): Promise<ActionResult> {
+  if (!uuid.safeParse(taskId).success) return fail("Invalid request.");
+  if (dueDate !== null && !isIsoDate(dueDate)) return fail("Enter a valid date.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await setTaskDueDateInWorkspace(supabase, workspace.id, taskId, dueDate);
   if (!result.ok) return result;
   refresh();
   return ok();

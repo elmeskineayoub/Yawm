@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { ScheduledList } from "@/components/planner/scheduled-list";
 import { TaskList } from "@/components/tasks/task-row";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { countInbox } from "@/features/inbox/queries";
 import { loadProjectSummaries } from "@/features/projects/queries";
 import { loadLookups } from "@/features/tasks/queries";
+import { plannerHref } from "@/features/planning/view";
 import { loadToday } from "@/features/tasks/today";
 import { formatDate, formatPeriod } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -105,7 +107,7 @@ export default async function DashboardPage() {
             title="Today's priorities"
             action={
               <Link
-                href={`/planner?period=day&date=${ctx.today}`}
+                href={plannerHref("day", ctx.today)}
                 className="text-sm text-accent hover:underline"
               >
                 Plan the day
@@ -140,9 +142,30 @@ export default async function DashboardPage() {
           </Card>
 
           <Card
+            title="Scheduled today"
+            action={
+              <Link
+                href={plannerHref("day", ctx.today)}
+                className="text-sm text-accent hover:underline"
+              >
+                Timeline
+              </Link>
+            }
+          >
+            <ScheduledList
+              blocks={today.scheduled}
+              timezone={ctx.timezone}
+              dayHref={plannerHref("day", ctx.today)}
+            />
+          </Card>
+
+          <Card
             title="This week"
             action={
-              <Link href="/planner?period=week" className="text-sm text-accent hover:underline">
+              <Link
+                href={plannerHref("week", ctx.today)}
+                className="text-sm text-accent hover:underline"
+              >
                 Weekly plan
               </Link>
             }

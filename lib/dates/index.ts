@@ -163,3 +163,50 @@ export function relativeDateLabel(date: IsoDate, today: IsoDate): string {
 export function dateOfInstant(instant: string, timeZone: string): IsoDate {
   return todayIn(timeZone, new Date(instant));
 }
+
+const titleFormatters = {
+  weekday: new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }),
+  monthDay: new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric" }),
+  day: new Intl.DateTimeFormat("en-US", { timeZone: "UTC", day: "numeric" }),
+  monthShort: new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short" }),
+};
+
+/** Heading for the Planner: "Wednesday, October 14", "Oct 12 – 18, 2026", "October 2026", "2026". */
+export function formatPeriodTitle(period: PlanPeriod, start: IsoDate): string {
+  const d = toUtc(start);
+  switch (period) {
+    case "year":
+      return start.slice(0, 4);
+    case "month":
+      return formatters.month.format(d);
+    case "day":
+      return titleFormatters.weekday.format(d);
+    case "week": {
+      const last = toUtc(addDays(start, 6));
+      const sameMonth = last.getUTCMonth() === d.getUTCMonth();
+      const end = sameMonth
+        ? titleFormatters.day.format(last)
+        : titleFormatters.monthDay.format(last);
+      return `${titleFormatters.monthDay.format(d)} – ${end}, ${last.getUTCFullYear()}`;
+    }
+  }
+}
+
+/** Short label for a context chip: "Week of Oct 12", "October", "2026", "Wed, Oct 14". */
+export function formatPeriodShort(period: PlanPeriod, start: IsoDate): string {
+  switch (period) {
+    case "year":
+      return start.slice(0, 4);
+    case "month":
+      return formatters.month.format(toUtc(start)).split(" ")[0]!;
+    case "week":
+      return `Week of ${titleFormatters.monthDay.format(toUtc(start))}`;
+    case "day":
+      return formatDate(start, "short");
+  }
+}

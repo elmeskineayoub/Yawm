@@ -2,16 +2,17 @@
 
 A planning and self-management app for tasks, connected yearly-to-daily plans, projects, habits, goals, a vision board, brainstorming, notes, journaling, time blocking, focus sessions, and weekly reviews.
 
-This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–2 are done: you can capture ideas, manage tasks and projects, and connect yearly/monthly/weekly/daily plans to actionable work. Calendar, habits, goals, journaling, focus, and backups come in later phases.
+This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–2 are done and Phase 3 is partly done: you can capture ideas, manage tasks and projects, plan years, months, weeks, and days in one Planner, and schedule work on an interactive calendar. Google Calendar sync, habits, goals, journaling, focus, and backups come in later phases.
 
 ## Current status
 
-| Phase                                   | Status                                                                                                                                                      |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health` |
-| 1 — Supabase auth & workspace isolation | Done: email/password auth with verification and reset, protected routes, personal workspace + default areas, RLS with integration tests                     |
-| 2 — Core execution                      | Done: inbox, tasks (subtasks, dependencies, recurrence, tags), projects, editable life areas, connected plans, Today, dashboard, quick capture              |
-| 3+                                      | Not started                                                                                                                                                 |
+| Phase                                   | Status                                                                                                                                                             |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health`        |
+| 1 — Supabase auth & workspace isolation | Done: email/password auth with verification and reset, protected routes, personal workspace + default areas, RLS with integration tests                            |
+| 2 — Core execution                      | Done: inbox, tasks (subtasks, dependencies, recurrence, tags), projects, editable life areas, connected plans, Today, dashboard, quick capture                     |
+| 3 — Planning & calendar                 | Partly done: redesigned Planner (Day/Week/Month/Year), manual time blocks with drag-and-drop scheduling, rescheduling, carry-forward. Google Calendar sync is next |
+| 4+                                      | Not started                                                                                                                                                        |
 
 What exists today:
 
@@ -25,34 +26,42 @@ What exists today:
   - Overdue is shown only for unfinished tasks, using today's date in your timezone.
 - **Projects:** create, edit (outcome, notes, dates, status, area), archive, delete (tasks are kept). Progress is derived from the project's tasks (cancelled tasks excluded), never stored.
 - **Life areas** (Settings): rename, recolor, reorder, archive/restore, delete, and add custom areas.
-- **Planner:** year, month, week, and day plans with theme, focus, and reflection; previous/next/current navigation. Each plan links to its parent period ("Part of October 2026") and lists the periods inside it. Link tasks and projects to any plan; progress flows from linked tasks and the tasks of linked projects. "Due this …" lists deadlines in the period, derived from tasks (no duplicated state). Weeks start on your week-start setting (Monday by default).
-- **Today:** today's priorities (the day plan's linked work), overdue, due today, and completed today.
+- **Planner** (`/planner`): one workspace with Day, Week, Month, and Year views. Switch views with the tabs or <kbd>d</kbd> / <kbd>w</kbd> / <kbd>m</kbd> / <kbd>y</kbd>, move with ← / → or the arrows, and jump back with **Today** (<kbd>t</kbd>). Each view has one job: the Year sets a direction and major outcomes (projects) and shows the twelve months; a Month has a theme and outcomes; a Week has a focus and a short list of priorities (a gentle hint above 5); a Day has an intention and 1–3 priorities next to the timeline. Everything is edited inline and saves on its own with an honest "Saving… / Saved" state. You can start at any level: a plan row is created only when you first write to it, and parent plans are never required (chips show the enclosing periods and their themes). Add a new priority by typing, or **Link existing** tasks and projects with search. Progress comes from the linked work. Notes and the period review sit under "Notes & review".
+- **Calendar and time blocks** (Day/Week/Month views): a 24-hour timeline (day/week), a month grid, and an agenda list; phones default to the agenda. Drag a task from **Unscheduled** onto a time slot to schedule it (length from its estimate, 30 minutes by default), click or drag across empty time to create a block, drag blocks to move them and their bottom edge to resize, or open a block to edit it in a side panel (title, linked task, date, start, end, notes). A block is scheduled time, not a deadline: scheduling never changes a task's due date, and deadlines show separately in the "Due" row. Overlapping blocks are allowed but highlighted, with a warning when you save. All times use your profile timezone (Settings), with a notice when your device is in a different one; blocks crossing midnight and DST changes are handled. Works without any Google credentials.
+- **Rescheduling:** the day or week that contains today lists **Needs rescheduling** — open tasks whose block has passed, or whose deadline has passed — with explicit actions: schedule a new block, move the deadline (today / tomorrow / next week / a date), or add to today's priorities. **Carry forward** links a period's unfinished priorities to the next period (originals stay, deadlines unchanged, running it twice does nothing new).
+- **Profile** (Settings): edit your name, timezone, and week start.
+- **Today:** today's priorities (the day plan's linked work), today's scheduled blocks, overdue, due today, and completed today. Task pages list their scheduled time.
 - **Dashboard:** counts for overdue, due today, inbox, and active projects; today's priorities; this week's theme and completed tasks; needs attention; upcoming 7 days; active project progress.
 - Loading skeletons, empty states, error boundaries with retry, confirmation dialogs for deletes, and "Saving… / Saved" shown only after the server confirms.
 
 ### Security model
 
-Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase 1) and `supabase/migrations/20261012090000_core_execution.sql` (Phase 2).
+Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase 1), `supabase/migrations/20261012090000_core_execution.sql` (Phase 2), and `supabase/migrations/20261012120000_time_blocks.sql` (Phase 3).
 
-| Table                                                                                                               | Read                           | Write from the browser/API                                 |
-| ------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------- |
-| `profiles`                                                                                                          | own row                        | update own `display_name`, `timezone`, `week_start`        |
-| `workspaces`                                                                                                        | workspaces you are a member of | owner/admin may rename                                     |
-| `workspace_members`                                                                                                 | members of your workspaces     | none (bootstrap trigger only)                              |
-| `areas`, `tags`, `projects`, `tasks`, `task_tags`, `task_dependencies`, `ideas`, `idea_tags`, `plans`, `plan_items` | your workspaces                | owner/admin/member insert/update/delete; viewers read-only |
+| Table                                                                                                               | Read                           | Write from the browser/API                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`                                                                                                          | own row                        | update own `display_name`, `timezone`, `week_start`                                                                                                                               |
+| `workspaces`                                                                                                        | workspaces you are a member of | owner/admin may rename                                                                                                                                                            |
+| `workspace_members`                                                                                                 | members of your workspaces     | none (bootstrap trigger only)                                                                                                                                                     |
+| `areas`, `tags`, `projects`, `tasks`, `task_tags`, `task_dependencies`, `ideas`, `idea_tags`, `plans`, `plan_items` | your workspaces                | owner/admin/member insert/update/delete; viewers read-only                                                                                                                        |
+| `time_blocks`                                                                                                       | your workspaces                | owner/admin/member insert/update/delete of app-created blocks only; blocks with `origin = 'google'` are read-only, and `origin` / external event IDs cannot be written by clients |
 
 - RLS is enabled on every table, in the same migration that creates it.
 - Every reference between rows is a composite foreign key on `(id, workspace_id)`, so a row can only point at rows in its own workspace, even with a guessed UUID.
 - Server actions also scope every ID-based update and delete (and the idea-conversion and tag functions) to the active workspace resolved on the server, so a member of several workspaces cannot change another workspace's rows by passing their IDs from this one. Those writes live in `features/*/mutations.ts` and are covered by `tests/integration/active-workspace-scope.test.ts`.
 - Table and column privileges are granted explicitly: `workspace_id` can never be changed, and trigger-managed columns (`completed_at`, recurrence series fields) cannot be written by clients.
-- Database functions called from the app (`convert_idea_to_task/project`, `set_task_tags`, `set_idea_tags`) run with the caller's permissions, so RLS applies. Membership checks are `security definer` helpers in a non-exposed `private` schema.
+- Database functions called from the app (`convert_idea_to_task/project`, `set_task_tags`, `set_idea_tags`, `add_task_to_plan`, `add_project_to_plan`) run with the caller's permissions, so RLS applies. Membership checks are `security definer` helpers in a non-exposed `private` schema.
 - `anon` (signed-out) has no privileges on any of these tables.
 - The app uses only the publishable key. No service-role/secret key is used by the app; integration tests use the local stack's secret key only to create test users.
 - Task, idea, and project content is never logged or sent to third parties.
 
 Known limitations / notes:
 
-- **Rescheduling / carry-forward** of unfinished tasks, calendar time blocks, and Google Calendar are Phase 3. Due dates are deadlines only.
+- **Google Calendar** sync (OAuth, importing external events read-only, one-way export of blocks) is not built yet; it is the next Phase 3 pull request. The `time_blocks` table already has `origin` and external event ID columns for it.
+- Time blocks don't repeat, are limited to 24 hours, and aren't shared between workspaces. Rescheduling is always an explicit action; nothing moves on its own.
+- Dragging on the calendar needs a mouse or touch. Keyboard users can do the same through the **Schedule** buttons and the block side panel.
+- The Unscheduled tray lists open tasks with no upcoming block (this period's priorities first; a short list with "Show all"). Scheduling data considers at most the 500 open tasks with the nearest deadlines.
+- The Planner's month grid shows blocks and deadlines but not plan priorities of individual days.
 - **Global search** across all entities is not built yet; Tasks and Inbox each have their own search (title and notes).
 - **Recurrence:** the next occurrence is created on completion (not pre-generated), so future occurrences don't appear until then. Subtasks and dependencies are not copied to the next occurrence. Rules are daily/weekly/monthly; no yearly or "last weekday of the month" rules.
 - Saving a task's details and its tags are two server calls; if the tag update fails, the form says so and the details are already saved.
@@ -60,11 +69,10 @@ Known limitations / notes:
 - Tags are created from the task/idea forms; there is no screen to rename or delete tags yet.
 - The Tasks list shows at most the 1,000 most recently created matching tasks (all filters, including tags, run in the database first); the page then says how many matched in total. The Inbox is paginated, 50 ideas per page.
 - Workspace creation, switching, and membership management (invites) are not exposed yet; the schema supports multiple workspaces and roles for the collaboration phase.
-- Profile editing (name, timezone, week start) has no UI yet; Settings shows the values. The database validates them.
 - Account and workspace deletion flows are not built (required before public release).
 - `NEXT_PUBLIC_*` values are inlined at build time; rebuild/restart after changing `.env.local`.
 - `npm audit` reports high-severity advisories in `braces`/`micromatch`/`fast-glob` pulled in by `eslint-config-next` (lint-time dev dependency only, not shipped to the browser). The only automated "fix" downgrades to Next 14 lint config, so it is left until upstream updates.
-- Dependencies for later phases (FullCalendar, Dexie, googleapis, etc.) are declared in `package.json` but unused until their phase.
+- Dependencies for later phases (Dexie, googleapis, etc.) are declared in `package.json` but unused until their phase.
 
 ## Start here
 
@@ -153,11 +161,16 @@ Still to come in later phases: a private Storage bucket and policies for vision-
 
 ### Applying a new migration to a hosted project
 
-Migrations are never applied to a hosted project automatically (not by CI and not by the app). To apply a new one, such as Phase 2's `20261012090000_core_execution.sql`:
+Migrations are never applied to a hosted project automatically (not by CI and not by the app). To apply a new one, such as Phase 3's `20261012120000_time_blocks.sql`:
 
 1. **Back up first.** The Free plan has no managed backups you can restore yourself. Run `npx supabase db dump --linked -f backup-schema.sql` and `npx supabase db dump --linked --data-only -f backup-data.sql`, and keep the files outside the repository. They contain your personal data.
 2. `npx supabase db push --dry-run` lists the pending migrations without changing anything.
 3. `npx supabase db push` applies the pending migrations in order, each in its own transaction, and records them in `supabase_migrations.schema_migrations` so they never run twice.
+
+What Phase 3's migration (`20261012120000_time_blocks.sql`) does to a hosted database:
+
+- It **adds** the `time_block_origin` enum, the `time_blocks` table with its indexes, `updated_at` trigger, grants, and RLS policies, and two functions (`add_task_to_plan`, `add_project_to_plan`) that create a task/project and link it to a plan in one transaction.
+- It does **not** change or delete existing rows, tables, or policies. Rollback works the same as below (restore from backup, or a new migration that drops `time_blocks`, which deletes all time blocks).
 
 What Phase 2's migration does to a hosted database:
 

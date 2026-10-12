@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { AreasManager } from "@/components/settings/areas-manager";
+import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeSelector } from "@/components/shared/theme-selector";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Settings" };
-
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export default async function SettingsPage() {
   const { supabase, user, workspace } = await getWorkspaceContext();
@@ -45,17 +44,12 @@ export default async function SettingsPage() {
           <h2 id="account-heading" className="text-base font-semibold">
             Account
           </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Changing your timezone changes how times are shown. Scheduled blocks keep their exact
+            moment.
+          </p>
           {profile ? (
-            <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Email</dt>
-              <dd>{user.email ?? "—"}</dd>
-              <dt className="text-muted-foreground">Name</dt>
-              <dd>{profile.display_name ?? "—"}</dd>
-              <dt className="text-muted-foreground">Timezone</dt>
-              <dd>{profile.timezone}</dd>
-              <dt className="text-muted-foreground">Week starts on</dt>
-              <dd>{WEEKDAYS[profile.week_start] ?? "—"}</dd>
-            </dl>
+            <ProfileForm email={user.email} profile={profile} />
           ) : (
             <p role="alert" className="mt-2 text-sm">
               Your profile could not be loaded.
