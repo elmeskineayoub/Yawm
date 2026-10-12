@@ -4,6 +4,7 @@ import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { QuickCapture } from "@/components/shared/quick-capture";
 import { AccountMenu } from "./account-menu";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -66,6 +67,11 @@ export function AppShell({
             )}
           </button>
         </div>
+        {account && (
+          <div className="px-2 pb-3">
+            <QuickCapture collapsed={collapsed} />
+          </div>
+        )}
         <SidebarNav collapsed={collapsed} />
         {account && <AccountMenu email={account.email} collapsed={collapsed} />}
       </aside>
@@ -94,6 +100,11 @@ export function AppShell({
                 <X aria-hidden className="size-4" />
               </button>
             </div>
+            {account && (
+              <div className="px-2 pb-3">
+                <QuickCapture />
+              </div>
+            )}
             <SidebarNav collapsed={false} />
             {account && <AccountMenu email={account.email} collapsed={false} />}
           </aside>

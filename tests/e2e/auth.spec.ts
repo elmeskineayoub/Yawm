@@ -37,15 +37,15 @@ test("sign up, verify email, use the workspace, sign out, and reset the password
   // Verify via the emailed link; it signs the user in.
   await page.goto(await waitForAuthLink(email, "Confirm your Yawm account"));
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText("Personal workspace")).toBeVisible();
-  for (const area of ["Spiritual", "Mental", "Physical", "Finances"]) {
-    await expect(page.getByRole("listitem").filter({ hasText: area })).toBeVisible();
-  }
+  await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
 
-  // The profile captured the browser timezone and name.
+  // The profile captured the browser timezone and name; the default areas were created.
   await page.goto("/settings");
   await expect(page.getByText("E2E Tester")).toBeVisible();
   await expect(page.getByText(email).first()).toBeVisible();
+  for (const area of ["Spiritual", "Mental", "Physical", "Finances"]) {
+    await expect(page.getByRole("textbox", { name: `Name of ${area}` })).toHaveValue(area);
+  }
 
   // Signed-in users skip the auth pages.
   await page.goto("/login");

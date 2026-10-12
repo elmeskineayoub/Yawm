@@ -24,11 +24,11 @@ export type NavItem = {
 
 export const primaryNavigation: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, available: true },
-  { label: "Inbox", href: "/inbox", icon: Inbox, available: false },
-  { label: "Today", href: "/today", icon: Sun, available: false },
-  { label: "Planner", href: "/planner", icon: CalendarDays, available: false },
-  { label: "Tasks", href: "/tasks", icon: CheckSquare, available: false },
-  { label: "Projects", href: "/projects", icon: FolderKanban, available: false },
+  { label: "Inbox", href: "/inbox", icon: Inbox, available: true },
+  { label: "Today", href: "/today", icon: Sun, available: true },
+  { label: "Planner", href: "/planner", icon: CalendarDays, available: true },
+  { label: "Tasks", href: "/tasks", icon: CheckSquare, available: true },
+  { label: "Projects", href: "/projects", icon: FolderKanban, available: true },
   { label: "Habits", href: "/habits", icon: Repeat, available: false },
   { label: "Goals & Vision", href: "/goals", icon: Star, available: false },
   { label: "Notes", href: "/notes", icon: NotebookPen, available: false },

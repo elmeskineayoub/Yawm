@@ -40,6 +40,4 @@ export const resetPasswordSchema = z
 
 export type FieldErrors = Partial<Record<string, string[]>>;
 
-export function fieldErrorsOf(error: z.ZodError): FieldErrors {
-  return z.flattenError(error).fieldErrors as FieldErrors;
-}
+export { fieldErrorsOf } from "@/lib/form";

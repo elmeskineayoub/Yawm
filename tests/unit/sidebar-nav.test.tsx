@@ -8,13 +8,16 @@ describe("SidebarNav", () => {
   it("marks the current page and links available modules", () => {
     render(<SidebarNav collapsed={false} />);
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+    for (const name of ["Inbox", "Today", "Planner", "Tasks", "Projects"]) {
+      expect(screen.getByRole("link", { name })).toBeInTheDocument();
+    }
     expect(screen.getByRole("link", { name: "Settings" })).not.toHaveAttribute("aria-current");
   });
 
   it("does not link modules that are not implemented yet", () => {
     render(<SidebarNav collapsed={false} />);
-    expect(screen.queryByRole("link", { name: /Tasks/ })).not.toBeInTheDocument();
-    expect(screen.getByText("Tasks").closest("[aria-disabled]")).toHaveAttribute(
+    expect(screen.queryByRole("link", { name: /Habits/ })).not.toBeInTheDocument();
+    expect(screen.getByText("Habits").closest("[aria-disabled]")).toHaveAttribute(
       "aria-disabled",
       "true",
     );
