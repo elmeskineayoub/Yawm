@@ -45,7 +45,9 @@ create trigger focus_sessions_set_updated_at before update on public.focus_sessi
 
 revoke all on table public.focus_sessions from anon, authenticated;
 grant select, delete on table public.focus_sessions to authenticated;
-grant insert (workspace_id, task_id, session_type, started_at, ended_at, duration_seconds)
+-- `id` is client-supplied so that re-logging a finished session is idempotent (it hits the
+-- primary key instead of inserting a duplicate), so it must be insertable.
+grant insert (id, workspace_id, task_id, session_type, started_at, ended_at, duration_seconds)
   on public.focus_sessions to authenticated;
 -- Sessions are immutable once written; there is no update grant.
 
