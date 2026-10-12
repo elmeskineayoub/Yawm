@@ -25,13 +25,21 @@ const INSUFFICIENT_PRIVILEGE = "42501";
 
 let alice: TestUser;
 let bob: TestUser;
+// Carol is a member of neither workspace, so her client exercises pure RLS rejection.
+let carol: TestUser;
 let ws: string;
 let bobWs: string;
+let carolWs: string;
 
 beforeAll(async () => {
   alice = await createConfirmedUser("alice-nj");
   bob = await createConfirmedUser("bob-nj");
-  [ws, bobWs] = await Promise.all([personalWorkspaceId(alice.id), personalWorkspaceId(bob.id)]);
+  carol = await createConfirmedUser("carol-nj");
+  [ws, bobWs, carolWs] = await Promise.all([
+    personalWorkspaceId(alice.id),
+    personalWorkspaceId(bob.id),
+    personalWorkspaceId(carol.id),
+  ]);
   // Alice is also a member of Bob's workspace: proves that scoping to the *active* workspace, not
   // just RLS membership, blocks cross-workspace writes.
   await adminClient()
@@ -41,7 +49,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await deleteUsers(alice, bob);
+  await deleteUsers(alice, bob, carol);
 });
 
 const ctx = (db = alice.client, workspace = ws): WorkspaceContext =>
@@ -152,13 +160,15 @@ describe("notes", () => {
     ).toEqual({ ok: false, error: "Link only to work in this workspace." });
   });
 
-  it("rejects anonymous and cross-workspace inserts at the RLS layer", async () => {
+  it("rejects inserts and tag writes from a non-member workspace at the RLS layer", async () => {
+    // Alice is not a member of Carol's workspace, so RLS rejects the insert outright.
     const insert = await alice.client
       .from("notes")
-      .insert({ workspace_id: bobWs, title: "x" } as never);
+      .insert({ workspace_id: carolWs, title: "x" } as never);
     expect(insert.error?.code).toBe(INSUFFICIENT_PRIVILEGE);
+    // RLS hides Carol's note from Alice, so the tag helper cannot find it.
     const tagRpc = await alice.client.rpc("set_note_tags", {
-      target_note_id: await note("Bob tag target", bob.client, bobWs),
+      target_note_id: await note("Carol tag target", carol.client, carolWs),
       tag_names: ["x"],
     });
     expect(tagRpc.error?.code).toBe("P0002");
@@ -223,13 +233,13 @@ describe("journal", () => {
     expect(page.entries.some((e) => e.id === bobEntry)).toBe(false);
   });
 
-  it("rejects cross-workspace inserts and tag writes at the RLS layer", async () => {
+  it("rejects inserts and tag writes from a non-member workspace at the RLS layer", async () => {
     const insert = await alice.client
       .from("journal_entries")
-      .insert({ workspace_id: bobWs, entry_date: "2026-10-12" } as never);
+      .insert({ workspace_id: carolWs, entry_date: "2026-10-12" } as never);
     expect(insert.error?.code).toBe(INSUFFICIENT_PRIVILEGE);
     const tagRpc = await alice.client.rpc("set_journal_tags", {
-      target_entry_id: await entry("2026-10-12", bob.client, bobWs),
+      target_entry_id: await entry("2026-10-12", carol.client, carolWs),
       tag_names: ["x"],
     });
     expect(tagRpc.error?.code).toBe("P0002");
