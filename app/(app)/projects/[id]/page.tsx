@@ -22,8 +22,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const { supabase } = ctx;
 
   const [project, taskRows, lookups] = await Promise.all([
-    supabase.from("projects").select("*").eq("id", id).maybeSingle(),
-    supabase.from("tasks").select(TASK_COLUMNS).eq("project_id", id).limit(1000),
+    supabase
+      .from("projects")
+      .select("*")
+      .eq("id", id)
+      .eq("workspace_id", ctx.workspace.id)
+      .maybeSingle(),
+    supabase
+      .from("tasks")
+      .select(TASK_COLUMNS)
+      .eq("project_id", id)
+      .eq("workspace_id", ctx.workspace.id)
+      .limit(1000),
     loadLookups(ctx),
   ]);
   if (project.error || taskRows.error) throw new Error("Could not load the project.");

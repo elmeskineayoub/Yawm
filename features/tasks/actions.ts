@@ -6,6 +6,13 @@ import { fail, ok, toSaveState, type ActionResult, type SaveState } from "@/lib/
 import { fieldErrorsOf, formObject, parseTagNames } from "@/lib/form";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 import { friendlyTaskError } from "./logic";
+import {
+  addDependencyInWorkspace,
+  deleteTaskInWorkspace,
+  removeDependencyInWorkspace,
+  setTaskStatusInWorkspace,
+  updateTaskInWorkspace,
+} from "./mutations";
 import { quickTaskSchema, taskEditSchema, taskStatus } from "./schemas";
 
 // Never log task titles or descriptions: they are private content.
@@ -73,27 +80,15 @@ export async function updateTask(
     };
   }
 
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase
-    .from("tasks")
-    .update(parsed.data)
-    .eq("id", taskId)
-    .select("id");
-  if (error) return { status: "error", message: friendlyTaskError(error.message) };
-  if (!data.length) return { status: "error", message: "This task no longer exists." };
-
-  const tags = await supabase.rpc("set_task_tags", {
-    target_task_id: taskId,
-    tag_names: parseTagNames(formData.get("tags")),
-  });
-  if (tags.error) {
-    return {
-      status: "error",
-      message: tags.error.message.includes("TOO_MANY_TAGS")
-        ? "Use at most 20 tags."
-        : "Details saved, but the tags could not be updated.",
-    };
-  }
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await updateTaskInWorkspace(
+    supabase,
+    workspace.id,
+    taskId,
+    parsed.data,
+    parseTagNames(formData.get("tags")),
+  );
+  if (!result.ok) return { status: "error", message: result.error };
 
   refresh();
   return toSaveState(ok());
@@ -103,14 +98,9 @@ export async function setTaskStatus(taskId: string, status: string): Promise<Act
   const parsedStatus = taskStatus.safeParse(status);
   if (!uuid.safeParse(taskId).success || !parsedStatus.success) return fail("Invalid request.");
 
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase
-    .from("tasks")
-    .update({ status: parsedStatus.data })
-    .eq("id", taskId)
-    .select("id");
-  if (error) return fail(friendlyTaskError(error.message));
-  if (!data.length) return fail("This task no longer exists.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await setTaskStatusInWorkspace(supabase, workspace.id, taskId, parsedStatus.data);
+  if (!result.ok) return result;
 
   refresh();
   return ok();
@@ -118,10 +108,9 @@ export async function setTaskStatus(taskId: string, status: string): Promise<Act
 
 export async function deleteTask(taskId: string): Promise<ActionResult> {
   if (!uuid.safeParse(taskId).success) return fail("Invalid request.");
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase.from("tasks").delete().eq("id", taskId).select("id");
-  if (error) return fail("Could not delete the task. Please try again.");
-  if (!data.length) return fail("This task no longer exists.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await deleteTaskInWorkspace(supabase, workspace.id, taskId);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }
@@ -131,16 +120,8 @@ export async function addDependency(taskId: string, dependsOnId: string): Promis
     return fail("Choose a task.");
   }
   const { supabase, workspace } = await getWorkspaceContext();
-  const { error } = await supabase.from("task_dependencies").insert({
-    workspace_id: workspace.id,
-    task_id: taskId,
-    depends_on_task_id: dependsOnId,
-  });
-  if (error) {
-    if (error.code === "23505") return fail("That dependency already exists.");
-    if (error.code === "23514") return fail("A task cannot depend on itself.");
-    return fail(friendlyTaskError(error.message));
-  }
+  const result = await addDependencyInWorkspace(supabase, workspace.id, taskId, dependsOnId);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }
@@ -149,13 +130,9 @@ export async function removeDependency(taskId: string, dependsOnId: string): Pro
   if (!uuid.safeParse(taskId).success || !uuid.safeParse(dependsOnId).success) {
     return fail("Invalid request.");
   }
-  const { supabase } = await getWorkspaceContext();
-  const { error } = await supabase
-    .from("task_dependencies")
-    .delete()
-    .eq("task_id", taskId)
-    .eq("depends_on_task_id", dependsOnId);
-  if (error) return fail("Could not remove the dependency.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await removeDependencyInWorkspace(supabase, workspace.id, taskId, dependsOnId);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }

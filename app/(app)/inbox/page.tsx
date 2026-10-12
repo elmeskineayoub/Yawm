@@ -31,20 +31,33 @@ export default async function InboxPage({
   const rawTag = Array.isArray(params.tag) ? params.tag[0] : params.tag;
   const tagId = z.uuid().safeParse(rawTag).success ? (rawTag as string) : null;
 
+  const rawPage = Array.isArray(params.page) ? params.page[0] : params.page;
+  const requestedPage = Number.parseInt(rawPage ?? "1", 10);
+
   const ctx = await getWorkspaceContext();
-  const [ideas, tags] = await Promise.all([
-    loadIdeas(ctx, { status, q, tagId }),
+  const [result, tags] = await Promise.all([
+    loadIdeas(
+      ctx,
+      { status, q, tagId },
+      { page: Number.isFinite(requestedPage) ? requestedPage : 1 },
+    ),
     ctx.supabase.from("tags").select("id, name").eq("workspace_id", ctx.workspace.id).order("name"),
   ]);
 
-  const tabHref = (tab: IdeaStatus | "all") => {
+  const { ideas, total, page, pageCount, pageSize } = result;
+
+  /** Keeps search and tag filters; a new status or filter starts again at page 1. */
+  const inboxHref = (tab: IdeaStatus | "all", targetPage = 1) => {
     const search = new URLSearchParams();
     if (tab !== "inbox") search.set("status", tab);
     if (q) search.set("q", q);
     if (tagId) search.set("tag", tagId);
+    if (targetPage > 1) search.set("page", String(targetPage));
     const s = search.toString();
     return s ? `/inbox?${s}` : "/inbox";
   };
+  const firstShown = (page - 1) * pageSize + 1;
+  const lastShown = firstShown + ideas.length - 1;
 
   return (
     <>
@@ -59,7 +72,7 @@ export default async function InboxPage({
           {TABS.map((tab) => (
             <Link
               key={tab}
-              href={tabHref(tab)}
+              href={inboxHref(tab)}
               aria-current={status === tab ? "page" : undefined}
               className={cn(
                 "-mb-px border-b-2 px-3 py-2 text-sm",
@@ -118,33 +131,89 @@ export default async function InboxPage({
               : "Try another status or search."}
           </EmptyState>
         ) : (
-          <ul aria-label="Ideas" className="divide-y divide-border rounded-lg border border-border">
-            {ideas.map((idea) => (
-              <li key={idea.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/inbox/${idea.id}`}
-                    className="text-sm font-medium break-words hover:underline"
-                  >
-                    {idea.title}
-                  </Link>
-                  {idea.body && (
-                    <p className="mt-0.5 line-clamp-2 text-sm break-words text-muted-foreground">
-                      {idea.body}
+          <>
+            <ul
+              aria-label="Ideas"
+              className="divide-y divide-border rounded-lg border border-border"
+            >
+              {ideas.map((idea) => (
+                <li key={idea.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/inbox/${idea.id}`}
+                      className="text-sm font-medium break-words hover:underline"
+                    >
+                      {idea.title}
+                    </Link>
+                    {idea.body && (
+                      <p className="mt-0.5 line-clamp-2 text-sm break-words text-muted-foreground">
+                        {idea.body}
+                      </p>
+                    )}
+                    <p className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span>
+                        {formatDate(dateOfInstant(idea.created_at, ctx.timezone), "short")}
+                      </span>
+                      {status === "all" && <span>{IDEA_STATUS_LABELS[idea.status]}</span>}
+                      {idea.tags.map((t) => (
+                        <span key={t.id}>#{t.name}</span>
+                      ))}
                     </p>
+                  </div>
+                  <IdeaActions idea={idea} />
+                </li>
+              ))}
+            </ul>
+            <nav
+              aria-label="Idea pages"
+              className="flex flex-wrap items-center justify-between gap-2 text-sm"
+            >
+              <p role="status" className="text-muted-foreground">
+                {total <= pageSize
+                  ? `${total} idea${total === 1 ? "" : "s"}`
+                  : `Showing ${firstShown}–${lastShown} of ${total} ideas`}
+              </p>
+              {pageCount > 1 && (
+                <div className="flex items-center gap-2">
+                  {page > 1 ? (
+                    <Link
+                      href={inboxHref(status, page - 1)}
+                      rel="prev"
+                      className="rounded-md border border-border px-3 py-1.5 hover:bg-surface-muted"
+                    >
+                      Previous
+                    </Link>
+                  ) : (
+                    <span
+                      aria-disabled="true"
+                      className="rounded-md border border-border px-3 py-1.5 opacity-50"
+                    >
+                      Previous
+                    </span>
                   )}
-                  <p className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    <span>{formatDate(dateOfInstant(idea.created_at, ctx.timezone), "short")}</span>
-                    {status === "all" && <span>{IDEA_STATUS_LABELS[idea.status]}</span>}
-                    {idea.tags.map((t) => (
-                      <span key={t.id}>#{t.name}</span>
-                    ))}
-                  </p>
+                  <span className="text-muted-foreground">
+                    Page {page} of {pageCount}
+                  </span>
+                  {page < pageCount ? (
+                    <Link
+                      href={inboxHref(status, page + 1)}
+                      rel="next"
+                      className="rounded-md border border-border px-3 py-1.5 hover:bg-surface-muted"
+                    >
+                      Next
+                    </Link>
+                  ) : (
+                    <span
+                      aria-disabled="true"
+                      className="rounded-md border border-border px-3 py-1.5 opacity-50"
+                    >
+                      Next
+                    </span>
+                  )}
                 </div>
-                <IdeaActions idea={idea} />
-              </li>
-            ))}
-          </ul>
+              )}
+            </nav>
+          </>
         )}
       </div>
     </>

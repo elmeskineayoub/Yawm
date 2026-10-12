@@ -49,6 +49,7 @@ export type TaskView = TaskRow & {
 export type Lookups = { projects: ProjectLite[]; areas: AreaLite[]; tags: TagLite[] };
 
 const LIMIT = 1000;
+export const TASK_DISPLAY_LIMIT = 1000;
 
 export async function loadLookups({ supabase, workspace }: WorkspaceContext): Promise<Lookups> {
   const [projects, areas, tags] = await Promise.all([
@@ -126,14 +127,35 @@ export async function enrichTasks(
   }));
 }
 
+export type FilteredTasks = {
+  tasks: TaskView[];
+  /** Number of tasks matching every filter, before the display limit. */
+  total: number;
+  truncated: boolean;
+};
+
+/**
+ * Every filter, including the tag, runs in the database before the limit, so the limit and the
+ * total always describe the matching set. When more than `limit` tasks match, the most recently
+ * created ones are returned.
+ */
 export async function loadFilteredTasks(
   ctx: WorkspaceContext,
   filters: TaskFilters,
   lookups: Lookups,
-): Promise<{ tasks: TaskView[]; truncated: boolean }> {
+  { limit = TASK_DISPLAY_LIMIT }: { limit?: number } = {},
+): Promise<FilteredTasks> {
   const { supabase, workspace, today } = ctx;
-  let query = supabase.from("tasks").select(TASK_COLUMNS).eq("workspace_id", workspace.id);
+  // `tag_match` is a left-joined embed; filtering it to non-null below turns it into an inner
+  // join on the selected tag.
+  let query = supabase
+    .from("tasks")
+    .select(`${TASK_COLUMNS}, tag_match:task_tags(tag_id)`, { count: "exact" })
+    .eq("workspace_id", workspace.id);
 
+  if (filters.tagId) {
+    query = query.eq("tag_match.tag_id", filters.tagId).not("tag_match", "is", null);
+  }
   if (filters.status === "open") query = query.in("status", ["todo", "in_progress"]);
   else if (filters.status !== "all") query = query.eq("status", filters.status);
   if (filters.priority) query = query.eq("priority", filters.priority);
@@ -158,13 +180,20 @@ export async function loadFilteredTasks(
       break;
   }
 
-  const { data, error } = await query.order("created_at", { ascending: false }).limit(LIMIT + 1);
+  const { data, error, count } = await query
+    .order("created_at", { ascending: false })
+    .order("id")
+    .limit(limit);
   if (error) throw new Error("Could not load tasks.");
 
-  let tasks = await enrichTasks(ctx, data.slice(0, LIMIT), lookups);
-  if (filters.tagId) tasks = tasks.filter((t) => t.tags.some((tag) => tag.id === filters.tagId));
+  const rows: TaskRow[] = data.map(({ tag_match, ...row }) => {
+    void tag_match;
+    return row;
+  });
+  const tasks = await enrichTasks(ctx, rows, lookups);
   tasks.sort(compareTasks(filters.sort));
-  return { tasks, truncated: data.length > LIMIT };
+  const total = count ?? tasks.length;
+  return { tasks, total, truncated: total > tasks.length };
 }
 
 /** Open tasks due in [from, to), plus overdue ones when `includeOverdue`. */

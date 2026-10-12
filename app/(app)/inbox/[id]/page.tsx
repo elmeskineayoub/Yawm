@@ -11,12 +11,13 @@ export const metadata: Metadata = { title: "Idea" };
 export default async function IdeaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
-  const { supabase } = await getWorkspaceContext();
+  const { supabase, workspace } = await getWorkspaceContext();
   const [idea, ideaTags] = await Promise.all([
     supabase
       .from("ideas")
       .select("id, title, body, status, converted_task_id, converted_project_id")
       .eq("id", id)
+      .eq("workspace_id", workspace.id)
       .maybeSingle(),
     supabase.from("idea_tags").select("tags(name)").eq("idea_id", id),
   ]);

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { fail, ok, toSaveState, type ActionResult, type SaveState } from "@/lib/action-result";
 import { fieldErrorsOf, formObject } from "@/lib/form";
 import { getWorkspaceContext } from "@/lib/workspace-context";
+import { deleteProjectInWorkspace, updateProjectInWorkspace } from "./mutations";
 import { projectCreateSchema, projectEditSchema } from "./schemas";
 
 const uuid = z.uuid();
@@ -53,14 +54,9 @@ export async function updateProject(
       fieldErrors: fieldErrorsOf(parsed.error),
     };
   }
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase
-    .from("projects")
-    .update(parsed.data)
-    .eq("id", projectId)
-    .select("id");
-  if (error) return { status: "error", message: "Could not save the project. Please try again." };
-  if (!data.length) return { status: "error", message: "This project no longer exists." };
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await updateProjectInWorkspace(supabase, workspace.id, projectId, parsed.data);
+  if (!result.ok) return { status: "error", message: result.error };
   refresh();
   return toSaveState(ok());
 }
@@ -68,10 +64,9 @@ export async function updateProject(
 /** Tasks are kept and become project-less (the foreign key sets them to null). */
 export async function deleteProject(projectId: string): Promise<ActionResult> {
   if (!uuid.safeParse(projectId).success) return fail("Invalid request.");
-  const { supabase } = await getWorkspaceContext();
-  const { data, error } = await supabase.from("projects").delete().eq("id", projectId).select("id");
-  if (error) return fail("Could not delete the project.");
-  if (!data.length) return fail("This project no longer exists.");
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await deleteProjectInWorkspace(supabase, workspace.id, projectId);
+  if (!result.ok) return result;
   refresh();
   return ok();
 }
