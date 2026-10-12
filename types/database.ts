@@ -1650,6 +1650,7 @@ export const Constants = {
   public: {
     Enums: {
       calendar_sync_status: ["pending", "synced", "error"],
+      focus_session_type: ["focus", "short_break", "long_break"],
       goal_status: ["active", "paused", "achieved", "archived"],
       google_connection_status: ["active", "reconnect_required", "error"],
       habit_frequency: ["daily", "weekly"],
