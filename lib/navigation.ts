@@ -31,8 +31,8 @@ export const primaryNavigation: NavItem[] = [
   { label: "Projects", href: "/projects", icon: FolderKanban, available: true },
   { label: "Habits", href: "/habits", icon: Repeat, available: true },
   { label: "Goals & Vision", href: "/goals", icon: Star, available: true },
-  { label: "Notes", href: "/notes", icon: NotebookPen, available: false },
-  { label: "Journal", href: "/journal", icon: BookOpen, available: false },
+  { label: "Notes", href: "/notes", icon: NotebookPen, available: true },
+  { label: "Journal", href: "/journal", icon: BookOpen, available: true },
   { label: "Reviews", href: "/reviews", icon: TrendingUp, available: false },
   { label: "Settings", href: "/settings", icon: Settings, available: true },
 ];

@@ -442,6 +442,98 @@ export type Database = {
           },
         ];
       };
+      journal_entries: {
+        Row: {
+          body: string | null;
+          created_at: string;
+          energy: number | null;
+          entry_date: string;
+          id: string;
+          mood: number | null;
+          prompt: string | null;
+          title: string | null;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          body?: string | null;
+          created_at?: string;
+          energy?: number | null;
+          entry_date: string;
+          id?: string;
+          mood?: number | null;
+          prompt?: string | null;
+          title?: string | null;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          body?: string | null;
+          created_at?: string;
+          energy?: number | null;
+          entry_date?: string;
+          id?: string;
+          mood?: number | null;
+          prompt?: string | null;
+          title?: string | null;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      journal_entry_tags: {
+        Row: {
+          created_at: string;
+          entry_id: string;
+          tag_id: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          entry_id: string;
+          tag_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          entry_id?: string;
+          tag_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_tags_entry_id_workspace_id_fkey";
+            columns: ["entry_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "journal_entries";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "journal_entry_tags_tag_id_workspace_id_fkey";
+            columns: ["tag_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "journal_entry_tags_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       milestones: {
         Row: {
           completed_at: string | null;
@@ -487,6 +579,119 @@ export type Database = {
           },
           {
             foreignKeyName: "milestones_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      note_tags: {
+        Row: {
+          created_at: string;
+          note_id: string;
+          tag_id: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          note_id: string;
+          tag_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          note_id?: string;
+          tag_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "note_tags_note_id_workspace_id_fkey";
+            columns: ["note_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "notes";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "note_tags_tag_id_workspace_id_fkey";
+            columns: ["tag_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "note_tags_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notes: {
+        Row: {
+          archived_at: string | null;
+          body: string | null;
+          created_at: string;
+          goal_id: string | null;
+          id: string;
+          project_id: string | null;
+          task_id: string | null;
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          archived_at?: string | null;
+          body?: string | null;
+          created_at?: string;
+          goal_id?: string | null;
+          id?: string;
+          project_id?: string | null;
+          task_id?: string | null;
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          body?: string | null;
+          created_at?: string;
+          goal_id?: string | null;
+          id?: string;
+          project_id?: string | null;
+          task_id?: string | null;
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notes_goal_id_workspace_id_fkey";
+            columns: ["goal_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "goals";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "notes_project_id_workspace_id_fkey";
+            columns: ["project_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "notes_task_id_workspace_id_fkey";
+            columns: ["task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "notes_workspace_id_fkey";
             columns: ["workspace_id"];
             isOneToOne: false;
             referencedRelation: "workspaces";
@@ -1256,6 +1461,11 @@ export type Database = {
       convert_idea_to_project: { Args: { idea_id: string }; Returns: string };
       convert_idea_to_task: { Args: { idea_id: string }; Returns: string };
       set_idea_tags: { Args: { tag_names: string[]; target_idea_id: string }; Returns: undefined };
+      set_journal_tags: {
+        Args: { tag_names: string[]; target_entry_id: string };
+        Returns: undefined;
+      };
+      set_note_tags: { Args: { tag_names: string[]; target_note_id: string }; Returns: undefined };
       set_task_tags: { Args: { tag_names: string[]; target_task_id: string }; Returns: undefined };
     };
     Enums: {
