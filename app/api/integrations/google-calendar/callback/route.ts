@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { GOOGLE_SCOPES } from "@/features/google-calendar/config";
+import { missingScopes } from "@/features/google-calendar/client";
 import { encryptSecret, tokenContext } from "@/features/google-calendar/crypto";
 import { STATE_COOKIE, verifyOAuthState } from "@/features/google-calendar/oauth-state";
 import { googleDepsFor } from "@/features/google-calendar/queries";
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     return back(request, "failed");
   }
   // Google's consent screen lets people untick scopes; without both, sync can't work.
-  if (!GOOGLE_SCOPES.every((scope) => grant.scopes.includes(scope))) {
+  if (missingScopes(grant.scopes).length > 0) {
     await deps.google.revokeToken(grant.accessToken);
     return back(request, "scopes");
   }

@@ -98,8 +98,25 @@ export type TokenGrant = {
   /** Epoch milliseconds. */
   expiresAt: number;
   refreshToken: string | null;
+  /** The scopes actually granted. */
   scopes: string[];
 };
+
+/**
+ * The granted scopes from a token response. RFC 6749 §5.1 lets the server omit `scope` when it
+ * is identical to what the client requested (§3.3: it must be included when it differs), so an
+ * omitted field means exactly the requested scopes. A field that is present, even empty, is
+ * taken at face value: it is how Google reports scopes the user unticked on the consent screen.
+ */
+export function grantedScopes(scope: string | undefined, requested: readonly string[]): string[] {
+  if (scope === undefined) return [...requested];
+  return scope.split(/\s+/).filter(Boolean);
+}
+
+/** Required scopes missing from a grant; empty when sync can work. */
+export function missingScopes(granted: readonly string[]): string[] {
+  return GOOGLE_SCOPES.filter((scope) => !granted.includes(scope));
+}
 
 const calendarListSchema = z.object({
   items: z
@@ -166,7 +183,11 @@ export function googleClient(config: GoogleConfig, fetchImpl: FetchLike = fetch)
     }
   }
 
-  async function tokenRequest(params: Record<string, string>): Promise<TokenGrant> {
+  /** `requested`: the scopes this grant was asked for, used when Google omits `scope`. */
+  async function tokenRequest(
+    params: Record<string, string>,
+    requested: readonly string[],
+  ): Promise<TokenGrant> {
     const response = await send(endpoints.token, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -182,7 +203,7 @@ export function googleClient(config: GoogleConfig, fetchImpl: FetchLike = fetch)
       accessToken: grant.access_token,
       expiresAt: Date.now() + grant.expires_in * 1000,
       refreshToken: grant.refresh_token ?? null,
-      scopes: grant.scope?.split(" ").filter(Boolean) ?? [],
+      scopes: grantedScopes(grant.scope, requested),
     };
   }
 
@@ -227,16 +248,25 @@ export function googleClient(config: GoogleConfig, fetchImpl: FetchLike = fetch)
     },
 
     exchangeCode(code: string, codeVerifier: string) {
-      return tokenRequest({
-        grant_type: "authorization_code",
-        code,
-        code_verifier: codeVerifier,
-        redirect_uri: config.redirectUri,
-      });
+      // The same scopes authorizeUrl asked for.
+      return tokenRequest(
+        {
+          grant_type: "authorization_code",
+          code,
+          code_verifier: codeVerifier,
+          redirect_uri: config.redirectUri,
+        },
+        GOOGLE_SCOPES,
+      );
     },
 
     refreshAccessToken(refreshToken: string) {
-      return tokenRequest({ grant_type: "refresh_token", refresh_token: refreshToken });
+      // A refresh without `scope` keeps the original grant (RFC 6749 §6), which the callback
+      // only accepted if it included every required scope.
+      return tokenRequest(
+        { grant_type: "refresh_token", refresh_token: refreshToken },
+        GOOGLE_SCOPES,
+      );
     },
 
     /** Best effort: the caller deletes local tokens whether or not this succeeds. */

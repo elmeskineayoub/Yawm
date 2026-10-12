@@ -41,7 +41,7 @@ export class FakeGoogle {
   accounts = new Map<string, Account>();
   private codes = new Map<
     string,
-    { email: string; challenge: string; redirectUri: string; scope: string }
+    { email: string; challenge: string; redirectUri: string; scope: string; omitScope: boolean }
   >();
   private refreshTokens = new Map<string, string>();
   private accessTokens = new Map<string, { email: string; expiresAt: number }>();
@@ -49,8 +49,12 @@ export class FakeGoogle {
   /** Every Calendar API write, for idempotency assertions. */
   calls: { method: string; path: string }[] = [];
   revoked: string[] = [];
-  /** Scopes granted at the next consent (null: whatever was requested). */
-  nextGrantedScope: string | null = null;
+  /**
+   * How the next consent is answered: `scope` returns an explicit (possibly reduced) scope
+   * string, as Google does when the user unticks a permission; `omitScope` leaves `scope` out
+   * of the token response, which RFC 6749 allows when it equals the requested scope.
+   */
+  nextGrant: { scope?: string; omitScope?: boolean } | null = null;
   /** Next consent is declined (`error=access_denied`). */
   denyNext = false;
   private counter = 0;
@@ -188,9 +192,10 @@ export class FakeGoogle {
       email: account.email,
       challenge: p.get("code_challenge") ?? "",
       redirectUri: p.get("redirect_uri") ?? "",
-      scope: this.nextGrantedScope ?? p.get("scope") ?? "",
+      scope: this.nextGrant?.scope ?? p.get("scope") ?? "",
+      omitScope: this.nextGrant?.omitScope === true,
     });
-    this.nextGrantedScope = null;
+    this.nextGrant = null;
     redirect.searchParams.set("code", code);
     return { status: 302, headers: { location: redirect.toString() } };
   }
@@ -215,7 +220,7 @@ export class FakeGoogle {
           access_token: tokens.access,
           refresh_token: tokens.refresh,
           expires_in: 3599,
-          scope: grant.scope,
+          ...(grant.omitScope ? {} : { scope: grant.scope }),
           token_type: "Bearer",
         },
       };

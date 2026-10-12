@@ -48,6 +48,10 @@ export function startMockGoogle(): Promise<Server> {
           fake.failNext(JSON.parse(body));
           return send(200, {});
         }
+        if (action === "grant-next") {
+          fake.nextGrant = JSON.parse(body) as { scope?: string; omitScope?: boolean };
+          return send(200, {});
+        }
         if (action === "deny-next") {
           fake.denyNext = true;
           return send(200, {});

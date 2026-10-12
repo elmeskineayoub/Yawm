@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { GoogleApiError, googleClient } from "@/features/google-calendar/client";
+import { createHash, randomBytes } from "node:crypto";
+import {
+  GoogleApiError,
+  googleClient,
+  grantedScopes,
+  missingScopes,
+} from "@/features/google-calendar/client";
 import { getGoogleConfig, GOOGLE_SCOPES } from "@/features/google-calendar/config";
 import { decryptSecret, encryptSecret } from "@/features/google-calendar/crypto";
 import {
@@ -330,5 +336,56 @@ describe("Google client against simulated responses", () => {
     fake.failNext({ pathIncludes: "/calendarList", status: 500 });
     const error = (await client.listCalendars(access).catch((e: unknown) => e)) as Error;
     expect(error.message).not.toContain(access);
+  });
+});
+
+describe("granted scopes in the token response", () => {
+  const [calendarList, eventsOwned] = GOOGLE_SCOPES;
+
+  /** Runs consent and the code exchange against the fake, as the callback does. */
+  async function exchange(grant: { scope?: string; omitScope?: boolean }) {
+    const fake = new FakeGoogle();
+    const config = enabledConfig();
+    const client = googleClient(config, fake.fetch);
+    const verifier = randomBytes(32).toString("base64url");
+    const challenge = createHash("sha256").update(verifier).digest("base64url");
+    fake.nextGrant = grant;
+    const consent = fake.handle(
+      "GET",
+      client.authorizeUrl({ state: "s", codeChallenge: challenge }),
+      new Headers(),
+      "",
+    );
+    const code = new URL(consent.headers!.location!).searchParams.get("code")!;
+    return client.exchangeCode(code, verifier);
+  }
+
+  it("treats an omitted scope as exactly the requested scopes (RFC 6749 §5.1)", async () => {
+    expect(grantedScopes(undefined, GOOGLE_SCOPES)).toEqual([...GOOGLE_SCOPES]);
+    const grant = await exchange({ omitScope: true });
+    expect(grant.scopes).toEqual([...GOOGLE_SCOPES]);
+    expect(missingScopes(grant.scopes)).toEqual([]);
+  });
+
+  it("still rejects an explicitly reduced scope, e.g. a permission unticked at consent", async () => {
+    const grant = await exchange({ scope: calendarList });
+    expect(grant.scopes).toEqual([calendarList]);
+    expect(missingScopes(grant.scopes)).toEqual([eventsOwned]);
+  });
+
+  it("treats an explicit empty or unrelated scope as nothing granted", async () => {
+    expect(missingScopes((await exchange({ scope: "" })).scopes)).toEqual([...GOOGLE_SCOPES]);
+    expect(missingScopes((await exchange({ scope: "openid email" })).scopes)).toEqual([
+      ...GOOGLE_SCOPES,
+    ]);
+  });
+
+  it("accepts the full set in any order, with extra whitespace or extra scopes", async () => {
+    expect(grantedScopes(`  ${eventsOwned}\t${calendarList}  `, GOOGLE_SCOPES)).toEqual([
+      eventsOwned,
+      calendarList,
+    ]);
+    const grant = await exchange({ scope: `openid ${eventsOwned} ${calendarList}` });
+    expect(missingScopes(grant.scopes)).toEqual([]);
   });
 });

@@ -69,11 +69,25 @@ test("connect Google Calendar, see its events, sync blocks once, and recover", a
     await expect(page.getByRole("button", { name: "Connect Google Calendar" })).toBeVisible();
   });
 
+  await test.step("an explicitly reduced scope is refused", async () => {
+    // The user unticked "manage events" on Google's consent screen.
+    await admin("grant-next", {
+      method: "POST",
+      body: { scope: "https://www.googleapis.com/auth/calendar.calendarlist.readonly" },
+    });
+    await page.getByRole("button", { name: "Connect Google Calendar" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "wasn't fully granted" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Connect Google Calendar" })).toBeVisible();
+  });
+
   await test.step("connect and choose calendars", async () => {
     await page.getByLabel("Timezone").selectOption("UTC");
     await page.getByRole("button", { name: "Save profile" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
 
+    // Google leaves `scope` out of the token response when it granted exactly what was
+    // requested (RFC 6749 §5.1); that must connect.
+    await admin("grant-next", { method: "POST", body: { omitScope: true } });
     await page.getByRole("button", { name: "Connect Google Calendar" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Google Calendar connected." }),
