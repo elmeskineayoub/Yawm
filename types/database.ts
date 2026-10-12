@@ -65,6 +65,224 @@ export type Database = {
           },
         ];
       };
+      idea_tags: {
+        Row: {
+          created_at: string;
+          idea_id: string;
+          tag_id: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          idea_id: string;
+          tag_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          idea_id?: string;
+          tag_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "idea_tags_idea_id_workspace_id_fkey";
+            columns: ["idea_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "ideas";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "idea_tags_tag_id_workspace_id_fkey";
+            columns: ["tag_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "idea_tags_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ideas: {
+        Row: {
+          body: string | null;
+          converted_project_id: string | null;
+          converted_task_id: string | null;
+          created_at: string;
+          id: string;
+          status: Database["public"]["Enums"]["idea_status"];
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          body?: string | null;
+          converted_project_id?: string | null;
+          converted_task_id?: string | null;
+          created_at?: string;
+          id?: string;
+          status?: Database["public"]["Enums"]["idea_status"];
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          body?: string | null;
+          converted_project_id?: string | null;
+          converted_task_id?: string | null;
+          created_at?: string;
+          id?: string;
+          status?: Database["public"]["Enums"]["idea_status"];
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ideas_converted_project_id_workspace_id_fkey";
+            columns: ["converted_project_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "ideas_converted_task_id_workspace_id_fkey";
+            columns: ["converted_task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "ideas_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      plan_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          plan_id: string;
+          project_id: string | null;
+          sort_order: number;
+          task_id: string | null;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          plan_id: string;
+          project_id?: string | null;
+          sort_order?: number;
+          task_id?: string | null;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          plan_id?: string;
+          project_id?: string | null;
+          sort_order?: number;
+          task_id?: string | null;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plan_items_plan_id_workspace_id_fkey";
+            columns: ["plan_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "plan_items_project_id_workspace_id_fkey";
+            columns: ["project_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "plan_items_task_id_workspace_id_fkey";
+            columns: ["task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "plan_items_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      plans: {
+        Row: {
+          created_at: string;
+          focus: string | null;
+          id: string;
+          parent_plan_id: string | null;
+          period: Database["public"]["Enums"]["plan_period"];
+          period_start: string;
+          reflection: string | null;
+          theme: string | null;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          focus?: string | null;
+          id?: string;
+          parent_plan_id?: string | null;
+          period: Database["public"]["Enums"]["plan_period"];
+          period_start: string;
+          reflection?: string | null;
+          theme?: string | null;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          focus?: string | null;
+          id?: string;
+          parent_plan_id?: string | null;
+          period?: Database["public"]["Enums"]["plan_period"];
+          period_start?: string;
+          reflection?: string | null;
+          theme?: string | null;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plans_parent_plan_id_workspace_id_fkey";
+            columns: ["parent_plan_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "plans_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -92,6 +310,303 @@ export type Database = {
           week_start?: number;
         };
         Relationships: [];
+      };
+      projects: {
+        Row: {
+          area_id: string | null;
+          created_at: string;
+          description: string | null;
+          due_date: string | null;
+          id: string;
+          name: string;
+          notes: string | null;
+          sort_order: number;
+          start_date: string | null;
+          status: Database["public"]["Enums"]["project_status"];
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          area_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          sort_order?: number;
+          start_date?: string | null;
+          status?: Database["public"]["Enums"]["project_status"];
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          area_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          sort_order?: number;
+          start_date?: string | null;
+          status?: Database["public"]["Enums"]["project_status"];
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "projects_area_id_workspace_id_fkey";
+            columns: ["area_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "areas";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "projects_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      tags: {
+        Row: {
+          color: string;
+          created_at: string;
+          id: string;
+          name: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          color?: string;
+          created_at?: string;
+          id?: string;
+          name: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tags_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      task_dependencies: {
+        Row: {
+          created_at: string;
+          depends_on_task_id: string;
+          task_id: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          depends_on_task_id: string;
+          task_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          depends_on_task_id?: string;
+          task_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_depends_on_task_id_workspace_id_fkey";
+            columns: ["depends_on_task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_workspace_id_fkey";
+            columns: ["task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "task_dependencies_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      task_tags: {
+        Row: {
+          created_at: string;
+          tag_id: string;
+          task_id: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          tag_id: string;
+          task_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          tag_id?: string;
+          task_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "task_tags_tag_id_workspace_id_fkey";
+            columns: ["tag_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "task_tags_task_id_workspace_id_fkey";
+            columns: ["task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "task_tags_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      tasks: {
+        Row: {
+          area_id: string | null;
+          completed_at: string | null;
+          created_at: string;
+          description: string | null;
+          due_date: string | null;
+          due_time: string | null;
+          estimate_minutes: number | null;
+          id: string;
+          parent_task_id: string | null;
+          priority: Database["public"]["Enums"]["task_priority"];
+          project_id: string | null;
+          recurrence_anchor: string | null;
+          recurrence_frequency: Database["public"]["Enums"]["recurrence_frequency"] | null;
+          recurrence_interval: number;
+          recurrence_until: string | null;
+          recurrence_weekdays: number[] | null;
+          recurs_from_task_id: string | null;
+          sort_order: number;
+          status: Database["public"]["Enums"]["task_status"];
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          area_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          due_time?: string | null;
+          estimate_minutes?: number | null;
+          id?: string;
+          parent_task_id?: string | null;
+          priority?: Database["public"]["Enums"]["task_priority"];
+          project_id?: string | null;
+          recurrence_anchor?: string | null;
+          recurrence_frequency?: Database["public"]["Enums"]["recurrence_frequency"] | null;
+          recurrence_interval?: number;
+          recurrence_until?: string | null;
+          recurrence_weekdays?: number[] | null;
+          recurs_from_task_id?: string | null;
+          sort_order?: number;
+          status?: Database["public"]["Enums"]["task_status"];
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          area_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          due_time?: string | null;
+          estimate_minutes?: number | null;
+          id?: string;
+          parent_task_id?: string | null;
+          priority?: Database["public"]["Enums"]["task_priority"];
+          project_id?: string | null;
+          recurrence_anchor?: string | null;
+          recurrence_frequency?: Database["public"]["Enums"]["recurrence_frequency"] | null;
+          recurrence_interval?: number;
+          recurrence_until?: string | null;
+          recurrence_weekdays?: number[] | null;
+          recurs_from_task_id?: string | null;
+          sort_order?: number;
+          status?: Database["public"]["Enums"]["task_status"];
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_area_id_workspace_id_fkey";
+            columns: ["area_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "areas";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_workspace_id_fkey";
+            columns: ["parent_task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "tasks_project_id_workspace_id_fkey";
+            columns: ["project_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "tasks_recurs_from_task_id_fkey";
+            columns: ["recurs_from_task_id"];
+            isOneToOne: true;
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tasks_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       workspace_members: {
         Row: {
@@ -156,9 +671,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      convert_idea_to_project: { Args: { idea_id: string }; Returns: string };
+      convert_idea_to_task: { Args: { idea_id: string }; Returns: string };
+      set_idea_tags: { Args: { tag_names: string[]; target_idea_id: string }; Returns: undefined };
+      set_task_tags: { Args: { tag_names: string[]; target_task_id: string }; Returns: undefined };
     };
     Enums: {
+      idea_status: "inbox" | "developing" | "someday" | "archived";
+      plan_period: "year" | "month" | "week" | "day";
+      project_status: "planned" | "active" | "on_hold" | "completed" | "archived";
+      recurrence_frequency: "daily" | "weekly" | "monthly";
+      task_priority: "low" | "medium" | "high" | "urgent";
+      task_status: "todo" | "in_progress" | "done" | "cancelled";
       workspace_role: "owner" | "admin" | "member" | "viewer";
     };
     CompositeTypes: {
@@ -274,6 +798,12 @@ export const Constants = {
   },
   public: {
     Enums: {
+      idea_status: ["inbox", "developing", "someday", "archived"],
+      plan_period: ["year", "month", "week", "day"],
+      project_status: ["planned", "active", "on_hold", "completed", "archived"],
+      recurrence_frequency: ["daily", "weekly", "monthly"],
+      task_priority: ["low", "medium", "high", "urgent"],
+      task_status: ["todo", "in_progress", "done", "cancelled"],
       workspace_role: ["owner", "admin", "member", "viewer"],
     },
   },
