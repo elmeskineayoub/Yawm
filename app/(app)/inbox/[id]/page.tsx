@@ -15,7 +15,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
   const [idea, ideaTags] = await Promise.all([
     supabase
       .from("ideas")
-      .select("id, title, body, status, converted_task_id, converted_project_id")
+      .select("id, title, body, status, converted_task_id, converted_project_id, converted_goal_id")
       .eq("id", id)
       .eq("workspace_id", workspace.id)
       .maybeSingle(),

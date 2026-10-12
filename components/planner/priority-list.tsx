@@ -6,8 +6,14 @@ import { useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { TaskCheckbox } from "@/components/tasks/task-checkbox";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { addPriority, unlinkFromPlan } from "@/features/planning/actions";
-import type { PlanItemView } from "@/features/planning/queries";
+import { setMilestoneDone } from "@/features/goals/actions";
+import {
+  addPriority,
+  linkToPlan,
+  unlinkFromPlan,
+  type LinkableKind,
+} from "@/features/planning/actions";
+import { linkedId, type PlanItemView } from "@/features/planning/queries";
 import { cn } from "@/lib/utils";
 import { LinkPopover } from "./link-popover";
 
@@ -15,8 +21,10 @@ type PriorityListProps = {
   period: string;
   start: string;
   items: PlanItemView[];
-  /** Outcomes (month/year) are created as projects; priorities (week/day) as tasks. */
-  kind: "task" | "project";
+  /** What typing a new item creates: a goal (year), project (month), or task (week/day). */
+  kind: "task" | "project" | "goal";
+  /** What "Link existing" searches. */
+  linkKinds: LinkableKind[];
   heading: string;
   addLabel: string;
   emptyText: string;
@@ -28,6 +36,7 @@ export function PriorityList({
   start,
   items,
   kind,
+  linkKinds,
   heading,
   addLabel,
   emptyText,
@@ -56,7 +65,7 @@ export function PriorityList({
       else toast.error(result.error);
     });
 
-  const linkedIds = items.map((i) => (i.kind === "task" ? i.task.id : i.project.id));
+  const linkedIds = items.map(linkedId);
 
   return (
     <section aria-labelledby={`${id}-h`}>
@@ -67,7 +76,11 @@ export function PriorityList({
         >
           {heading}
         </h2>
-        <LinkPopover period={period} start={start} linkedIds={linkedIds} />
+        <LinkPopover
+          linkedIds={linkedIds}
+          kinds={linkKinds}
+          onLink={(item) => linkToPlan(period, start, item.kind, item.id)}
+        />
       </div>
 
       {items.length === 0 ? (
@@ -102,32 +115,7 @@ export function PriorityList({
                 />
               </li>
             ) : (
-              <li
-                key={item.id}
-                className="group flex items-start gap-2.5 rounded-md px-1 py-1.5 hover:bg-surface-muted"
-              >
-                <span aria-hidden className="mt-1.5 size-2.5 shrink-0 rounded-sm bg-accent" />
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/projects/${item.project.id}`}
-                    className="text-sm break-words hover:underline"
-                  >
-                    {item.project.name}
-                  </Link>
-                  {item.project.progress.total > 0 && (
-                    <div className="mt-1 max-w-48">
-                      <ProgressBar
-                        progress={item.project.progress}
-                        label={`${item.project.name} progress`}
-                      />
-                    </div>
-                  )}
-                </div>
-                <RemoveButton
-                  label={item.project.name}
-                  onClick={() => remove(item.id, item.project.name)}
-                />
-              </li>
+              <OutcomeItem key={item.id} item={item} onRemove={remove} />
             ),
           )}
         </ul>
@@ -181,5 +169,87 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
     >
       <X aria-hidden className="size-4" />
     </button>
+  );
+}
+
+function OutcomeItem({
+  item,
+  onRemove,
+}: {
+  item: Exclude<PlanItemView, { kind: "task" }>;
+  onRemove: (itemId: string, label: string) => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const title =
+    item.kind === "project"
+      ? item.project.name
+      : item.kind === "goal"
+        ? item.goal.title
+        : item.milestone.title;
+  const href =
+    item.kind === "project"
+      ? `/projects/${item.project.id}`
+      : item.kind === "goal"
+        ? `/goals/${item.goal.id}`
+        : `/goals/${item.milestone.goal_id}`;
+
+  return (
+    <li className="group flex items-start gap-2.5 rounded-md px-1 py-1.5 hover:bg-surface-muted">
+      {item.kind === "milestone" ? (
+        <input
+          type="checkbox"
+          aria-label={`Milestone “${title}” done`}
+          checked={item.milestone.completed_at !== null}
+          disabled={pending}
+          onChange={(e) =>
+            startTransition(async () => {
+              const result = await setMilestoneDone(item.milestone.id, e.target.checked);
+              if (!result.ok) toast.error(result.error);
+            })
+          }
+          className="mt-1 size-4 accent-[var(--accent)]"
+        />
+      ) : (
+        <span
+          aria-hidden
+          className={cn(
+            "mt-1.5 size-2.5 shrink-0 bg-accent",
+            item.kind === "goal" ? "rounded-full" : "rounded-sm",
+          )}
+        />
+      )}
+      <div className="min-w-0 flex-1">
+        <Link
+          href={href}
+          className={cn(
+            "text-sm break-words hover:underline",
+            item.kind === "milestone" &&
+              item.milestone.completed_at &&
+              "text-muted-foreground line-through",
+          )}
+        >
+          {title}
+        </Link>
+        {item.kind === "goal" && <span className="sr-only"> (goal)</span>}
+        {item.kind === "milestone" && (
+          <p className="text-xs text-muted-foreground">
+            {item.milestone.goal_title}
+            {item.milestone.due_date && ` · due ${item.milestone.due_date}`}
+          </p>
+        )}
+        {item.kind === "project" && item.project.progress.total > 0 && (
+          <div className="mt-1 max-w-48">
+            <ProgressBar progress={item.project.progress} label={`${title} progress`} />
+          </div>
+        )}
+        {item.kind === "goal" && item.goal.progress.milestones.total > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {item.goal.progress.milestones.done}/{item.goal.progress.milestones.total} milestones
+            {item.goal.next && ` · next: ${item.goal.next.title}`}
+          </p>
+        )}
+      </div>
+      <RemoveButton label={title} onClick={() => onRemove(item.id, title)} />
+    </li>
   );
 }

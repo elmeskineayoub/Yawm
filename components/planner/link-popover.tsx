@@ -6,18 +6,31 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
-import { linkToPlan, searchLinkable, type Linkable } from "@/features/planning/actions";
+import type { ActionResult } from "@/lib/action-result";
+import { searchLinkable, type Linkable, type LinkableKind } from "@/features/planning/actions";
 import { cn } from "@/lib/utils";
 
-/** Search-as-you-type picker for linking an existing task or project to the period. */
+const KIND_NAMES: Record<LinkableKind, string> = {
+  task: "tasks",
+  project: "projects",
+  goal: "goals",
+  milestone: "milestones",
+};
+
+function listNames(kinds: LinkableKind[]) {
+  const names = kinds.map((k) => KIND_NAMES[k]);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0]!;
+}
+
+/** Search-as-you-type picker for linking existing work (to a plan, a goal, …). */
 export function LinkPopover({
-  period,
-  start,
   linkedIds,
+  kinds,
+  onLink,
 }: {
-  period: string;
-  start: string;
   linkedIds: string[];
+  kinds: LinkableKind[];
+  onLink: (item: Linkable) => Promise<ActionResult>;
 }) {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -28,13 +41,15 @@ export function LinkPopover({
   const [pending, startTransition] = useTransition();
   const requestRef = useRef(0);
   const linkedKey = linkedIds.join(",");
+  const kindsKey = kinds.join(",");
+  const names = listNames(kinds);
 
   useEffect(() => {
     if (!open) return;
     const request = ++requestRef.current;
     const timer = setTimeout(async () => {
       setLoading(true);
-      const result = await searchLinkable(query);
+      const result = await searchLinkable(query, kindsKey.split(",") as LinkableKind[]);
       if (request !== requestRef.current) return;
       setLoading(false);
       const linked = new Set(linkedKey.split(","));
@@ -42,11 +57,11 @@ export function LinkPopover({
       setActive(0);
     }, 200);
     return () => clearTimeout(timer);
-  }, [query, open, linkedKey]);
+  }, [query, open, linkedKey, kindsKey]);
 
   const choose = (item: Linkable) =>
     startTransition(async () => {
-      const result = await linkToPlan(period, start, item.kind, item.id);
+      const result = await onLink(item);
       if (result.ok) {
         toast.success(`Linked “${item.title}”`);
         setOpen(false);
@@ -69,7 +84,7 @@ export function LinkPopover({
           className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-background p-2 shadow-lg"
         >
           <label htmlFor={`${id}-q`} className="sr-only">
-            Search tasks and projects
+            Search {names}
           </label>
           <input
             id={`${id}-q`}
@@ -79,7 +94,7 @@ export function LinkPopover({
             aria-activedescendant={results[active] ? `${id}-opt-${active}` : undefined}
             autoFocus
             value={query}
-            placeholder="Search tasks and projects…"
+            placeholder={`Search ${names}…`}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
@@ -123,7 +138,7 @@ export function LinkPopover({
           </ul>
           {!loading && results.length === 0 && (
             <p className="px-2 py-3 text-sm text-muted-foreground">
-              {query ? "No matching open tasks or projects." : "No open tasks or projects to link."}
+              {query ? `No matching ${names}.` : `Nothing to link yet.`}
             </p>
           )}
         </Popover.Content>

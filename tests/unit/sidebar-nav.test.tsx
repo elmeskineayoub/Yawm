@@ -16,8 +16,8 @@ describe("SidebarNav", () => {
 
   it("does not link modules that are not implemented yet", () => {
     render(<SidebarNav collapsed={false} />);
-    expect(screen.queryByRole("link", { name: /Habits/ })).not.toBeInTheDocument();
-    expect(screen.getByText("Habits").closest("[aria-disabled]")).toHaveAttribute(
+    expect(screen.queryByRole("link", { name: /Notes/ })).not.toBeInTheDocument();
+    expect(screen.getByText("Notes").closest("[aria-disabled]")).toHaveAttribute(
       "aria-disabled",
       "true",
     );

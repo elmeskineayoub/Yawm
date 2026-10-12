@@ -99,11 +99,14 @@ export async function updatePlanNotesInWorkspace(
   return ok();
 }
 
+export type PlanLink =
+  { task_id: string } | { project_id: string } | { goal_id: string } | { milestone_id: string };
+
 export async function linkToPlanInWorkspace(
   db: Db,
   workspaceId: string,
   planId: string,
-  link: { task_id: string } | { project_id: string },
+  link: PlanLink,
 ): Promise<ActionResult> {
   const { data: last } = await db
     .from("plan_items")

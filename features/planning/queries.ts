@@ -1,3 +1,4 @@
+import { loadGoalSummaries, type GoalSummary } from "@/features/goals/queries";
 import { loadProjectSummaries, type ProjectSummary } from "@/features/projects/queries";
 import { compareTasks, progressOf, type ProgressSummary } from "@/features/tasks/logic";
 import {
@@ -20,9 +21,50 @@ import type { Database } from "@/types/database";
 
 export type PlanRow = Database["public"]["Tables"]["plans"]["Row"];
 
+export type PlanMilestone = {
+  id: string;
+  title: string;
+  due_date: IsoDate | null;
+  completed_at: string | null;
+  goal_id: string;
+  goal_title: string;
+};
+
 export type PlanItemView =
   | { id: string; kind: "task"; task: TaskView }
-  | { id: string; kind: "project"; project: ProjectSummary };
+  | { id: string; kind: "project"; project: ProjectSummary }
+  | { id: string; kind: "goal"; goal: GoalSummary }
+  | { id: string; kind: "milestone"; milestone: PlanMilestone };
+
+/** Title, link, and kind label for any plan item (tasks render with their own row). */
+export function planItemLink(item: Exclude<PlanItemView, { kind: "task" }>) {
+  switch (item.kind) {
+    case "project":
+      return { title: item.project.name, href: `/projects/${item.project.id}`, label: "project" };
+    case "goal":
+      return { title: item.goal.title, href: `/goals/${item.goal.id}`, label: "goal" };
+    case "milestone":
+      return {
+        title: item.milestone.title,
+        href: `/goals/${item.milestone.goal_id}`,
+        label: "milestone",
+      };
+  }
+}
+
+/** The ID of the task, project, goal, or milestone a plan item links. */
+export function linkedId(item: PlanItemView): string {
+  switch (item.kind) {
+    case "task":
+      return item.task.id;
+    case "project":
+      return item.project.id;
+    case "goal":
+      return item.goal.id;
+    case "milestone":
+      return item.milestone.id;
+  }
+}
 
 export type ChildPeriod = {
   period: PlanPeriod;
@@ -111,7 +153,7 @@ export async function loadPlanPage(
     plan
       ? supabase
           .from("plan_items")
-          .select("id, task_id, project_id, sort_order, created_at")
+          .select("id, task_id, project_id, goal_id, milestone_id, sort_order, created_at")
           .eq("plan_id", plan.id)
           .order("sort_order")
           .order("created_at")
@@ -126,7 +168,11 @@ export async function loadPlanPage(
   const projectIds = new Set(
     (itemRows.data ?? []).flatMap((i) => (i.project_id ? [i.project_id] : [])),
   );
-  const [linkedTasks, projects, projectTaskRows] = await Promise.all([
+  const goalIds = (itemRows.data ?? []).flatMap((i) => (i.goal_id ? [i.goal_id] : []));
+  const milestoneIds = (itemRows.data ?? []).flatMap((i) =>
+    i.milestone_id ? [i.milestone_id] : [],
+  );
+  const [linkedTasks, projects, projectTaskRows, goals, milestoneRows] = await Promise.all([
     loadTasksByIds(ctx, taskIds, lookups),
     projectIds.size ? loadProjectSummaries(ctx) : Promise.resolve([]),
     projectIds.size
@@ -135,7 +181,22 @@ export async function loadPlanPage(
           .select("id, status")
           .in("project_id", [...projectIds])
       : Promise.resolve({ data: [], error: null }),
+    goalIds.length ? loadGoalSummaries(ctx, { ids: goalIds }) : Promise.resolve([]),
+    milestoneIds.length
+      ? supabase
+          .from("milestones")
+          .select("id, title, due_date, completed_at, goal_id, goals(title)")
+          .eq("workspace_id", workspace.id)
+          .in("id", milestoneIds)
+      : Promise.resolve({ data: [], error: null }),
   ]);
+  const goalById = new Map(goals.map((g) => [g.id, g]));
+  const milestoneById = new Map(
+    (milestoneRows.data ?? []).map(({ goals: goal, ...m }) => [
+      m.id,
+      { ...m, goal_title: goal?.title ?? "" },
+    ]),
+  );
   const taskById = new Map(linkedTasks.map((t) => [t.id, t]));
   const projectById = new Map(projects.map((p) => [p.id, p]));
 
@@ -144,14 +205,25 @@ export async function loadPlanPage(
       const task = taskById.get(item.task_id);
       return task ? [{ id: item.id, kind: "task", task }] : [];
     }
+    if (item.goal_id) {
+      const goal = goalById.get(item.goal_id);
+      return goal ? [{ id: item.id, kind: "goal", goal }] : [];
+    }
+    if (item.milestone_id) {
+      const milestone = milestoneById.get(item.milestone_id);
+      return milestone ? [{ id: item.id, kind: "milestone", milestone }] : [];
+    }
     const project = item.project_id ? projectById.get(item.project_id) : undefined;
     return project ? [{ id: item.id, kind: "project", project }] : [];
   });
 
-  // Progress flows from linked tasks and the tasks of linked projects, counted once each.
+  // Progress flows from linked tasks, the tasks of linked projects, and the work behind linked
+  // goals, counted once each.
   const counted = new Map<string, { status: TaskView["status"] }>();
   for (const t of linkedTasks) counted.set(t.id, t);
   for (const t of projectTaskRows.data ?? []) counted.set(t.id, t);
+  const goalTasks = goalIds.length ? await goalWorkTasks(ctx, goalIds) : [];
+  for (const t of goalTasks) counted.set(t.id, t);
 
   const childByStart = new Map((childPlans.data ?? []).map((c) => [c.period_start, c]));
   const itemCounts = new Map<string, number>();
@@ -185,4 +257,31 @@ export async function loadPlanPage(
         }
       : null,
   };
+}
+
+/** Tasks behind goals: linked directly or through the goals' projects. */
+async function goalWorkTasks(ctx: WorkspaceContext, goalIds: string[]) {
+  const { supabase, workspace } = ctx;
+  const [direct, projects] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, status")
+      .eq("workspace_id", workspace.id)
+      .in("goal_id", goalIds)
+      .limit(10_000),
+    supabase.from("projects").select("id").eq("workspace_id", workspace.id).in("goal_id", goalIds),
+  ]);
+  if (direct.error || projects.error) throw new Error("Could not load goal progress.");
+  if (!projects.data.length) return direct.data;
+  const viaProjects = await supabase
+    .from("tasks")
+    .select("id, status")
+    .eq("workspace_id", workspace.id)
+    .in(
+      "project_id",
+      projects.data.map((p) => p.id),
+    )
+    .limit(10_000);
+  if (viaProjects.error) throw new Error("Could not load goal progress.");
+  return [...direct.data, ...viaProjects.data];
 }

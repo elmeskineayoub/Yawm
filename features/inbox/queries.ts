@@ -5,7 +5,14 @@ import type { IdeaStatus } from "./schemas";
 
 export type IdeaRow = Pick<
   Database["public"]["Tables"]["ideas"]["Row"],
-  "id" | "title" | "body" | "status" | "converted_task_id" | "converted_project_id" | "created_at"
+  | "id"
+  | "title"
+  | "body"
+  | "status"
+  | "converted_task_id"
+  | "converted_project_id"
+  | "converted_goal_id"
+  | "created_at"
 >;
 export type IdeaView = IdeaRow & { tags: { id: string; name: string }[] };
 
@@ -24,7 +31,7 @@ export type IdeaPage = {
 export const IDEA_PAGE_SIZE = 50;
 
 const IDEA_COLUMNS =
-  "id, title, body, status, converted_task_id, converted_project_id, created_at" as const;
+  "id, title, body, status, converted_task_id, converted_project_id, converted_goal_id, created_at" as const;
 
 async function queryPage(
   { supabase, workspace }: WorkspaceContext,

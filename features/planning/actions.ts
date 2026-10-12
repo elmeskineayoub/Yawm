@@ -14,6 +14,7 @@ import {
   unlinkPlanItemInWorkspace,
   updatePlanNotesInWorkspace,
   type PeriodRef,
+  type PlanLink,
 } from "./mutations";
 
 const uuid = z.uuid();
@@ -49,24 +50,31 @@ async function ensurePlan(
   return result.ok ? result.data : { error: result.error };
 }
 
+const LINK_COLUMNS = {
+  task: "task_id",
+  project: "project_id",
+  goal: "goal_id",
+  milestone: "milestone_id",
+} as const;
+
 export async function linkToPlan(
   rawPeriod: string,
   start: string,
-  kind: "task" | "project",
+  kind: LinkableKind,
   targetId: string,
 ): Promise<ActionResult> {
   const ctx = await getWorkspaceContext();
   const target = checkPeriod(ctx, rawPeriod, start);
-  if (!target || !uuid.safeParse(targetId).success) return fail("Choose something to link.");
+  const column = LINK_COLUMNS[kind];
+  if (!target || !column || !uuid.safeParse(targetId).success) {
+    return fail("Choose something to link.");
+  }
 
   const plan = await ensurePlan(ctx, target);
   if ("error" in plan) return fail(plan.error);
-  const result = await linkToPlanInWorkspace(
-    ctx.supabase,
-    ctx.workspace.id,
-    plan.id,
-    kind === "task" ? { task_id: targetId } : { project_id: targetId },
-  );
+  const result = await linkToPlanInWorkspace(ctx.supabase, ctx.workspace.id, plan.id, {
+    [column]: targetId,
+  } as PlanLink);
   if (!result.ok) return result;
   refresh();
   return ok();
@@ -110,18 +118,20 @@ export async function savePlanField(
 const priorityTitle = z.string().trim().min(1, "Write the priority first.").max(200);
 
 /**
- * Creates a task (week/day) or project (month/year outcome) and links it to the period's plan in
- * one database transaction.
+ * Creates a task (week/day), project (month outcome), or goal (year outcome) and links it to the
+ * period's plan in one database transaction.
  */
 export async function addPriority(
   rawPeriod: string,
   start: string,
-  kind: "task" | "project",
+  kind: "task" | "project" | "goal",
   title: string,
 ): Promise<ActionResult<{ id: string }>> {
   const ctx = await getWorkspaceContext();
   const target = checkPeriod(ctx, rawPeriod, start);
-  if (!target || (kind !== "task" && kind !== "project")) return fail("Unknown planning period.");
+  if (!target || !["task", "project", "goal"].includes(kind)) {
+    return fail("Unknown planning period.");
+  }
   const parsed = priorityTitle.safeParse(title);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the title.");
 
@@ -133,49 +143,100 @@ export async function addPriority(
           target_plan_id: plan.id,
           task_title: parsed.data,
         })
-      : await ctx.supabase.rpc("add_project_to_plan", {
-          target_plan_id: plan.id,
-          project_name: parsed.data,
-        });
+      : kind === "goal"
+        ? await ctx.supabase.rpc("add_goal_to_plan", {
+            target_plan_id: plan.id,
+            goal_title: parsed.data,
+          })
+        : await ctx.supabase.rpc("add_project_to_plan", {
+            target_plan_id: plan.id,
+            project_name: parsed.data,
+          });
   if (error || !data) return fail("Could not add the priority. Please try again.");
   refresh();
   return ok({ id: data });
 }
 
-export type Linkable = { kind: "task" | "project"; id: string; title: string; detail: string };
+export type LinkableKind = "task" | "project" | "goal" | "milestone";
+export type Linkable = { kind: LinkableKind; id: string; title: string; detail: string };
 
-/** Search open tasks and active projects to link, in the active workspace only. */
-export async function searchLinkable(query: string): Promise<ActionResult<Linkable[]>> {
+const ALL_KINDS: LinkableKind[] = ["task", "project", "goal", "milestone"];
+
+/** Search open tasks, active projects, goals, and open milestones, in the active workspace only. */
+export async function searchLinkable(
+  query: string,
+  kinds: LinkableKind[] = ["task", "project"],
+): Promise<ActionResult<Linkable[]>> {
   const q = query.trim().slice(0, 100);
+  const wanted = new Set(kinds.filter((k) => ALL_KINDS.includes(k)));
   const { supabase, workspace } = await getWorkspaceContext();
   const pattern = `%${escapeLike(q)}%`;
-  const [tasks, projects] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, due_date")
-      .eq("workspace_id", workspace.id)
-      .in("status", ["todo", "in_progress"])
-      .ilike("title", pattern)
-      .order("created_at", { ascending: false })
-      .limit(12),
-    supabase
-      .from("projects")
-      .select("id, name, status")
-      .eq("workspace_id", workspace.id)
-      .in("status", ["planned", "active", "on_hold"])
-      .ilike("name", pattern)
-      .order("name")
-      .limit(8),
+  const none = Promise.resolve({ data: [], error: null });
+  const [tasks, projects, goals, milestones] = await Promise.all([
+    wanted.has("task")
+      ? supabase
+          .from("tasks")
+          .select("id, title, due_date")
+          .eq("workspace_id", workspace.id)
+          .in("status", ["todo", "in_progress"])
+          .ilike("title", pattern)
+          .order("created_at", { ascending: false })
+          .limit(12)
+      : none,
+    wanted.has("project")
+      ? supabase
+          .from("projects")
+          .select("id, name, status")
+          .eq("workspace_id", workspace.id)
+          .in("status", ["planned", "active", "on_hold"])
+          .ilike("name", pattern)
+          .order("name")
+          .limit(8)
+      : none,
+    wanted.has("goal")
+      ? supabase
+          .from("goals")
+          .select("id, title, target_date")
+          .eq("workspace_id", workspace.id)
+          .in("status", ["active", "paused"])
+          .ilike("title", pattern)
+          .order("sort_order")
+          .limit(8)
+      : none,
+    wanted.has("milestone")
+      ? supabase
+          .from("milestones")
+          .select("id, title, due_date, goals(title)")
+          .eq("workspace_id", workspace.id)
+          .is("completed_at", null)
+          .ilike("title", pattern)
+          .order("due_date", { nullsFirst: false })
+          .limit(8)
+      : none,
   ]);
-  if (tasks.error || projects.error) return fail("Search failed. Please try again.");
+  if (tasks.error || projects.error || goals.error || milestones.error) {
+    return fail("Search failed. Please try again.");
+  }
   return ok([
-    ...projects.data.map((p) => ({
+    ...(goals.data ?? []).map((g) => ({
+      kind: "goal" as const,
+      id: g.id,
+      title: g.title,
+      detail: g.target_date ? `Goal · by ${g.target_date}` : "Goal",
+    })),
+    ...(milestones.data ?? []).map((m) => ({
+      kind: "milestone" as const,
+      id: m.id,
+      title: m.title,
+      detail: `Milestone · ${m.goals?.title ?? "goal"}${m.due_date ? ` · due ${m.due_date}` : ""}`,
+    })),
+    ...(projects.data ?? []).map((p) => ({
       kind: "project" as const,
       id: p.id,
       title: p.name,
       detail: "Project",
     })),
-    ...tasks.data.map((t) => ({
+    ...(tasks.data ?? []).map((t) => ({
       kind: "task" as const,
       id: t.id,
       title: t.title,

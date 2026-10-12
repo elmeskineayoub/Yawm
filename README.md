@@ -2,7 +2,7 @@
 
 A planning and self-management app for tasks, connected yearly-to-daily plans, projects, habits, goals, a vision board, brainstorming, notes, journaling, time blocking, focus sessions, and weekly reviews.
 
-This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–3 are done: you can capture ideas, manage tasks and projects, plan years, months, weeks, and days in one Planner, schedule work on an interactive calendar, and optionally connect Google Calendar. Habits, goals, journaling, focus, and backups come in later phases.
+This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–3 are done: you can capture ideas, manage tasks and projects, plan years, months, weeks, and days in one Planner, schedule work on an interactive calendar, and optionally connect Google Calendar. Phase 4 is in progress: habits, goals with milestones, and the vision board are built; notes and journaling come next. Focus and backups come in later phases.
 
 ## Current status
 
@@ -12,7 +12,8 @@ This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md
 | 1 — Supabase auth & workspace isolation | Done: email/password auth with verification and reset, protected routes, personal workspace + default areas, RLS with integration tests                                                        |
 | 2 — Core execution                      | Done: inbox, tasks (subtasks, dependencies, recurrence, tags), projects, editable life areas, connected plans, Today, dashboard, quick capture                                                 |
 | 3 — Planning & calendar                 | Done: redesigned Planner (Day/Week/Month/Year), manual time blocks with drag-and-drop scheduling, rescheduling, carry-forward, optional Google Calendar (read-only events, one-way block sync) |
-| 4+                                      | Not started                                                                                                                                                                                    |
+| 4 — Habits, goals, vision, notes        | In progress: habits (daily/weekly, measurable, rest days, streaks, history), goals with milestones linked to projects, tasks, and plans, vision board (private images). Notes & journal next   |
+| 5+                                      | Not started                                                                                                                                                                                    |
 
 What exists today:
 
@@ -30,14 +31,17 @@ What exists today:
 - **Calendar and time blocks** (Day/Week/Month views): a 24-hour timeline (day/week), a month grid, and an agenda list; phones default to the agenda. Drag a task from **Unscheduled** onto a time slot to schedule it (length from its estimate, 30 minutes by default), click or drag across empty time to create a block, drag blocks to move them and their bottom edge to resize, or open a block to edit it in a side panel (title, linked task, date, start, end, notes). A block is scheduled time, not a deadline: scheduling never changes a task's due date, and deadlines show separately in the "Due" row. Overlapping blocks are allowed but highlighted, with a warning when you save. All times use your profile timezone (Settings), with a notice when your device is in a different one; blocks crossing midnight and DST changes are handled. Works without any Google credentials.
 - **Google Calendar (optional, off unless configured):** connect in Settings. Events from the calendars you choose appear in the Planner, read-only and hatched; busy events count in overlap warnings. Your time blocks are sent one way to one calendar you own (title and time only), updated when you change them and removed when you delete them. The Planner shows "Syncing… / Synced with Google / Google sync failed · Retry", and each block's panel says whether it is in Google. Revoked or expired access shows "Reconnect Google Calendar" and never blocks manual scheduling. Settings has calendar choice, "Sync now", and Disconnect (deletes stored tokens and revokes access).
 - **Rescheduling:** the day or week that contains today lists **Needs rescheduling** — open tasks whose block has passed, or whose deadline has passed — with explicit actions: schedule a new block, move the deadline (today / tomorrow / next week / a date), or add to today's priorities. **Carry forward** links a period's unfinished priorities to the next period (originals stay, deadlines unchanged, running it twice does nothing new).
+- **Habits** (`/habits`): add a habit by typing its name. In its settings, choose "done / not done" or an amount with a daily target and unit (e.g. 8 glasses), and either certain weekdays or "N times a week". Check it off from the habit list, Today, the Planner's Day view, or the dashboard; mark a **rest day** (the moon) when you're deliberately skipping. Streaks count scheduled days (or weeks, for weekly habits) in your timezone; rest days and unscheduled days never break a streak, and today doesn't count as missed until it's over. Each habit page shows this week, this month, and the last 30 days, plus a 12-week history where any past day can be corrected. Archive or delete from the habit page.
+- **Goals** (`/goals`): a title is enough; add why it matters, a description, status (active / paused / achieved / archived), start and target dates, and an optional measurable target (e.g. 1,000 km, with the current value updated inline). Break a goal into **milestones** (inline add, rename, due date, done, reorder). Link projects and tasks to a goal from the goal page or from a project/task's "Goal" field; progress shows milestones, the measure, and the linked work separately, never stored. Goals and milestones can be Year/Month priorities in the Planner (Link existing, or type a new goal), and the Month and Year views list milestones due. Convert an idea to a goal from the Inbox.
+- **Vision board** (`/goals/vision`): type a word or quote, or pick an image, and it becomes a card. Filter by life area or goal, reorder by drag-and-drop or the arrow buttons, and edit a card in a side panel (text, image, image description, goal, area, archive, delete). A goal's page shows its cards. Images are JPEG/PNG/WebP/GIF up to 5 MB, stored in a private bucket and shown through short-lived signed links.
 - **Profile** (Settings): edit your name, timezone, and week start.
-- **Today:** today's priorities (the day plan's linked work), today's scheduled blocks, overdue, due today, and completed today. Task pages list their scheduled time.
-- **Dashboard:** counts for overdue, due today, inbox, and active projects; today's priorities; this week's theme and completed tasks; needs attention; upcoming 7 days; active project progress.
+- **Today:** today's priorities (the day plan's linked work), today's habits, today's scheduled blocks, overdue, due today, and completed today. Task pages list their scheduled time.
+- **Dashboard:** counts for overdue, due today, inbox, and active projects; today's priorities; today's habits; this week's theme and completed tasks; needs attention; upcoming 7 days; active project progress.
 - Loading skeletons, empty states, error boundaries with retry, confirmation dialogs for deletes, and "Saving… / Saved" shown only after the server confirms.
 
 ### Security model
 
-Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase 1), `supabase/migrations/20261012090000_core_execution.sql` (Phase 2), `supabase/migrations/20261012120000_time_blocks.sql`, and `supabase/migrations/20261013090000_google_calendar.sql` (Phase 3).
+Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase 1), `supabase/migrations/20261012090000_core_execution.sql` (Phase 2), `supabase/migrations/20261012120000_time_blocks.sql`, and `supabase/migrations/20261013090000_google_calendar.sql` (Phase 3), and `supabase/migrations/20261014090000_habits_goals_vision.sql` (Phase 4).
 
 | Table                                                                                                               | Read                                                               | Write from the browser/API                                                                                                                                                        |
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -47,15 +51,17 @@ Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase
 | `areas`, `tags`, `projects`, `tasks`, `task_tags`, `task_dependencies`, `ideas`, `idea_tags`, `plans`, `plan_items` | your workspaces                                                    | owner/admin/member insert/update/delete; viewers read-only                                                                                                                        |
 | `time_blocks`                                                                                                       | your workspaces                                                    | owner/admin/member insert/update/delete of app-created blocks only; blocks with `origin = 'google'` are read-only, and `origin` / external event IDs cannot be written by clients |
 | `google_calendar_connections`, `time_block_sync`                                                                    | only the user who connected, while they can write in the workspace | the same user only; `workspace_id`/`user_id` can never change; tokens are stored as ciphertext only                                                                               |
+| `habits`, `habit_logs`, `goals`, `milestones`, `vision_board_items`                                                 | your workspaces                                                    | owner/admin/member insert/update/delete; viewers read-only; a log, milestone, link, or card can only point at rows in the same workspace                                          |
+| Storage bucket `vision-board` (private)                                                                             | files under `{workspace_id}/…` of your workspaces                  | writers may upload only to `{workspace_id}/{card_id}/…` for a card that exists in that workspace; writers may delete; no public URLs                                              |
 
 - RLS is enabled on every table, in the same migration that creates it.
 - Every reference between rows is a composite foreign key on `(id, workspace_id)`, so a row can only point at rows in its own workspace, even with a guessed UUID.
 - Server actions also scope every ID-based update and delete (and the idea-conversion and tag functions) to the active workspace resolved on the server, so a member of several workspaces cannot change another workspace's rows by passing their IDs from this one. Those writes live in `features/*/mutations.ts` and are covered by `tests/integration/active-workspace-scope.test.ts`.
 - Table and column privileges are granted explicitly: `workspace_id` can never be changed, and trigger-managed columns (`completed_at`, recurrence series fields) cannot be written by clients.
-- Database functions called from the app (`convert_idea_to_task/project`, `set_task_tags`, `set_idea_tags`, `add_task_to_plan`, `add_project_to_plan`) run with the caller's permissions, so RLS applies. Membership checks are `security definer` helpers in a non-exposed `private` schema.
+- Database functions called from the app (`convert_idea_to_task/project/goal`, `set_task_tags`, `set_idea_tags`, `add_task_to_plan`, `add_project_to_plan`, `add_goal_to_plan`) run with the caller's permissions, so RLS applies. Membership checks are `security definer` helpers in a non-exposed `private` schema.
 - `anon` (signed-out) has no privileges on any of these tables.
 - The app uses only the publishable key. No service-role/secret key is used by the app; integration tests use the local stack's secret key only to create test users.
-- Task, idea, and project content is never logged or sent to third parties.
+- Task, idea, project, habit, goal, and vision-board content is never logged or sent to third parties. Vision images go only to your Supabase Storage bucket, uploaded from the browser with your own session (so Storage RLS applies), then attached to the card by a server action that checks the path and that the file exists.
 
 Known limitations / notes:
 
@@ -64,6 +70,10 @@ Known limitations / notes:
 - Dragging on the calendar needs a mouse or touch. Keyboard users can do the same through the **Schedule** buttons and the block side panel.
 - The Unscheduled tray lists open tasks with no upcoming block (this period's priorities first; a short list with "Show all"). Scheduling data considers at most the 500 open tasks with the nearest deadlines.
 - The Planner's month grid shows blocks and deadlines but not plan priorities of individual days.
+- **Habits:** no reminders yet (planned for Phase 5's notifications). Streaks and rates look back at most about three years of logs. A habit's schedule applies to its whole history: changing a habit's days re-evaluates past days too. Future days can't be logged.
+- **Goals:** a project or task belongs to at most one goal; progress of linked work counts tasks directly on the goal plus tasks of its linked projects.
+- **Vision board:** at most 500 cards are shown per view, and image links are valid for an hour (reload the page after that). If the browser closes between the upload and the attach step, the uploaded file stays in Storage without a card; it is removed when the card is deleted, but a file without any card is not cleaned up automatically. Images are not resized or cropped.
+- **Notes and journaling** (daily reflections, periodic reviews, markdown notes) are the second half of Phase 4 and not built yet; plan notes and period reviews in the Planner remain the place for reflections until then.
 - **Global search** across all entities is not built yet; Tasks and Inbox each have their own search (title and notes).
 - **Recurrence:** the next occurrence is created on completion (not pre-generated), so future occurrences don't appear until then. Subtasks and dependencies are not copied to the next occurrence. Rules are daily/weekly/monthly; no yearly or "last weekday of the month" rules.
 - Saving a task's details and its tags are two server calls; if the tag update fails, the form says so and the details are already saved.
@@ -124,8 +134,8 @@ npm run db:types   # regenerate types/database.ts after changing migrations
 npm run db:stop
 ```
 
-To skip services this phase does not use (faster start, less disk):
-`npx supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor,studio,postgres-meta`
+Storage is required from Phase 4 (vision-board images). To skip the services the app does not use (faster start, less disk):
+`npx supabase start -x realtime,imgproxy,edge-runtime,logflare,vector,supavisor,studio,postgres-meta`
 
 ### Checks
 
@@ -159,15 +169,22 @@ The integration tests refuse to run against anything other than `localhost`/`127
 7. Copy the project URL and **publishable** key (Project Settings → API Keys) into `.env.local` or Vercel environment variables as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and set `NEXT_PUBLIC_APP_URL`. Never put the secret/service-role key in this app's environment.
 8. Sign up with two accounts and confirm neither can see the other's data. The automated version of this check is `npm run test:integration`.
 
-Still to come in later phases: a private Storage bucket and policies for vision-board images (Phase 4).
+The private `vision-board` Storage bucket and its policies are created by the Phase 4 migration; nothing has to be set up in the dashboard. Don't make the bucket public.
 
 ### Applying a new migration to a hosted project
 
-Migrations are never applied to a hosted project automatically (not by CI and not by the app). To apply new ones, such as Phase 3's `20261012120000_time_blocks.sql` and `20261013090000_google_calendar.sql`:
+Migrations are never applied to a hosted project automatically (not by CI and not by the app). To apply new ones, such as Phase 4's `20261014090000_habits_goals_vision.sql`:
 
 1. **Back up first.** The Free plan has no managed backups you can restore yourself. Run `npx supabase db dump --linked -f backup-schema.sql` and `npx supabase db dump --linked --data-only -f backup-data.sql`, and keep the files outside the repository. They contain your personal data.
 2. `npx supabase db push --dry-run` lists the pending migrations without changing anything.
 3. `npx supabase db push` applies the pending migrations in order, each in its own transaction, and records them in `supabase_migrations.schema_migrations` so they never run twice.
+
+What `20261014090000_habits_goals_vision.sql` (Phase 4) does to a hosted database:
+
+- It **adds** three enums; five tables (`habits`, `habit_logs`, `goals`, `milestones`, `vision_board_items`) with indexes, `updated_at` triggers, column grants, and RLS policies; nullable `goal_id` columns on `projects`, `tasks`, and `plan_items`, plus `plan_items.milestone_id` and `ideas.converted_goal_id`; the functions `convert_idea_to_goal` and `add_goal_to_plan`; two `private` helpers; the private `vision-board` Storage bucket (5 MB, images only); and four policies on `storage.objects` limited to that bucket.
+- It **replaces** two existing objects: the `plan_items` check that a plan item links exactly one task or project now allows exactly one task, project, goal, or milestone (existing rows already satisfy it), and `private.tasks_create_next_occurrence` now also copies `goal_id` to the next occurrence of a recurring task.
+- It does **not** delete or rewrite existing rows. Undo: restore from backup, or a new migration that drops the new objects (this deletes all habits, goals, milestones, and cards; uploaded images must be removed from the bucket separately) and restores the previous check and function.
+- Deploy the matching app version after it succeeds.
 
 What `20261013090000_google_calendar.sql` does to a hosted database:
 

@@ -75,7 +75,7 @@ export async function convertIdeaInWorkspace(
   db: Db,
   workspaceId: string,
   ideaId: string,
-  target: "task" | "project",
+  target: "task" | "project" | "goal",
 ): Promise<ActionResult<{ id: string }>> {
   const { data: idea, error: lookupError } = await db
     .from("ideas")
@@ -89,7 +89,9 @@ export async function convertIdeaInWorkspace(
   const { data, error } =
     target === "task"
       ? await db.rpc("convert_idea_to_task", { idea_id: ideaId })
-      : await db.rpc("convert_idea_to_project", { idea_id: ideaId });
+      : target === "goal"
+        ? await db.rpc("convert_idea_to_goal", { idea_id: ideaId })
+        : await db.rpc("convert_idea_to_project", { idea_id: ideaId });
   if (error || !data) return fail(`Could not convert the idea into a ${target}.`);
   return ok({ id: data });
 }
