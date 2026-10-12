@@ -65,6 +65,58 @@ export type Database = {
           },
         ];
       };
+      focus_sessions: {
+        Row: {
+          created_at: string;
+          duration_seconds: number;
+          ended_at: string;
+          id: string;
+          session_type: Database["public"]["Enums"]["focus_session_type"];
+          started_at: string;
+          task_id: string | null;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          duration_seconds: number;
+          ended_at: string;
+          id?: string;
+          session_type?: Database["public"]["Enums"]["focus_session_type"];
+          started_at: string;
+          task_id?: string | null;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          duration_seconds?: number;
+          ended_at?: string;
+          id?: string;
+          session_type?: Database["public"]["Enums"]["focus_session_type"];
+          started_at?: string;
+          task_id?: string | null;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "focus_sessions_task_id_workspace_id_fkey";
+            columns: ["task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "focus_sessions_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       goals: {
         Row: {
           area_id: string | null;
@@ -1470,6 +1522,7 @@ export type Database = {
     };
     Enums: {
       calendar_sync_status: "pending" | "synced" | "error";
+      focus_session_type: "focus" | "short_break" | "long_break";
       goal_status: "active" | "paused" | "achieved" | "archived";
       google_connection_status: "active" | "reconnect_required" | "error";
       habit_frequency: "daily" | "weekly";

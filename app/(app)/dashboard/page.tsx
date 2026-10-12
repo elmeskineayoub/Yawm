@@ -6,6 +6,8 @@ import { HabitList } from "@/components/habits/habit-row";
 import { ScheduledList } from "@/components/planner/scheduled-list";
 import { TaskList } from "@/components/tasks/task-row";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { formatDuration } from "@/features/focus/logic";
+import { loadFocusSummary } from "@/features/focus/queries";
 import { isDone } from "@/features/habits/logic";
 import { loadHabitsForDay } from "@/features/habits/queries";
 import { countInbox } from "@/features/inbox/queries";
@@ -75,11 +77,12 @@ function Card({
 export default async function DashboardPage() {
   const ctx = await getWorkspaceContext();
   const lookups = await loadLookups(ctx);
-  const [today, inboxCount, projects, habits] = await Promise.all([
+  const [today, inboxCount, projects, habits, focus] = await Promise.all([
     loadToday(ctx, lookups),
     countInbox(ctx),
     loadProjectSummaries(ctx, { statuses: ["active"] }),
     loadHabitsForDay(ctx, ctx.today),
+    loadFocusSummary(ctx),
   ]);
   const habitsDone = habits.filter((h) => isDone(h.habit, h.log ?? undefined)).length;
   const { data: weekPlan } = await ctx.supabase
@@ -225,6 +228,35 @@ export default async function DashboardPage() {
             ) : (
               <TaskList tasks={attention.slice(0, 8)} today={ctx.today} label="Needs attention" />
             )}
+          </Card>
+
+          <Card
+            title="Focus"
+            action={
+              <Link href="/focus" className="text-sm text-accent hover:underline">
+                Start focus
+              </Link>
+            }
+          >
+            <p className="text-sm">
+              <span className="font-medium tabular-nums">{formatDuration(focus.todaySeconds)}</span>{" "}
+              focused today
+              {focus.todayCount > 0 && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {focus.todayCount} session{focus.todayCount === 1 ? "" : "s"}
+                </span>
+              )}
+            </p>
+            {focus.recent[0] && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Last: {formatDuration(focus.recent[0].duration_seconds)}
+                {focus.recent[0].task ? ` · ${focus.recent[0].task.title}` : ""}
+              </p>
+            )}
+            <p className="mt-2 text-sm text-muted-foreground">
+              {formatDuration(focus.weekSeconds)} this week.
+            </p>
           </Card>
 
           <Card title="Upcoming (next 7 days)">
