@@ -72,29 +72,41 @@ export async function loadDeadlines(
   return data.flatMap((t) => (t.due_date ? [{ ...t, due_date: t.due_date }] : []));
 }
 
+/** Task IDs per `in` filter, keeping the request URL well under PostgREST's limits. */
+const ID_CHUNK = 100;
+
 /**
- * Open tasks and the blocks scheduled for them, for the unscheduled tray and the
- * "needs rescheduling" list. Blocks that ended more than 30 days ago are ignored.
+ * Open tasks and every block scheduled for them, for the unscheduled tray and the
+ * "needs rescheduling" list. Blocks are not cut off by age: a task whose only block was months
+ * ago still needs a decision.
  */
 export async function loadSchedulingState({ supabase, workspace }: WorkspaceContext) {
-  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-  const [tasks, blocks] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, status, priority, due_date, estimate_minutes")
-      .eq("workspace_id", workspace.id)
-      .in("status", ["todo", "in_progress"])
-      .order("due_date", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .limit(500),
-    supabase
-      .from("time_blocks")
-      .select("task_id, starts_at, ends_at")
-      .eq("workspace_id", workspace.id)
-      .not("task_id", "is", null)
-      .gte("ends_at", since)
-      .limit(5000),
-  ]);
-  if (tasks.error || blocks.error) throw new Error("Could not load scheduling details.");
-  return { tasks: tasks.data as SchedulableTask[], blocks: blocks.data };
+  const tasks = await supabase
+    .from("tasks")
+    .select("id, title, status, priority, due_date, estimate_minutes")
+    .eq("workspace_id", workspace.id)
+    .in("status", ["todo", "in_progress"])
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (tasks.error) throw new Error("Could not load scheduling details.");
+
+  const ids = tasks.data.map((t) => t.id);
+  const chunks = Array.from({ length: Math.ceil(ids.length / ID_CHUNK) }, (_, i) =>
+    ids.slice(i * ID_CHUNK, (i + 1) * ID_CHUNK),
+  );
+  const results = await Promise.all(
+    chunks.map((chunk) =>
+      supabase
+        .from("time_blocks")
+        .select("task_id, starts_at, ends_at")
+        .eq("workspace_id", workspace.id)
+        .in("task_id", chunk),
+    ),
+  );
+  const blocks = results.flatMap((r) => {
+    if (r.error) throw new Error("Could not load scheduling details.");
+    return r.data;
+  });
+  return { tasks: tasks.data as SchedulableTask[], blocks };
 }

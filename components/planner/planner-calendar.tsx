@@ -227,6 +227,8 @@ export default function PlannerCalendar({
       initialDate={start}
       timeZone={timezone}
       firstDay={weekStart}
+      // Show only the weeks the month touches; that is exactly the range the server loads.
+      fixedWeekCount={false}
       headerToolbar={false}
       height={view === "month" || mode === "agenda" ? "auto" : 640}
       expandRows

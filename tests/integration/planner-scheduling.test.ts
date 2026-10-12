@@ -5,12 +5,15 @@ import {
   findOverlaps,
   updateBlockInWorkspace,
 } from "@/features/calendar/mutations";
+import { needsRescheduling } from "@/features/calendar/logic";
+import { loadSchedulingState } from "@/features/calendar/queries";
 import {
   carryForwardInWorkspace,
   ensurePlanInWorkspace,
   linkToPlanInWorkspace,
 } from "@/features/planning/mutations";
 import { setTaskDueDateInWorkspace } from "@/features/tasks/mutations";
+import type { WorkspaceContext } from "@/lib/workspace-context";
 import {
   adminClient,
   createConfirmedUser,
@@ -289,5 +292,35 @@ describe("moving a deadline", () => {
       ok: false,
       error: "A repeating task needs a due date.",
     });
+  });
+});
+
+describe("scheduling state", () => {
+  it("keeps a task whose only block was months ago in Needs rescheduling", async () => {
+    const taskId = await newTask("Old missed work");
+    await createBlockInWorkspace(alice.client, ws, {
+      title: "Old missed work",
+      starts_at: "2026-03-02T09:00:00.000Z",
+      ends_at: "2026-03-02T10:00:00.000Z",
+      timezone: "UTC",
+      task_id: taskId,
+    });
+    const ctx: WorkspaceContext = {
+      supabase: alice.client,
+      user: { id: alice.id, email: alice.email },
+      workspace: { id: ws, name: "Personal", is_personal: true },
+      timezone: "UTC",
+      weekStart: 1,
+      today: "2026-10-14",
+    };
+    const state = await loadSchedulingState(ctx);
+    expect(state.blocks.some((b) => b.task_id === taskId)).toBe(true);
+    const reschedule = needsRescheduling(
+      state.tasks,
+      state.blocks,
+      new Date("2026-10-14T12:00:00Z"),
+      "2026-10-14",
+    );
+    expect(reschedule.find((r) => r.task.id === taskId)?.reasons).toEqual(["missed_block"]);
   });
 });

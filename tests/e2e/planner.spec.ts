@@ -158,6 +158,15 @@ test("plan from year to day, schedule work, and keep it all in sync", async ({ p
     await page.keyboard.press("Escape");
   });
 
+  await test.step("the month grid shows only the weeks it loads", async () => {
+    // October 2026 with Monday weeks spans Sep 28 – Nov 1: five rows, not FullCalendar's default six.
+    await page.goto("/planner?view=month&date=2026-10-01");
+    await page.getByRole("button", { name: "Month grid" }).click();
+    const days = page.locator(".fc-daygrid-day[data-date]");
+    await expect(days.first()).toHaveAttribute("data-date", "2026-09-28");
+    await expect(days.last()).toHaveAttribute("data-date", "2026-11-01");
+  });
+
   await test.step("reschedule unfinished work explicitly", async () => {
     await page.goto("/tasks");
     await page.getByPlaceholder("Add a task").fill("Renew passport");
