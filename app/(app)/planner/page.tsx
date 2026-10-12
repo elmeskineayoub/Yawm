@@ -1,43 +1,226 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader } from "@/components/layout/page-header";
-import { LinkWorkForm, UnlinkButton } from "@/components/planner/plan-links";
-import { PlanForm } from "@/components/planner/plan-form";
-import { QuickAddTask } from "@/components/tasks/quick-add-task";
-import { TaskList, TaskRow } from "@/components/tasks/task-row";
-import { EmptyState } from "@/components/ui/empty-state";
+import { CarryForwardButton } from "@/components/planner/carry-forward";
+import { InlineText } from "@/components/planner/inline-text";
+import { PlannerHeader } from "@/components/planner/planner-header";
+import { PlannerWorkspace } from "@/components/planner/planner-workspace";
+import { PriorityList } from "@/components/planner/priority-list";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { loadPlanPage } from "@/features/planning/queries";
-import { loadLookups } from "@/features/tasks/queries";
+import { loadPlanner, type PlannerData } from "@/features/planning/planner";
+import { parsePlannerParams, plannerHref } from "@/features/planning/view";
+import { isOpen } from "@/features/tasks/logic";
 import {
-  formatDate,
-  formatPeriod,
-  isIsoDate,
-  PARENT_PERIOD,
+  formatPeriodShort,
+  formatPeriodTitle,
   periodEnd,
-  periodStart,
   shiftPeriod,
+  type IsoDate,
   type PlanPeriod,
 } from "@/lib/dates";
+import { isoWeekNumber } from "@/lib/dates/zoned";
 import { cn } from "@/lib/utils";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Planner" };
 
-const PERIODS: { value: PlanPeriod; label: string }[] = [
-  { value: "year", label: "Year" },
-  { value: "month", label: "Month" },
-  { value: "week", label: "Week" },
-  { value: "day", label: "Day" },
-];
+/** What each period is for. Shown as the focus panel's copy and empty states. */
+const PURPOSE: Record<
+  PlanPeriod,
+  {
+    intentionLabel: string;
+    intentionPlaceholder: string;
+    listHeading: string;
+    addLabel: string;
+    empty: string;
+    kind: "task" | "project";
+    softLimit?: number;
+  }
+> = {
+  year: {
+    intentionLabel: "Direction",
+    intentionPlaceholder: "Set a theme for the year…",
+    listHeading: "Major outcomes",
+    addLabel: "Add an outcome",
+    empty: "Name the few outcomes that would make this year a success. Each becomes a project.",
+    kind: "project",
+  },
+  month: {
+    intentionLabel: "Theme",
+    intentionPlaceholder: "What is this month about?",
+    listHeading: "Outcomes",
+    addLabel: "Add an outcome",
+    empty: "What should this month move forward? Add outcomes, or link projects you already have.",
+    kind: "project",
+  },
+  week: {
+    intentionLabel: "Focus",
+    intentionPlaceholder: "What matters most this week?",
+    listHeading: "Priorities",
+    addLabel: "Add a priority",
+    empty: "Choose a short list of tasks that would make this week count.",
+    kind: "task",
+    softLimit: 5,
+  },
+  day: {
+    intentionLabel: "Intention",
+    intentionPlaceholder: "What would make today a good day?",
+    listHeading: "Priorities",
+    addLabel: "Add a priority",
+    empty: "Pick one to three things that matter most, then give them time on the timeline.",
+    kind: "task",
+    softLimit: 3,
+  },
+};
 
-const href = (period: PlanPeriod, date: string) => `/planner?period=${period}&date=${date}`;
+function FocusPanel({
+  view,
+  start,
+  data,
+  nextLabel,
+  canCarry,
+}: {
+  view: PlanPeriod;
+  start: IsoDate;
+  data: PlannerData;
+  nextLabel: string;
+  canCarry: boolean;
+}) {
+  const purpose = PURPOSE[view];
+  const openPriorities = data.items.filter(
+    (i) => i.kind === "task" && isOpen(i.task.status),
+  ).length;
+  const plan = data.plan;
 
-function childLabel(period: PlanPeriod, start: string) {
-  if (period === "month") return formatPeriod("month", start).split(" ")[0];
-  if (period === "week") return `Week of ${formatDate(start, "short")}`;
-  return formatDate(start);
+  return (
+    <div className="space-y-5">
+      <InlineText
+        key={`theme-${view}-${start}`}
+        period={view}
+        start={start}
+        field="theme"
+        value={plan?.theme ?? null}
+        label={purpose.intentionLabel}
+        placeholder={purpose.intentionPlaceholder}
+        maxLength={200}
+      />
+      <div>
+        <PriorityList
+          key={`list-${view}-${start}`}
+          period={view}
+          start={start}
+          items={data.items}
+          kind={purpose.kind}
+          heading={purpose.listHeading}
+          addLabel={purpose.addLabel}
+          emptyText={purpose.empty}
+          softLimit={purpose.softLimit}
+        />
+        {data.progress.total > 0 && (
+          <div className="mt-2 px-1">
+            <ProgressBar progress={data.progress} label={`${purpose.listHeading} progress`} />
+          </div>
+        )}
+        {view !== "year" && canCarry && (
+          <div className="mt-1">
+            <CarryForwardButton
+              period={view}
+              start={start}
+              openCount={openPriorities}
+              nextLabel={nextLabel}
+            />
+          </div>
+        )}
+      </div>
+      <details className="group rounded-md">
+        <summary className="cursor-pointer px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Notes & review
+        </summary>
+        <div className="mt-2 space-y-3">
+          <InlineText
+            key={`focus-${view}-${start}`}
+            period={view}
+            start={start}
+            field="focus"
+            value={plan?.focus ?? null}
+            label="Notes"
+            placeholder="Anything to remember while planning…"
+            multiline
+            maxLength={5000}
+          />
+          <InlineText
+            key={`reflection-${view}-${start}`}
+            period={view}
+            start={start}
+            field="reflection"
+            value={plan?.reflection ?? null}
+            label="Review"
+            placeholder="How did it go? What carries over?"
+            multiline
+            maxLength={10000}
+          />
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function ContextChips({ data }: { data: PlannerData }) {
+  if (data.context.length === 0) return null;
+  return (
+    <nav aria-label="Part of" className="mb-4 flex flex-wrap gap-1.5 text-xs">
+      {data.context.map((c) => (
+        <Link
+          key={c.period}
+          href={plannerHref(c.period, c.start)}
+          className="rounded-full border border-border px-2.5 py-1 text-muted-foreground hover:bg-surface-muted hover:text-foreground"
+        >
+          <span className="font-medium text-foreground">
+            {formatPeriodShort(c.period, c.start)}
+          </span>
+          {c.theme && <span> · {c.theme}</span>}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function YearGrid({ data, today }: { data: PlannerData; today: IsoDate }) {
+  const thisMonth = `${today.slice(0, 7)}-01`;
+  return (
+    <section aria-label="Months">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        {data.children.map((month) => (
+          <li key={month.start}>
+            <Link
+              href={plannerHref("month", month.start)}
+              aria-current={month.start === thisMonth ? "date" : undefined}
+              className={cn(
+                "block h-full rounded-lg border border-border bg-surface p-3 hover:bg-surface-muted",
+                month.start === thisMonth && "border-accent",
+              )}
+            >
+              <span className="text-sm font-semibold">
+                {formatPeriodShort("month", month.start)}
+              </span>
+              <span
+                className={cn(
+                  "mt-1 block text-sm break-words",
+                  !month.plan?.theme && "text-muted-foreground",
+                )}
+              >
+                {month.plan?.theme ?? "No theme yet"}
+              </span>
+              {month.itemCount > 0 && (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {month.itemCount} linked
+                </span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 export default async function PlannerPage({
@@ -45,227 +228,74 @@ export default async function PlannerPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
   const ctx = await getWorkspaceContext();
-  const rawPeriod = typeof params.period === "string" ? params.period : "week";
-  const period: PlanPeriod = PERIODS.some((p) => p.value === rawPeriod)
-    ? (rawPeriod as PlanPeriod)
-    : "week";
-  const date = typeof params.date === "string" && isIsoDate(params.date) ? params.date : ctx.today;
-  const start = periodStart(period, date, ctx.weekStart);
-  const end = periodEnd(period, start);
+  const { view, start } = parsePlannerParams(await searchParams, ctx.today, ctx.weekStart);
+  const end = periodEnd(view, start);
   const isCurrent = ctx.today >= start && ctx.today < end;
+  const data = await loadPlanner(ctx, view, start);
 
-  const lookups = await loadLookups(ctx);
-  const data = await loadPlanPage(ctx, period, start, PARENT_PERIOD[period], lookups);
+  const next = shiftPeriod(view, start, 1);
+  const nextLabel =
+    view === "day" && isCurrent
+      ? "tomorrow"
+      : formatPeriodShort(view, next).replace("Week of ", "the week of ");
+  const subtitle =
+    view === "day"
+      ? `${start.slice(0, 4)} · Week ${isoWeekNumber(start)}`
+      : view === "week"
+        ? `Week ${isoWeekNumber(start)}`
+        : undefined;
+  // Carrying forward makes sense for the current period and ones that have ended.
+  const canCarry = ctx.today >= start;
 
-  const linkedTaskIds = new Set(data.items.flatMap((i) => (i.kind === "task" ? [i.task.id] : [])));
-  const linkedProjectIds = new Set(
-    data.items.flatMap((i) => (i.kind === "project" ? [i.project.id] : [])),
+  const focus = (
+    <FocusPanel view={view} start={start} data={data} nextLabel={nextLabel} canCarry={canCarry} />
   );
-  const { data: openTasks } = await ctx.supabase
-    .from("tasks")
-    .select("id, title")
-    .eq("workspace_id", ctx.workspace.id)
-    .in("status", ["todo", "in_progress"])
-    .order("created_at", { ascending: false })
-    .limit(300);
 
   return (
     <>
-      <PageHeader title="Planner" description="Connect yearly direction to daily action." />
+      <PlannerHeader
+        view={view}
+        title={formatPeriodTitle(view, start)}
+        subtitle={subtitle}
+        isCurrent={isCurrent}
+        viewHrefs={{
+          day: plannerHref("day", isCurrent ? ctx.today : start),
+          week: plannerHref("week", isCurrent ? ctx.today : start),
+          month: plannerHref("month", isCurrent ? ctx.today : start),
+          year: plannerHref("year", isCurrent ? ctx.today : start),
+        }}
+        prevHref={plannerHref(view, shiftPeriod(view, start, -1))}
+        nextHref={plannerHref(view, next)}
+        todayHref={plannerHref(view, ctx.today)}
+      />
+      <ContextChips data={data} />
 
-      <nav
-        aria-label="Planning period"
-        className="mb-4 flex flex-wrap gap-1 border-b border-border"
-      >
-        {PERIODS.map((p) => (
-          <Link
-            key={p.value}
-            href={href(p.value, date)}
-            aria-current={p.value === period ? "page" : undefined}
-            className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm",
-              p.value === period
-                ? "border-accent font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {p.label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">{formatPeriod(period, start)}</h2>
-          {data.parent && (
-            <p className="text-sm text-muted-foreground">
-              Part of{" "}
-              <Link
-                href={href(data.parent.period, data.parent.start)}
-                className="text-accent hover:underline"
-              >
-                {formatPeriod(data.parent.period, data.parent.start)}
-              </Link>
-              {!data.parent.exists && " (no plan yet)"}
-            </p>
-          )}
+      {view === "year" || !data.calendar ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="order-2 lg:order-1">
+            <YearGrid data={data} today={ctx.today} />
+          </div>
+          <aside aria-label="Plan" className="order-1 lg:order-2">
+            {focus}
+          </aside>
         </div>
-        <div className="flex items-center gap-1">
-          <Link
-            href={href(period, shiftPeriod(period, start, -1))}
-            aria-label={`Previous ${period}`}
-            className="rounded-md border border-border p-2 hover:bg-surface-muted"
-          >
-            <ChevronLeft aria-hidden className="size-4" />
-          </Link>
-          <Link
-            href={href(period, ctx.today)}
-            aria-disabled={isCurrent || undefined}
-            className={cn(
-              "rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted",
-              isCurrent && "pointer-events-none opacity-50",
-            )}
-          >
-            Current
-          </Link>
-          <Link
-            href={href(period, shiftPeriod(period, start, 1))}
-            aria-label={`Next ${period}`}
-            className="rounded-md border border-border p-2 hover:bg-surface-muted"
-          >
-            <ChevronRight aria-hidden className="size-4" />
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section aria-label="Plan notes" className="rounded-lg border border-border bg-surface p-5">
-          <PlanForm period={period} start={start} plan={data.plan} />
-        </section>
-
-        <div className="space-y-6">
-          <section
-            aria-labelledby="linked-heading"
-            className="space-y-3 rounded-lg border border-border bg-surface p-5"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <h3 id="linked-heading" className="text-sm font-semibold">
-                {period === "day" ? "Priorities" : "Linked work"}
-              </h3>
-              {data.progress.total > 0 && (
-                <div className="w-40">
-                  <ProgressBar progress={data.progress} label="Plan progress" />
-                </div>
-              )}
-            </div>
-            {data.items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nothing linked yet. Link the projects and tasks this {period} is about.
-              </p>
-            ) : (
-              <ul aria-label="Linked work">
-                {data.items.map((item) =>
-                  item.kind === "task" ? (
-                    <TaskRow
-                      key={item.id}
-                      task={item.task}
-                      today={ctx.today}
-                      actions={<UnlinkButton itemId={item.id} label={item.task.title} />}
-                    />
-                  ) : (
-                    <li
-                      key={item.id}
-                      className="flex items-start gap-2 border-b border-border py-2.5 last:border-b-0"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          href={`/projects/${item.project.id}`}
-                          className="text-sm font-medium break-words hover:underline"
-                        >
-                          {item.project.name}
-                        </Link>
-                        <div className="mt-1 max-w-xs">
-                          <ProgressBar
-                            progress={item.project.progress}
-                            label={`${item.project.name} progress`}
-                          />
-                        </div>
-                      </div>
-                      <UnlinkButton itemId={item.id} label={item.project.name} />
-                    </li>
-                  ),
-                )}
-              </ul>
-            )}
-            <LinkWorkForm
-              period={period}
-              start={start}
-              tasks={(openTasks ?? [])
-                .filter((t) => !linkedTaskIds.has(t.id))
-                .map((t) => ({ id: t.id, label: t.title }))}
-              projects={lookups.projects
-                .filter(
-                  (p) =>
-                    !linkedProjectIds.has(p.id) &&
-                    p.status !== "archived" &&
-                    p.status !== "completed",
-                )
-                .map((p) => ({ id: p.id, label: p.name }))}
-            />
-            {data.plan && (
-              <QuickAddTask
-                planId={data.plan.id}
-                placeholder="Add a new task to this plan"
-                defaultDueDate={period === "day" ? start : undefined}
-                compact
-              />
-            )}
-          </section>
-
-          {data.children.length > 0 && (
-            <section
-              aria-labelledby="children-heading"
-              className="rounded-lg border border-border bg-surface p-5"
-            >
-              <h3 id="children-heading" className="mb-2 text-sm font-semibold">
-                Inside this {period}
-              </h3>
-              <ul className="divide-y divide-border">
-                {data.children.map((child) => (
-                  <li
-                    key={child.start}
-                    className="flex items-center justify-between gap-2 py-2 text-sm"
-                  >
-                    <Link href={href(child.period, child.start)} className="hover:underline">
-                      {childLabel(child.period, child.start)}
-                    </Link>
-                    <span className="min-w-0 truncate text-right text-xs text-muted-foreground">
-                      {child.plan
-                        ? [child.plan.theme, child.itemCount ? `${child.itemCount} linked` : null]
-                            .filter(Boolean)
-                            .join(" · ") || "Planned"
-                        : "No plan"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
-      </div>
-
-      <section aria-labelledby="due-heading" className="mt-6">
-        <h3 id="due-heading" className="mb-2 text-sm font-semibold">
-          Due this {period}
-        </h3>
-        {data.dueInPeriod.length === 0 ? (
-          <EmptyState title="No deadlines in this period" />
-        ) : (
-          <TaskList tasks={data.dueInPeriod} today={ctx.today} label={`Due this ${period}`} />
-        )}
-      </section>
+      ) : (
+        <PlannerWorkspace
+          view={view}
+          start={start}
+          today={ctx.today}
+          timezone={ctx.timezone}
+          weekStart={ctx.weekStart}
+          blocks={data.calendar.blocks}
+          deadlines={data.calendar.deadlines}
+          unscheduled={data.calendar.unscheduled}
+          openTasks={data.calendar.openTasks}
+          reschedule={data.calendar.reschedule}
+          priorityIds={data.items.flatMap((i) => (i.kind === "task" ? [i.task.id] : []))}
+          focus={focus}
+        />
+      )}
     </>
   );
 }

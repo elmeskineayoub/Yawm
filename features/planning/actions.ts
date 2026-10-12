@@ -2,19 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { fail, ok, toSaveState, type ActionResult, type SaveState } from "@/lib/action-result";
-import {
-  CHILD_PERIOD,
-  isIsoDate,
-  PARENT_PERIOD,
-  periodEnd,
-  periodStart,
-  type IsoDate,
-  type PlanPeriod,
-} from "@/lib/dates";
-import { fieldErrorsOf, formObject, optionalText } from "@/lib/form";
+import { fail, ok, type ActionResult } from "@/lib/action-result";
+import { isIsoDate, periodStart, type IsoDate, type PlanPeriod } from "@/lib/dates";
+import { optionalText } from "@/lib/form";
+import { escapeLike } from "@/lib/search";
 import { getWorkspaceContext, type WorkspaceContext } from "@/lib/workspace-context";
-import { unlinkPlanItemInWorkspace, updatePlanNotesInWorkspace } from "./mutations";
+import {
+  carryForwardInWorkspace,
+  ensurePlanInWorkspace,
+  linkToPlanInWorkspace,
+  unlinkPlanItemInWorkspace,
+  updatePlanNotesInWorkspace,
+  type PeriodRef,
+} from "./mutations";
 
 const uuid = z.uuid();
 const period = z.enum(["year", "month", "week", "day"]);
@@ -41,99 +41,12 @@ function checkPeriod(
   return { period: parsed.data, start };
 }
 
-/**
- * Returns the plan for a period, creating an empty one if needed. New plans are linked to an
- * existing parent plan, and adopt existing child plans that have no parent yet.
- */
 async function ensurePlan(
   ctx: WorkspaceContext,
-  target: { period: PlanPeriod; start: IsoDate },
+  target: PeriodRef,
 ): Promise<{ id: string } | { error: string }> {
-  const { supabase, workspace, weekStart } = ctx;
-  const existing = await supabase
-    .from("plans")
-    .select("id")
-    .eq("workspace_id", workspace.id)
-    .eq("period", target.period)
-    .eq("period_start", target.start)
-    .maybeSingle();
-  if (existing.error) return { error: "Could not load the plan." };
-  if (existing.data) return existing.data;
-
-  const parentPeriod = PARENT_PERIOD[target.period];
-  let parentId: string | null = null;
-  if (parentPeriod) {
-    const parent = await supabase
-      .from("plans")
-      .select("id")
-      .eq("workspace_id", workspace.id)
-      .eq("period", parentPeriod)
-      .eq("period_start", periodStart(parentPeriod, target.start, weekStart))
-      .maybeSingle();
-    parentId = parent.data?.id ?? null;
-  }
-
-  const created = await supabase
-    .from("plans")
-    .insert({
-      workspace_id: workspace.id,
-      period: target.period,
-      period_start: target.start,
-      parent_plan_id: parentId,
-    })
-    .select("id")
-    .single();
-  if (created.error) {
-    // Another request created it first.
-    if (created.error.code === "23505") return ensurePlan(ctx, target);
-    return { error: "Could not create the plan." };
-  }
-
-  const childPeriod = CHILD_PERIOD[target.period];
-  if (childPeriod) {
-    // Best effort: a child the database rejects (e.g. a week from a different week-start
-    // setting) simply stays unlinked.
-    await supabase
-      .from("plans")
-      .update({ parent_plan_id: created.data.id })
-      .eq("workspace_id", workspace.id)
-      .eq("period", childPeriod)
-      .is("parent_plan_id", null)
-      .gte("period_start", target.start)
-      .lt("period_start", periodEnd(target.period, target.start));
-  }
-  return created.data;
-}
-
-export async function savePlan(
-  rawPeriod: string,
-  start: string,
-  _prev: SaveState,
-  formData: FormData,
-): Promise<SaveState> {
-  const ctx = await getWorkspaceContext();
-  const target = checkPeriod(ctx, rawPeriod, start);
-  if (!target) return { status: "error", message: "Unknown planning period." };
-  const parsed = planSchema.safeParse(formObject(formData, ["theme", "focus", "reflection"]));
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Check the highlighted fields.",
-      fieldErrors: fieldErrorsOf(parsed.error),
-    };
-  }
-
-  const plan = await ensurePlan(ctx, target);
-  if ("error" in plan) return { status: "error", message: plan.error };
-  const result = await updatePlanNotesInWorkspace(
-    ctx.supabase,
-    ctx.workspace.id,
-    plan.id,
-    parsed.data,
-  );
-  if (!result.ok) return { status: "error", message: result.error };
-  refresh();
-  return toSaveState(ok());
+  const result = await ensurePlanInWorkspace(ctx.supabase, ctx.workspace.id, ctx.weekStart, target);
+  return result.ok ? result.data : { error: result.error };
 }
 
 export async function linkToPlan(
@@ -148,15 +61,13 @@ export async function linkToPlan(
 
   const plan = await ensurePlan(ctx, target);
   if ("error" in plan) return fail(plan.error);
-  const { error } = await ctx.supabase.from("plan_items").insert({
-    workspace_id: ctx.workspace.id,
-    plan_id: plan.id,
-    ...(kind === "task" ? { task_id: targetId } : { project_id: targetId }),
-  });
-  if (error) {
-    if (error.code === "23505") return fail("That is already linked to this plan.");
-    return fail("Could not link it to the plan.");
-  }
+  const result = await linkToPlanInWorkspace(
+    ctx.supabase,
+    ctx.workspace.id,
+    plan.id,
+    kind === "task" ? { task_id: targetId } : { project_id: targetId },
+  );
+  if (!result.ok) return result;
   refresh();
   return ok();
 }
@@ -168,4 +79,125 @@ export async function unlinkFromPlan(itemId: string): Promise<ActionResult> {
   if (!result.ok) return result;
   refresh();
   return ok();
+}
+
+const planField = z.enum(["theme", "focus", "reflection"]);
+
+/** Inline autosave of one plan field. Creates the plan on first use. */
+export async function savePlanField(
+  rawPeriod: string,
+  start: string,
+  field: string,
+  value: string,
+): Promise<ActionResult> {
+  const ctx = await getWorkspaceContext();
+  const target = checkPeriod(ctx, rawPeriod, start);
+  const parsedField = planField.safeParse(field);
+  if (!target || !parsedField.success) return fail("Unknown planning period.");
+  const parsed = planSchema.shape[parsedField.data].safeParse(value);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check this field.");
+
+  const plan = await ensurePlan(ctx, target);
+  if ("error" in plan) return fail(plan.error);
+  const result = await updatePlanNotesInWorkspace(ctx.supabase, ctx.workspace.id, plan.id, {
+    [parsedField.data]: parsed.data,
+  });
+  if (!result.ok) return result;
+  refresh();
+  return ok();
+}
+
+const priorityTitle = z.string().trim().min(1, "Write the priority first.").max(200);
+
+/**
+ * Creates a task (week/day) or project (month/year outcome) and links it to the period's plan in
+ * one database transaction.
+ */
+export async function addPriority(
+  rawPeriod: string,
+  start: string,
+  kind: "task" | "project",
+  title: string,
+): Promise<ActionResult<{ id: string }>> {
+  const ctx = await getWorkspaceContext();
+  const target = checkPeriod(ctx, rawPeriod, start);
+  if (!target || (kind !== "task" && kind !== "project")) return fail("Unknown planning period.");
+  const parsed = priorityTitle.safeParse(title);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the title.");
+
+  const plan = await ensurePlan(ctx, target);
+  if ("error" in plan) return fail(plan.error);
+  const { data, error } =
+    kind === "task"
+      ? await ctx.supabase.rpc("add_task_to_plan", {
+          target_plan_id: plan.id,
+          task_title: parsed.data,
+        })
+      : await ctx.supabase.rpc("add_project_to_plan", {
+          target_plan_id: plan.id,
+          project_name: parsed.data,
+        });
+  if (error || !data) return fail("Could not add the priority. Please try again.");
+  refresh();
+  return ok({ id: data });
+}
+
+export type Linkable = { kind: "task" | "project"; id: string; title: string; detail: string };
+
+/** Search open tasks and active projects to link, in the active workspace only. */
+export async function searchLinkable(query: string): Promise<ActionResult<Linkable[]>> {
+  const q = query.trim().slice(0, 100);
+  const { supabase, workspace } = await getWorkspaceContext();
+  const pattern = `%${escapeLike(q)}%`;
+  const [tasks, projects] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, title, due_date")
+      .eq("workspace_id", workspace.id)
+      .in("status", ["todo", "in_progress"])
+      .ilike("title", pattern)
+      .order("created_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("projects")
+      .select("id, name, status")
+      .eq("workspace_id", workspace.id)
+      .in("status", ["planned", "active", "on_hold"])
+      .ilike("name", pattern)
+      .order("name")
+      .limit(8),
+  ]);
+  if (tasks.error || projects.error) return fail("Search failed. Please try again.");
+  return ok([
+    ...projects.data.map((p) => ({
+      kind: "project" as const,
+      id: p.id,
+      title: p.name,
+      detail: "Project",
+    })),
+    ...tasks.data.map((t) => ({
+      kind: "task" as const,
+      id: t.id,
+      title: t.title,
+      detail: t.due_date ? `Task · due ${t.due_date}` : "Task",
+    })),
+  ]);
+}
+
+/** Explicitly carries unfinished task priorities to the next period. Due dates are unchanged. */
+export async function carryForward(
+  rawPeriod: string,
+  start: string,
+): Promise<ActionResult<{ moved: number; next: PeriodRef }>> {
+  const ctx = await getWorkspaceContext();
+  const target = checkPeriod(ctx, rawPeriod, start);
+  if (!target) return fail("Unknown planning period.");
+  const result = await carryForwardInWorkspace(
+    ctx.supabase,
+    ctx.workspace.id,
+    ctx.weekStart,
+    target,
+  );
+  if (result.ok) refresh();
+  return result;
 }

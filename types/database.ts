@@ -608,6 +608,80 @@ export type Database = {
           },
         ];
       };
+      time_blocks: {
+        Row: {
+          created_at: string;
+          ends_at: string;
+          external_calendar_id: string | null;
+          external_event_id: string | null;
+          id: string;
+          notes: string | null;
+          origin: Database["public"]["Enums"]["time_block_origin"];
+          project_id: string | null;
+          starts_at: string;
+          task_id: string | null;
+          timezone: string;
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          ends_at: string;
+          external_calendar_id?: string | null;
+          external_event_id?: string | null;
+          id?: string;
+          notes?: string | null;
+          origin?: Database["public"]["Enums"]["time_block_origin"];
+          project_id?: string | null;
+          starts_at: string;
+          task_id?: string | null;
+          timezone: string;
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string;
+          external_calendar_id?: string | null;
+          external_event_id?: string | null;
+          id?: string;
+          notes?: string | null;
+          origin?: Database["public"]["Enums"]["time_block_origin"];
+          project_id?: string | null;
+          starts_at?: string;
+          task_id?: string | null;
+          timezone?: string;
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "time_blocks_project_id_workspace_id_fkey";
+            columns: ["project_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "time_blocks_task_id_workspace_id_fkey";
+            columns: ["task_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "time_blocks_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspace_members: {
         Row: {
           created_at: string;
@@ -671,6 +745,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_project_to_plan: {
+        Args: { project_name: string; target_plan_id: string };
+        Returns: string;
+      };
+      add_task_to_plan: {
+        Args: { target_plan_id: string; task_due_date?: string; task_title: string };
+        Returns: string;
+      };
       convert_idea_to_project: { Args: { idea_id: string }; Returns: string };
       convert_idea_to_task: { Args: { idea_id: string }; Returns: string };
       set_idea_tags: { Args: { tag_names: string[]; target_idea_id: string }; Returns: undefined };
@@ -683,6 +765,7 @@ export type Database = {
       recurrence_frequency: "daily" | "weekly" | "monthly";
       task_priority: "low" | "medium" | "high" | "urgent";
       task_status: "todo" | "in_progress" | "done" | "cancelled";
+      time_block_origin: "app" | "google";
       workspace_role: "owner" | "admin" | "member" | "viewer";
     };
     CompositeTypes: {
@@ -804,6 +887,7 @@ export const Constants = {
       recurrence_frequency: ["daily", "weekly", "monthly"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in_progress", "done", "cancelled"],
+      time_block_origin: ["app", "google"],
       workspace_role: ["owner", "admin", "member", "viewer"],
     },
   },

@@ -71,3 +71,102 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* FullCalendar, themed with the app's tokens (light and dark). */
+.planner-calendar .fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--surface-muted);
+  --fc-neutral-text-color: var(--muted-foreground);
+  --fc-today-bg-color: color-mix(in srgb, var(--accent) 3.5%, transparent);
+  --fc-event-bg-color: color-mix(in srgb, var(--accent) 16%, var(--background));
+  --fc-event-border-color: var(--accent);
+  --fc-event-text-color: var(--foreground);
+  --fc-event-selected-overlay-color: color-mix(in srgb, var(--accent) 20%, transparent);
+  --fc-highlight-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  --fc-now-indicator-color: #dc2626;
+  --fc-list-event-hover-bg-color: var(--surface-muted);
+  font-size: 0.8125rem;
+}
+
+.planner-calendar .fc .fc-col-header-cell-cushion,
+.planner-calendar .fc .fc-daygrid-day-number,
+.planner-calendar .fc .fc-list-day-text,
+.planner-calendar .fc .fc-list-day-side-text {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.planner-calendar .fc .fc-timegrid-slot-label,
+.planner-calendar .fc .fc-timegrid-axis {
+  color: var(--muted-foreground);
+}
+
+.planner-calendar .fc .fc-timegrid-slot {
+  height: 1.75rem;
+}
+
+/* Time blocks: a soft fill with an accent edge. */
+.planner-calendar .fc .planner-block {
+  border-width: 0 0 0 3px;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.planner-calendar .fc .planner-block-label {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1px 4px;
+  line-height: 1.25;
+}
+.planner-calendar .fc .planner-block-time {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+}
+.planner-calendar .fc .planner-block-title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.planner-calendar .fc .planner-block-done .planner-block-title {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}
+.planner-calendar .fc .planner-block-overlap {
+  outline: 2px dashed #d97706;
+  outline-offset: -2px;
+}
+.planner-calendar .fc .planner-block-external {
+  --fc-event-bg-color: var(--surface-muted);
+  border-left-color: var(--muted-foreground);
+  cursor: default;
+}
+
+/* Deadlines: a marker in the "Due" row, visually distinct from scheduled time. */
+.planner-calendar .fc .planner-deadline {
+  background: transparent;
+  border: 1px dashed var(--muted-foreground);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.planner-calendar .fc .planner-deadline-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+  color: var(--foreground);
+}
+.planner-calendar .fc .planner-deadline-done .planner-deadline-label {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}
+
+.planner-calendar .fc .fc-list-empty {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.planner-calendar .fc a {
+  color: inherit;
+}

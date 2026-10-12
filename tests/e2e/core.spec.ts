@@ -72,13 +72,20 @@ test("capture an idea, plan it, and get it done", async ({ page }) => {
   });
 
   await test.step("plan the week around the project", async () => {
+    // Old links using ?period= still work.
     await page.goto("/planner?period=week");
-    await page.getByLabel("Theme for the week").fill("Ship the first issue");
-    await page.getByRole("button", { name: "Create plan" }).click();
+    await page.getByRole("button", { name: "Focus" }).click();
+    await page.getByRole("textbox", { name: "Focus" }).fill("Ship the first issue");
+    await page.keyboard.press("Enter");
     await expect(page.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
-    await page.getByLabel("Task or project to link").selectOption({ label: "Launch a newsletter" });
-    await page.getByRole("button", { name: "Link", exact: true }).click();
-    await expect(page.getByRole("link", { name: "Launch a newsletter" })).toBeVisible();
+    await page.getByRole("button", { name: "Link existing" }).click();
+    await page.getByRole("combobox", { name: "Search tasks and projects" }).fill("newsletter");
+    await page.getByRole("option", { name: /Launch a newsletter/ }).click();
+    await expect(
+      page
+        .getByRole("list", { name: "Priorities" })
+        .getByRole("link", { name: "Launch a newsletter" }),
+    ).toBeVisible();
 
     await page.goto("/dashboard");
     await expect(page.getByText("Ship the first issue")).toBeVisible();

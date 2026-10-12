@@ -113,3 +113,24 @@ export async function removeDependencyInWorkspace(
   if (!data.length) return fail("That dependency no longer exists.");
   return ok();
 }
+
+/** Explicitly moves a task's deadline (a date-only value). Never called implicitly. */
+export async function setTaskDueDateInWorkspace(
+  db: Db,
+  workspaceId: string,
+  taskId: string,
+  dueDate: string | null,
+): Promise<ActionResult> {
+  const { data, error } = await db
+    .from("tasks")
+    .update(dueDate === null ? { due_date: null, due_time: null } : { due_date: dueDate })
+    .eq("id", taskId)
+    .eq("workspace_id", workspaceId)
+    .select("id");
+  if (error) {
+    if (error.code === "23514") return fail("A repeating task needs a due date.");
+    return fail(friendlyTaskError(error.message));
+  }
+  if (!data.length) return fail(NOT_FOUND);
+  return ok();
+}

@@ -41,7 +41,7 @@ test("sign up, verify email, use the workspace, sign out, and reset the password
 
   // The profile captured the browser timezone and name; the default areas were created.
   await page.goto("/settings");
-  await expect(page.getByText("E2E Tester")).toBeVisible();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("E2E Tester");
   await expect(page.getByText(email).first()).toBeVisible();
   for (const area of ["Spiritual", "Mental", "Physical", "Finances"]) {
     await expect(page.getByRole("textbox", { name: `Name of ${area}` })).toHaveValue(area);

@@ -9,8 +9,10 @@ import { TaskEditForm } from "@/components/tasks/task-edit-form";
 import { TaskList } from "@/components/tasks/task-row";
 import { describeRecurrence, STATUS_LABELS } from "@/features/tasks/logic";
 import { enrichTasks, loadLookups, TASK_COLUMNS } from "@/features/tasks/queries";
-import { dateOfInstant, formatDate, formatPeriod, type PlanPeriod } from "@/lib/dates";
+import { addDays, dateOfInstant, formatDate, formatPeriod, type PlanPeriod } from "@/lib/dates";
+import { formatTimeRange, instantToLocal, zonedDayRange } from "@/lib/dates/zoned";
 import { getWorkspaceContext } from "@/lib/workspace-context";
+import { plannerHref } from "@/features/planning/view";
 
 export const metadata: Metadata = { title: "Task" };
 
@@ -79,6 +81,15 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           )
       : Promise.resolve({ data: [], error: null }),
   ]);
+  const { data: scheduledBlocks } = await supabase
+    .from("time_blocks")
+    .select("id, title, starts_at, ends_at")
+    .eq("workspace_id", ctx.workspace.id)
+    .eq("task_id", id)
+    .gte("ends_at", zonedDayRange(addDays(ctx.today, -7), ctx.timezone).start)
+    .order("starts_at")
+    .limit(20);
+
   const relatedById = new Map((related.data ?? []).map((t) => [t.id, t]));
   const dependsOn = (dependsOnRows.data ?? [])
     .map((d) => relatedById.get(d.depends_on_task_id))
@@ -181,6 +192,41 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           </section>
 
           <section
+            aria-labelledby="scheduled-heading"
+            className="rounded-lg border border-border bg-surface p-5"
+          >
+            <h2 id="scheduled-heading" className="mb-1 text-sm font-semibold">
+              Scheduled time
+            </h2>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Time set aside to work on it. Separate from the deadline.
+            </p>
+            {(scheduledBlocks ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                None yet.{" "}
+                <Link href={plannerHref("day", ctx.today)} className="text-accent hover:underline">
+                  Schedule it in the Planner
+                </Link>
+                .
+              </p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {(scheduledBlocks ?? []).map((b) => {
+                  const local = instantToLocal(b.starts_at, ctx.timezone);
+                  return (
+                    <li key={b.id}>
+                      <Link href={plannerHref("day", local.date)} className="hover:underline">
+                        {formatDate(local.date, "short")} ·{" "}
+                        {formatTimeRange(b.starts_at, b.ends_at, ctx.timezone)}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section
             aria-labelledby="plans-heading"
             className="rounded-lg border border-border bg-surface p-5"
           >
@@ -200,7 +246,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                 {(plans.data ?? []).map((p) => (
                   <li key={p.id}>
                     <Link
-                      href={`/planner?period=${p.period}&date=${p.period_start}`}
+                      href={plannerHref(p.period as PlanPeriod, p.period_start)}
                       className="hover:underline"
                     >
                       {formatPeriod(p.period as PlanPeriod, p.period_start)}

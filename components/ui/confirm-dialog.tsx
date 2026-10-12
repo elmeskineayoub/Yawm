@@ -11,6 +11,8 @@ type ConfirmDialogProps = {
   confirmLabel: string;
   /** Resolves to an error message, or null on success. */
   onConfirm: () => Promise<string | null>;
+  /** Red confirm button (default). Use false for safe, reversible actions. */
+  destructive?: boolean;
 };
 
 /** Confirmation for destructive actions. The dialog stays open and shows the error on failure. */
@@ -20,6 +22,7 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   onConfirm,
+  destructive = true,
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +54,7 @@ export function ConfirmDialog({
               <Button variant="secondary">Cancel</Button>
             </Dialog.Close>
             <Button
-              className="bg-red-700 text-white hover:bg-red-800"
+              className={destructive ? "bg-red-700 text-white hover:bg-red-800" : undefined}
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {
