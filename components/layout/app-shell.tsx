@@ -5,15 +5,19 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { QuickCapture } from "@/components/shared/quick-capture";
+import type { Reminder } from "@/features/reminders/logic";
 import { AccountMenu } from "./account-menu";
+import { ReminderCenter } from "./reminder-center";
 import { SidebarNav } from "./sidebar-nav";
 
 export function AppShell({
   children,
   account,
+  reminders = [],
 }: {
   children: ReactNode;
   account?: { email: string | null };
+  reminders?: Reminder[];
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -53,19 +57,22 @@ export function AppShell({
       >
         <div className="flex h-14 items-center justify-between px-3">
           {!collapsed && <span className="px-2 text-base font-semibold">Yawm</span>}
-          <button
-            type="button"
-            onClick={() => setCollapsed((value) => !value)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-expanded={!collapsed}
-            className="rounded p-2 text-muted-foreground hover:bg-surface-muted"
-          >
-            {collapsed ? (
-              <PanelLeftOpen aria-hidden className="size-4" />
-            ) : (
-              <PanelLeftClose aria-hidden className="size-4" />
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            {account && <ReminderCenter reminders={reminders} />}
+            <button
+              type="button"
+              onClick={() => setCollapsed((value) => !value)}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!collapsed}
+              className="rounded p-2 text-muted-foreground hover:bg-surface-muted"
+            >
+              {collapsed ? (
+                <PanelLeftOpen aria-hidden className="size-4" />
+              ) : (
+                <PanelLeftClose aria-hidden className="size-4" />
+              )}
+            </button>
+          </div>
         </div>
         {account && (
           <div className="px-2 pb-3">
@@ -124,6 +131,11 @@ export function AppShell({
             <Menu aria-hidden className="size-5" />
           </button>
           <span className="text-base font-semibold">Yawm</span>
+          {account && (
+            <div className="ml-auto">
+              <ReminderCenter reminders={reminders} />
+            </div>
+          )}
         </header>
         <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-8">
           {children}

@@ -985,6 +985,72 @@ export type Database = {
           },
         ];
       };
+      reminder_dismissals: {
+        Row: {
+          created_at: string;
+          id: string;
+          reminder_key: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          reminder_key: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          reminder_key?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reminder_dismissals_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reminder_preferences: {
+        Row: {
+          created_at: string;
+          show_habits: boolean;
+          show_tasks: boolean;
+          show_time_blocks: boolean;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          show_habits?: boolean;
+          show_tasks?: boolean;
+          show_time_blocks?: boolean;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          show_habits?: boolean;
+          show_tasks?: boolean;
+          show_time_blocks?: boolean;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reminder_preferences_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: true;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tags: {
         Row: {
           color: string;
