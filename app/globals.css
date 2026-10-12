@@ -139,7 +139,15 @@ body {
 .planner-calendar .fc .planner-block-external {
   --fc-event-bg-color: var(--surface-muted);
   border-left-color: var(--muted-foreground);
-  cursor: default;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 6px,
+    color-mix(in srgb, var(--muted-foreground) 8%, transparent) 6px 12px
+  );
+}
+/* "Free" in Google: shown faintly, not counted as busy. */
+.planner-calendar .fc .planner-block-free {
+  opacity: 0.6;
 }
 
 /* Deadlines: a marker in the "Due" row, visually distinct from scheduled time. */

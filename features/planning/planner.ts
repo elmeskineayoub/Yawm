@@ -7,6 +7,12 @@ import {
   type DeadlineMarker,
   type SchedulableTask,
 } from "@/features/calendar/queries";
+import { loadGoogleEvents, loadGoogleOverview } from "@/features/google-calendar/queries";
+import type {
+  BlockSyncState,
+  ExternalEvent,
+  GoogleConnectionState,
+} from "@/features/google-calendar/types";
 import { loadLookups } from "@/features/tasks/queries";
 import { PARENT_PERIOD, periodEnd, periodStart, type IsoDate, type PlanPeriod } from "@/lib/dates";
 import { zonedRange } from "@/lib/dates/zoned";
@@ -26,6 +32,14 @@ export type PlannerData = PlanPageData & {
     /** Open tasks for the block editor's "linked task" picker. */
     openTasks: SchedulableTask[];
     reschedule: { task: SchedulableTask; reasons: ("missed_block" | "overdue")[] }[];
+    google: {
+      state: GoogleConnectionState;
+      /** Sync state of the visible blocks; absent when a block isn't synced to Google. */
+      blockStates: Record<string, BlockSyncState>;
+      /** Read-only Google events in the visible range. */
+      events: ExternalEvent[];
+      eventsError: string | null;
+    };
   } | null;
 };
 
@@ -78,10 +92,14 @@ export async function loadPlanner(
 
   const visible = visibleDates(period, start, weekStart);
   const range = zonedRange(visible.from, visible.to, timezone);
-  const [blocks, deadlines, scheduling] = await Promise.all([
+  const [blocks, deadlines, scheduling, google] = await Promise.all([
     loadBlocks(ctx, range),
     loadDeadlines(ctx, visible),
     loadSchedulingState(ctx),
+    loadGoogleOverview(ctx).then(async (overview) => ({
+      overview,
+      ...(await loadGoogleEvents(overview, range)),
+    })),
   ]);
 
   const priorityIds = new Set(
@@ -107,6 +125,17 @@ export async function loadPlanner(
       unscheduled: unscheduled.filter((t) => !needsDecision.has(t.id)),
       openTasks: scheduling.tasks,
       reschedule,
+      google: {
+        state: google.overview.state,
+        blockStates: Object.fromEntries(
+          blocks.flatMap((b) => {
+            const state = google.overview.blockStates.get(b.id);
+            return state ? [[b.id, state]] : [];
+          }),
+        ),
+        events: google.events,
+        eventsError: google.error,
+      },
     },
   };
 }

@@ -2,17 +2,17 @@
 
 A planning and self-management app for tasks, connected yearly-to-daily plans, projects, habits, goals, a vision board, brainstorming, notes, journaling, time blocking, focus sessions, and weekly reviews.
 
-This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–2 are done and Phase 3 is partly done: you can capture ideas, manage tasks and projects, plan years, months, weeks, and days in one Planner, and schedule work on an interactive calendar. Google Calendar sync, habits, goals, journaling, focus, and backups come in later phases.
+This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–3 are done: you can capture ideas, manage tasks and projects, plan years, months, weeks, and days in one Planner, schedule work on an interactive calendar, and optionally connect Google Calendar. Habits, goals, journaling, focus, and backups come in later phases.
 
 ## Current status
 
-| Phase                                   | Status                                                                                                                                                             |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health`        |
-| 1 — Supabase auth & workspace isolation | Done: email/password auth with verification and reset, protected routes, personal workspace + default areas, RLS with integration tests                            |
-| 2 — Core execution                      | Done: inbox, tasks (subtasks, dependencies, recurrence, tags), projects, editable life areas, connected plans, Today, dashboard, quick capture                     |
-| 3 — Planning & calendar                 | Partly done: redesigned Planner (Day/Week/Month/Year), manual time blocks with drag-and-drop scheduling, rescheduling, carry-forward. Google Calendar sync is next |
-| 4+                                      | Not started                                                                                                                                                        |
+| Phase                                   | Status                                                                                                                                                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 — Foundation                          | Done: Next.js 16 App Router, TypeScript strict, Tailwind v4, ESLint, Prettier, Vitest, GitHub Actions CI, app shell, light/dark/system theme, `/api/health`                                    |
+| 1 — Supabase auth & workspace isolation | Done: email/password auth with verification and reset, protected routes, personal workspace + default areas, RLS with integration tests                                                        |
+| 2 — Core execution                      | Done: inbox, tasks (subtasks, dependencies, recurrence, tags), projects, editable life areas, connected plans, Today, dashboard, quick capture                                                 |
+| 3 — Planning & calendar                 | Done: redesigned Planner (Day/Week/Month/Year), manual time blocks with drag-and-drop scheduling, rescheduling, carry-forward, optional Google Calendar (read-only events, one-way block sync) |
+| 4+                                      | Not started                                                                                                                                                                                    |
 
 What exists today:
 
@@ -28,6 +28,7 @@ What exists today:
 - **Life areas** (Settings): rename, recolor, reorder, archive/restore, delete, and add custom areas.
 - **Planner** (`/planner`): one workspace with Day, Week, Month, and Year views. Switch views with the tabs or <kbd>d</kbd> / <kbd>w</kbd> / <kbd>m</kbd> / <kbd>y</kbd>, move with ← / → or the arrows, and jump back with **Today** (<kbd>t</kbd>). Each view has one job: the Year sets a direction and major outcomes (projects) and shows the twelve months; a Month has a theme and outcomes; a Week has a focus and a short list of priorities (a gentle hint above 5); a Day has an intention and 1–3 priorities next to the timeline. Everything is edited inline and saves on its own with an honest "Saving… / Saved" state. You can start at any level: a plan row is created only when you first write to it, and parent plans are never required (chips show the enclosing periods and their themes). Add a new priority by typing, or **Link existing** tasks and projects with search. Progress comes from the linked work. Notes and the period review sit under "Notes & review".
 - **Calendar and time blocks** (Day/Week/Month views): a 24-hour timeline (day/week), a month grid, and an agenda list; phones default to the agenda. Drag a task from **Unscheduled** onto a time slot to schedule it (length from its estimate, 30 minutes by default), click or drag across empty time to create a block, drag blocks to move them and their bottom edge to resize, or open a block to edit it in a side panel (title, linked task, date, start, end, notes). A block is scheduled time, not a deadline: scheduling never changes a task's due date, and deadlines show separately in the "Due" row. Overlapping blocks are allowed but highlighted, with a warning when you save. All times use your profile timezone (Settings), with a notice when your device is in a different one; blocks crossing midnight and DST changes are handled. Works without any Google credentials.
+- **Google Calendar (optional, off unless configured):** connect in Settings. Events from the calendars you choose appear in the Planner, read-only and hatched; busy events count in overlap warnings. Your time blocks are sent one way to one calendar you own (title and time only), updated when you change them and removed when you delete them. The Planner shows "Syncing… / Synced with Google / Google sync failed · Retry", and each block's panel says whether it is in Google. Revoked or expired access shows "Reconnect Google Calendar" and never blocks manual scheduling. Settings has calendar choice, "Sync now", and Disconnect (deletes stored tokens and revokes access).
 - **Rescheduling:** the day or week that contains today lists **Needs rescheduling** — open tasks whose block has passed, or whose deadline has passed — with explicit actions: schedule a new block, move the deadline (today / tomorrow / next week / a date), or add to today's priorities. **Carry forward** links a period's unfinished priorities to the next period (originals stay, deadlines unchanged, running it twice does nothing new).
 - **Profile** (Settings): edit your name, timezone, and week start.
 - **Today:** today's priorities (the day plan's linked work), today's scheduled blocks, overdue, due today, and completed today. Task pages list their scheduled time.
@@ -36,15 +37,16 @@ What exists today:
 
 ### Security model
 
-Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase 1), `supabase/migrations/20261012090000_core_execution.sql` (Phase 2), and `supabase/migrations/20261012120000_time_blocks.sql` (Phase 3).
+Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase 1), `supabase/migrations/20261012090000_core_execution.sql` (Phase 2), `supabase/migrations/20261012120000_time_blocks.sql`, and `supabase/migrations/20261013090000_google_calendar.sql` (Phase 3).
 
-| Table                                                                                                               | Read                           | Write from the browser/API                                                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`                                                                                                          | own row                        | update own `display_name`, `timezone`, `week_start`                                                                                                                               |
-| `workspaces`                                                                                                        | workspaces you are a member of | owner/admin may rename                                                                                                                                                            |
-| `workspace_members`                                                                                                 | members of your workspaces     | none (bootstrap trigger only)                                                                                                                                                     |
-| `areas`, `tags`, `projects`, `tasks`, `task_tags`, `task_dependencies`, `ideas`, `idea_tags`, `plans`, `plan_items` | your workspaces                | owner/admin/member insert/update/delete; viewers read-only                                                                                                                        |
-| `time_blocks`                                                                                                       | your workspaces                | owner/admin/member insert/update/delete of app-created blocks only; blocks with `origin = 'google'` are read-only, and `origin` / external event IDs cannot be written by clients |
+| Table                                                                                                               | Read                                                               | Write from the browser/API                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`                                                                                                          | own row                                                            | update own `display_name`, `timezone`, `week_start`                                                                                                                               |
+| `workspaces`                                                                                                        | workspaces you are a member of                                     | owner/admin may rename                                                                                                                                                            |
+| `workspace_members`                                                                                                 | members of your workspaces                                         | none (bootstrap trigger only)                                                                                                                                                     |
+| `areas`, `tags`, `projects`, `tasks`, `task_tags`, `task_dependencies`, `ideas`, `idea_tags`, `plans`, `plan_items` | your workspaces                                                    | owner/admin/member insert/update/delete; viewers read-only                                                                                                                        |
+| `time_blocks`                                                                                                       | your workspaces                                                    | owner/admin/member insert/update/delete of app-created blocks only; blocks with `origin = 'google'` are read-only, and `origin` / external event IDs cannot be written by clients |
+| `google_calendar_connections`, `time_block_sync`                                                                    | only the user who connected, while they can write in the workspace | the same user only; `workspace_id`/`user_id` can never change; tokens are stored as ciphertext only                                                                               |
 
 - RLS is enabled on every table, in the same migration that creates it.
 - Every reference between rows is a composite foreign key on `(id, workspace_id)`, so a row can only point at rows in its own workspace, even with a guessed UUID.
@@ -57,7 +59,7 @@ Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase
 
 Known limitations / notes:
 
-- **Google Calendar** sync (OAuth, importing external events read-only, one-way export of blocks) is not built yet; it is the next Phase 3 pull request. The `time_blocks` table already has `origin` and external event ID columns for it.
+- **Google Calendar** is one-way: editing or deleting a Yawm event in Google doesn't change Yawm, and the next change to that block in Yawm overwrites (or restores) the Google copy. Google events are shown, never edited or stored. Only calendars you own can be shown or written to (the narrowest scopes allow nothing else), at most 10 shown calendars, and recurring Google events are expanded by Google. One connection per workspace: the member who connected it is the only one whose changes sync immediately; other members' changes sync the next time the owner syncs. Sync covers blocks that ended at most 7 days ago (plus anything synced before), 25 Google writes per run; the Planner keeps going until everything is sent. Disconnecting leaves events already sent in Google Calendar. There is no background job: sync runs after each change, when the Planner opens with pending work, and from "Sync now".
 - Time blocks don't repeat, are limited to 24 hours, and aren't shared between workspaces. Rescheduling is always an explicit action; nothing moves on its own.
 - Dragging on the calendar needs a mouse or touch. Keyboard users can do the same through the **Schedule** buttons and the block side panel.
 - The Unscheduled tray lists open tasks with no upcoming block (this period's priorities first; a short list with "Show all"). Scheduling data considers at most the 500 open tasks with the nearest deadlines.
@@ -72,7 +74,7 @@ Known limitations / notes:
 - Account and workspace deletion flows are not built (required before public release).
 - `NEXT_PUBLIC_*` values are inlined at build time; rebuild/restart after changing `.env.local`.
 - `npm audit` reports high-severity advisories in `braces`/`micromatch`/`fast-glob` pulled in by `eslint-config-next` (lint-time dev dependency only, not shipped to the browser). The only automated "fix" downgrades to Next 14 lint config, so it is left until upstream updates.
-- Dependencies for later phases (Dexie, googleapis, etc.) are declared in `package.json` but unused until their phase.
+- Dependencies for later phases (e.g. Dexie) are declared in `package.json` but unused until their phase.
 
 ## Start here
 
@@ -161,13 +163,18 @@ Still to come in later phases: a private Storage bucket and policies for vision-
 
 ### Applying a new migration to a hosted project
 
-Migrations are never applied to a hosted project automatically (not by CI and not by the app). To apply a new one, such as Phase 3's `20261012120000_time_blocks.sql`:
+Migrations are never applied to a hosted project automatically (not by CI and not by the app). To apply new ones, such as Phase 3's `20261012120000_time_blocks.sql` and `20261013090000_google_calendar.sql`:
 
 1. **Back up first.** The Free plan has no managed backups you can restore yourself. Run `npx supabase db dump --linked -f backup-schema.sql` and `npx supabase db dump --linked --data-only -f backup-data.sql`, and keep the files outside the repository. They contain your personal data.
 2. `npx supabase db push --dry-run` lists the pending migrations without changing anything.
 3. `npx supabase db push` applies the pending migrations in order, each in its own transaction, and records them in `supabase_migrations.schema_migrations` so they never run twice.
 
-What Phase 3's migration (`20261012120000_time_blocks.sql`) does to a hosted database:
+What `20261013090000_google_calendar.sql` does to a hosted database:
+
+- It **adds** two enums, two tables (`google_calendar_connections` for encrypted tokens and the calendar choice, `time_block_sync` mapping each synced block to its Google event), indexes, `updated_at` triggers, column grants, RLS policies, and one `private` helper function. It is needed because there was nowhere to keep tokens or per-block sync state; `time_blocks.external_event_id` is reserved for imported events.
+- It does **not** change existing tables, rows, or policies. Undo: restore from backup, or a new migration that drops the two tables (this deletes stored Google connections; events in Google are untouched).
+
+What Phase 3's first migration (`20261012120000_time_blocks.sql`) does to a hosted database:
 
 - It **adds** the `time_block_origin` enum, the `time_blocks` table with its indexes, `updated_at` trigger, grants, and RLS policies, and two functions (`add_task_to_plan`, `add_project_to_plan`) that create a task/project and link it to a plan in one transaction.
 - It does **not** change or delete existing rows, tables, or policies. Rollback works the same as below (restore from backup, or a new migration that drops `time_blocks`, which deletes all time blocks).
@@ -182,7 +189,30 @@ What Phase 2's migration does to a hosted database:
 
 ## Google Calendar (optional)
 
-Google Calendar is disabled until configured. Create a Google OAuth 2.0 Web client, add the local and production callback URLs, then set the `GOOGLE_*` variables in local/Vercel server environment settings. `GOOGLE_CLIENT_SECRET` and `GOOGLE_TOKEN_ENCRYPTION_KEY` must remain server-only. Do not enable the feature until token encryption, OAuth state validation, event idempotency, and revocation handling are tested.
+Google Calendar is off unless `GOOGLE_CALENDAR_INTEGRATION_ENABLED=true` **and** every variable below is valid; otherwise Settings explains what is missing and the rest of the app, including manual scheduling, works as before. Nothing here is a `NEXT_PUBLIC_*` variable, and none of it reaches the browser.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/): create a project, enable the **Google Calendar API**, and configure the **OAuth consent screen** (External; add yourself as a test user while the app is in "Testing").
+2. Add these scopes to the consent screen. They are the narrowest that work: list your calendars, and manage events only on calendars you own.
+   - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
+   - `https://www.googleapis.com/auth/calendar.events.owned`
+3. Create an **OAuth client ID** of type _Web application_ with authorized redirect URIs `http://localhost:3000/api/integrations/google-calendar/callback` and `https://YOUR_DOMAIN/api/integrations/google-calendar/callback`.
+4. Set server-side environment variables (`.env.local`, or Vercel → Project Settings → Environment Variables; never `NEXT_PUBLIC_`):
+   - `GOOGLE_CALENDAR_INTEGRATION_ENABLED=true`
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+   - `GOOGLE_REDIRECT_URI` exactly as registered (https, or http only for localhost)
+   - `GOOGLE_TOKEN_ENCRYPTION_KEY`: `openssl rand -base64 32`. Keep it secret and stable: changing it makes stored tokens unreadable, and each user then sees "Reconnect Google Calendar".
+5. Apply `20261013090000_google_calendar.sql` (see "Applying a new migration to a hosted project"), deploy, and connect from **Settings → Google Calendar**.
+
+While the consent screen is in "Testing", Google expires refresh tokens after 7 days, so you will be asked to reconnect weekly; publishing (and, for these sensitive scopes, Google's verification) removes that limit.
+
+How it is protected:
+
+- **OAuth:** authorization-code flow with PKCE. The `state` and PKCE verifier live in an encrypted, httpOnly, single-use cookie bound to your user and workspace and valid for 10 minutes; the callback rejects anything else and always redirects to a fixed Settings URL. If you untick a calendar permission on Google's consent screen, the connection is refused and the token revoked.
+- **Tokens:** refresh and access tokens are encrypted with AES-256-GCM on the server (key derived from `GOOGLE_TOKEN_ENCRYPTION_KEY`, ciphertext bound to the workspace and user) before they are stored. They are never sent to the browser, logged, or put in URLs. RLS limits the rows to the user who connected; even that user only ever sees ciphertext.
+- **Idempotency:** each block maps to one fixed Google event ID (the block's UUID). Inserting it twice returns "already exists", which becomes an update; deleting an already-deleted event counts as success. Sync detects changes by comparing each block's `updated_at` with the version last sent, so interrupted runs, retries, concurrent tabs, and disconnect/reconnect never create duplicates (covered by `tests/integration/google-calendar.test.ts`).
+- **Failures:** revoked or expired access stops sync and asks you to reconnect; rate limits back off (`Retry-After`, default 60 s) for automatic runs; outages mark the affected blocks as failed and retry later. In every case your blocks stay saved in Yawm.
+- **Privacy:** only a block's title, start, end, and timezone are sent, plus a private back-reference ID. Notes, tasks, journals, ideas, and habits never go to Google.
+- **Tests:** automated tests never call Google. `tests/support/fake-google.ts` simulates the OAuth and Calendar endpoints; browser tests serve it on `127.0.0.1:4010` via `GOOGLE_API_ORIGIN_OVERRIDE`, which the app accepts only for loopback addresses.
 
 ## Deploying to Vercel
 

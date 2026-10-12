@@ -65,6 +65,75 @@ export type Database = {
           },
         ];
       };
+      google_calendar_connections: {
+        Row: {
+          access_token_ciphertext: string | null;
+          access_token_expires_at: string | null;
+          created_at: string;
+          google_account_email: string | null;
+          id: string;
+          last_error: string | null;
+          last_synced_at: string | null;
+          read_calendar_ids: string[];
+          refresh_token_ciphertext: string;
+          retry_after: string | null;
+          scopes: string[];
+          status: Database["public"]["Enums"]["google_connection_status"];
+          target_calendar_id: string | null;
+          target_calendar_name: string | null;
+          updated_at: string;
+          user_id: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          access_token_ciphertext?: string | null;
+          access_token_expires_at?: string | null;
+          created_at?: string;
+          google_account_email?: string | null;
+          id?: string;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          read_calendar_ids?: string[];
+          refresh_token_ciphertext: string;
+          retry_after?: string | null;
+          scopes?: string[];
+          status?: Database["public"]["Enums"]["google_connection_status"];
+          target_calendar_id?: string | null;
+          target_calendar_name?: string | null;
+          updated_at?: string;
+          user_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          access_token_ciphertext?: string | null;
+          access_token_expires_at?: string | null;
+          created_at?: string;
+          google_account_email?: string | null;
+          id?: string;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          read_calendar_ids?: string[];
+          refresh_token_ciphertext?: string;
+          retry_after?: string | null;
+          scopes?: string[];
+          status?: Database["public"]["Enums"]["google_connection_status"];
+          target_calendar_id?: string | null;
+          target_calendar_name?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "google_calendar_connections_workspace_id_user_id_fkey";
+            columns: ["workspace_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "workspace_members";
+            referencedColumns: ["workspace_id", "user_id"];
+          },
+        ];
+      };
       idea_tags: {
         Row: {
           created_at: string;
@@ -608,6 +677,70 @@ export type Database = {
           },
         ];
       };
+      time_block_sync: {
+        Row: {
+          attempts: number;
+          block_updated_at: string | null;
+          calendar_id: string;
+          connection_id: string;
+          created_at: string;
+          event_id: string;
+          id: string;
+          last_error: string | null;
+          status: Database["public"]["Enums"]["calendar_sync_status"];
+          synced_at: string | null;
+          time_block_id: string | null;
+          updated_at: string;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          block_updated_at?: string | null;
+          calendar_id: string;
+          connection_id: string;
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          last_error?: string | null;
+          status?: Database["public"]["Enums"]["calendar_sync_status"];
+          synced_at?: string | null;
+          time_block_id?: string | null;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          attempts?: number;
+          block_updated_at?: string | null;
+          calendar_id?: string;
+          connection_id?: string;
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          last_error?: string | null;
+          status?: Database["public"]["Enums"]["calendar_sync_status"];
+          synced_at?: string | null;
+          time_block_id?: string | null;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "time_block_sync_connection_id_workspace_id_fkey";
+            columns: ["connection_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "google_calendar_connections";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "time_block_sync_time_block_id_workspace_id_fkey";
+            columns: ["time_block_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "time_blocks";
+            referencedColumns: ["id", "workspace_id"];
+          },
+        ];
+      };
       time_blocks: {
         Row: {
           created_at: string;
@@ -759,6 +892,8 @@ export type Database = {
       set_task_tags: { Args: { tag_names: string[]; target_task_id: string }; Returns: undefined };
     };
     Enums: {
+      calendar_sync_status: "pending" | "synced" | "error";
+      google_connection_status: "active" | "reconnect_required" | "error";
       idea_status: "inbox" | "developing" | "someday" | "archived";
       plan_period: "year" | "month" | "week" | "day";
       project_status: "planned" | "active" | "on_hold" | "completed" | "archived";
@@ -881,6 +1016,8 @@ export const Constants = {
   },
   public: {
     Enums: {
+      calendar_sync_status: ["pending", "synced", "error"],
+      google_connection_status: ["active", "reconnect_required", "error"],
       idea_status: ["inbox", "developing", "someday", "archived"],
       plan_period: ["year", "month", "week", "day"],
       project_status: ["planned", "active", "on_hold", "completed", "archived"],

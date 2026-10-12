@@ -4,10 +4,17 @@ import dynamic from "next/dynamic";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import type { CalendarBlock, DeadlineMarker, SchedulableTask } from "@/features/calendar/queries";
 import { defaultBlockMinutes } from "@/features/calendar/logic";
+import type {
+  BlockSyncState,
+  ExternalEvent,
+  GoogleConnectionState,
+} from "@/features/google-calendar/types";
 import type { IsoDate } from "@/lib/dates";
 import { localToInstant } from "@/lib/dates/zoned";
 import { cn } from "@/lib/utils";
 import { BlockPanel, type BlockDraft } from "./block-panel";
+import { ExternalEventPanel } from "./external-event-panel";
+import { GoogleSyncStatus, useGoogleSync } from "./google-sync";
 import type { CalendarMode } from "./planner-calendar";
 import { RescheduleList, UnscheduledTray } from "./schedule-lists";
 
@@ -34,6 +41,12 @@ type PlannerWorkspaceProps = {
   openTasks: SchedulableTask[];
   reschedule: { task: SchedulableTask; reasons: ("missed_block" | "overdue")[] }[];
   priorityIds: string[];
+  google: {
+    state: GoogleConnectionState;
+    blockStates: Record<string, BlockSyncState>;
+    events: ExternalEvent[];
+    eventsError: string | null;
+  };
   /** Server-rendered intention and priorities, shown above the scheduling tools. */
   focus: ReactNode;
 };
@@ -68,6 +81,9 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
   // Phones get the agenda for week and month by default; the grid is still one tap away.
   const mode: CalendarMode = chosenMode ?? (narrow && view !== "day" ? "agenda" : "grid");
   const [draft, setDraft] = useState<BlockDraft | null>(null);
+  const [external, setExternal] = useState<ExternalEvent | null>(null);
+  const google = useGoogleSync(props.google.state);
+  const onChanged = () => void google.run();
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const browserTz = useBrowserTimezone();
   const priorityIds = new Set(props.priorityIds);
@@ -111,6 +127,12 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
             ))}
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <GoogleSyncStatus
+              state={props.google.state}
+              phase={google.phase}
+              message={google.message}
+              onRetry={() => void google.run(true)}
+            />
             <span
               role="status"
               aria-live="polite"
@@ -149,6 +171,11 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
             . You can change your timezone in Settings.
           </p>
         )}
+        {props.google.eventsError && (
+          <p role="alert" className="mb-2 text-xs text-amber-800 dark:text-amber-300">
+            {props.google.eventsError}
+          </p>
+        )}
         <div className="planner-calendar">
           <PlannerCalendar
             view={view}
@@ -158,8 +185,11 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
             weekStart={props.weekStart}
             blocks={props.blocks}
             deadlines={props.deadlines}
+            external={props.google.events}
             onOpenBlock={setDraft}
+            onOpenExternal={setExternal}
             onSaving={setSaving}
+            onChanged={onChanged}
           />
         </div>
       </section>
@@ -181,7 +211,11 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
         timezone={timezone}
         openTasks={props.openTasks}
         blocks={props.blocks}
+        busy={props.google.events}
+        syncStates={props.google.blockStates}
+        onChanged={onChanged}
       />
+      <ExternalEventPanel event={external} timezone={timezone} onClose={() => setExternal(null)} />
     </div>
   );
 }
