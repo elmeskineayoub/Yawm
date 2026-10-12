@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { moveBlock, scheduleTask } from "@/features/calendar/actions";
 import { overlappingIds } from "@/features/calendar/logic";
 import type { CalendarBlock, DeadlineMarker } from "@/features/calendar/queries";
+import type { ExternalEvent } from "@/features/google-calendar/types";
 import type { IsoDate } from "@/lib/dates";
 import { localToInstant } from "@/lib/dates/zoned";
 import type { BlockDraft } from "./block-panel";
@@ -48,8 +49,13 @@ type PlannerCalendarProps = {
   weekStart: number;
   blocks: CalendarBlock[];
   deadlines: DeadlineMarker[];
+  /** Read-only events from Google Calendar. */
+  external: ExternalEvent[];
   onOpenBlock: (draft: BlockDraft) => void;
+  onOpenExternal: (event: ExternalEvent) => void;
   onSaving: (state: "saving" | "saved" | "error") => void;
+  /** Called after a change is saved, e.g. to sync it to Google. */
+  onChanged: () => void;
 };
 
 /**
@@ -65,15 +71,22 @@ export default function PlannerCalendar({
   weekStart,
   blocks,
   deadlines,
+  external,
   onOpenBlock,
+  onOpenExternal,
   onSaving,
+  onChanged,
 }: PlannerCalendarProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
   const events = useMemo<EventInput[]>(() => {
-    const overlapping = overlappingIds(blocks);
+    // Busy Google events count for overlap warnings too, so double-booking is visible.
+    const busy = external
+      .filter((e) => !e.allDay && !e.free)
+      .map((e) => ({ id: `google-${e.id}`, starts_at: e.start, ends_at: e.end }));
+    const overlapping = overlappingIds([...blocks, ...busy]);
     return [
       ...blocks.map((b) => ({
         id: b.id,
@@ -98,8 +111,23 @@ export default function PlannerCalendar({
         classNames: ["planner-deadline", d.status === "done" ? "planner-deadline-done" : ""],
         extendedProps: { kind: "deadline", taskId: d.id },
       })),
+      ...external.map((e) => ({
+        id: `google-${e.id}`,
+        title: e.title,
+        start: e.start,
+        end: e.end,
+        allDay: e.allDay,
+        editable: false,
+        classNames: [
+          "planner-block",
+          "planner-block-external",
+          e.free ? "planner-block-free" : "",
+          overlapping.has(`google-${e.id}`) ? "planner-block-overlap" : "",
+        ].filter(Boolean),
+        extendedProps: { kind: "external", event: e, overlap: overlapping.has(`google-${e.id}`) },
+      })),
     ];
-  }, [blocks, deadlines]);
+  }, [blocks, deadlines, external]);
 
   const run = (
     work: () => Promise<{ ok: boolean; error?: string; data?: { overlaps?: { title: string }[] } }>,
@@ -110,6 +138,7 @@ export default function PlannerCalendar({
       const result = await work();
       if (result.ok) {
         onSaving("saved");
+        onChanged();
         const overlaps = result.data?.overlaps ?? [];
         if (overlaps.length)
           toast.warning(`Overlaps with ${overlaps.map((o) => o.title).join(", ")}`);
@@ -186,6 +215,10 @@ export default function PlannerCalendar({
       router.push(`/tasks/${info.event.extendedProps.taskId}`);
       return;
     }
+    if (kind === "external") {
+      onOpenExternal(info.event.extendedProps.event as ExternalEvent);
+      return;
+    }
     const block = info.event.extendedProps.block as CalendarBlock;
     onOpenBlock({
       id: block.id,
@@ -213,6 +246,7 @@ export default function PlannerCalendar({
       <span className="planner-block-label">
         {arg.timeText && <span className="planner-block-time">{arg.timeText}</span>}
         <span className="planner-block-title">{arg.event.title}</span>
+        {kind === "external" && <span className="sr-only"> (Google Calendar, read-only)</span>}
         {overlap && <span className="sr-only"> (overlaps another block)</span>}
         {pendingIds.has(arg.event.id) && <span className="sr-only"> (saving)</span>}
       </span>
@@ -233,7 +267,8 @@ export default function PlannerCalendar({
       height={view === "month" || mode === "agenda" ? "auto" : 640}
       expandRows
       nowIndicator
-      allDayText="Due"
+      // The all-day row holds deadlines, plus all-day events when Google is connected.
+      allDayText={external.some((e) => e.allDay) ? "All day" : "Due"}
       dayHeaderFormat={view === "week" ? weekHeader : { weekday: "short" }}
       allDaySlot
       slotDuration="00:30:00"

@@ -27,9 +27,7 @@ personal-productivity-os/
 │   │   └── settings/
 │   ├── api/
 │   │   └── integrations/google-calendar/
-│   │       ├── connect/
-│   │       ├── callback/
-│   │       └── sync/
+│   │       └── callback/        # OAuth redirect; connect/sync/disconnect are server actions
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── manifest.ts

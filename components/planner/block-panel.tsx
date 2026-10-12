@@ -9,6 +9,7 @@ import { controlClass } from "@/components/ui/field";
 import { createBlock, deleteBlock, updateBlock } from "@/features/calendar/actions";
 import { overlapsWith } from "@/features/calendar/logic";
 import type { CalendarBlock, SchedulableTask } from "@/features/calendar/queries";
+import type { BlockSyncState, ExternalEvent } from "@/features/google-calendar/types";
 import { addDays } from "@/lib/dates";
 import { formatTimeRange, instantToLocal, localToInstant } from "@/lib/dates/zoned";
 import { cn } from "@/lib/utils";
@@ -29,10 +30,20 @@ type BlockPanelProps = {
   timezone: string;
   openTasks: SchedulableTask[];
   blocks: CalendarBlock[];
+  /** Google events, for overlap warnings. */
+  busy: ExternalEvent[];
+  syncStates: Record<string, BlockSyncState>;
+  onChanged: () => void;
+};
+
+const SYNC_LABEL: Record<BlockSyncState, string> = {
+  synced: "In Google Calendar",
+  pending: "Waiting to sync to Google Calendar",
+  error: "Google Calendar sync failed; it will be retried",
 };
 
 /** Create or edit a time block. Also the keyboard-accessible alternative to drag and drop. */
-export function BlockPanel({ draft, onClose, timezone, openTasks, blocks }: BlockPanelProps) {
+export function BlockPanel({ draft, onClose, ...rest }: BlockPanelProps) {
   return (
     <Dialog.Root open={draft !== null} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -43,9 +54,7 @@ export function BlockPanel({ draft, onClose, timezone, openTasks, blocks }: Bloc
               key={draft.id ?? `${draft.starts_at}-${draft.task_id}`}
               draft={draft}
               onClose={onClose}
-              timezone={timezone}
-              openTasks={openTasks}
-              blocks={blocks}
+              {...rest}
             />
           )}
         </Dialog.Content>
@@ -60,6 +69,9 @@ function BlockForm({
   timezone,
   openTasks,
   blocks,
+  busy,
+  syncStates,
+  onChanged,
 }: BlockPanelProps & { draft: BlockDraft }) {
   const id = useId();
   const start = instantToLocal(draft.starts_at, timezone);
@@ -86,7 +98,11 @@ function BlockForm({
     }
   }, [date, startTime, endTime, timezone]);
 
-  const overlaps = span ? overlapsWith({ ...span, id: draft.id }, blocks) : [];
+  const busySpans = busy
+    .filter((e) => !e.allDay && !e.free)
+    .map((e) => ({ id: `google-${e.id}`, title: e.title, starts_at: e.start, ends_at: e.end }));
+  const overlaps = span ? overlapsWith({ ...span, id: draft.id }, [...blocks, ...busySpans]) : [];
+  const syncState = draft.id ? syncStates[draft.id] : undefined;
   const linkedTask = openTasks.find((t) => t.id === taskId);
   const effectiveTitle = title.trim() || linkedTask?.title || "";
 
@@ -110,6 +126,7 @@ function BlockForm({
         return;
       }
       toast.success(draft.id ? "Block updated" : "Block added");
+      onChanged();
       if (result.data.overlaps.length) {
         toast.warning(`Overlaps with ${result.data.overlaps.map((o) => o.title).join(", ")}`);
       }
@@ -126,6 +143,7 @@ function BlockForm({
         return;
       }
       toast.success("Block deleted");
+      onChanged();
       onClose();
     });
 
@@ -240,6 +258,18 @@ function BlockForm({
         <p className="text-xs text-muted-foreground">
           {span ? formatTimeRange(span.starts_at, span.ends_at, timezone) : "—"} · {timezone}
         </p>
+        {syncState && (
+          <p
+            className={cn(
+              "text-xs",
+              syncState === "error"
+                ? "text-amber-800 dark:text-amber-300"
+                : "text-muted-foreground",
+            )}
+          >
+            {SYNC_LABEL[syncState]}
+          </p>
+        )}
 
         {overlaps.length > 0 && (
           <p

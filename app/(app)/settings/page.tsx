@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { AreasManager } from "@/components/settings/areas-manager";
+import { GoogleCalendarSettings } from "@/components/settings/google-calendar";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeSelector } from "@/components/shared/theme-selector";
+import { loadGoogleOverview, loadOwnedCalendars } from "@/features/google-calendar/queries";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default async function SettingsPage() {
-  const { supabase, user, workspace } = await getWorkspaceContext();
-  const [{ data: profile }, areas, usage] = await Promise.all([
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const ctx = await getWorkspaceContext();
+  const { supabase, user, workspace } = ctx;
+  const googleOutcome = (await searchParams).google;
+  const google = await loadGoogleOverview(ctx);
+  const [{ data: profile }, areas, usage, owned] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, timezone, week_start")
@@ -27,6 +36,7 @@ export default async function SettingsPage() {
       .eq("workspace_id", workspace.id)
       .not("area_id", "is", null)
       .limit(10_000),
+    loadOwnedCalendars(google),
   ]);
   const usageByArea = new Map<string, number>();
   for (const row of usage.data ?? []) {
@@ -77,6 +87,25 @@ export default async function SettingsPage() {
               />
             </div>
           )}
+        </section>
+        <section
+          id="google"
+          aria-labelledby="google-heading"
+          className="scroll-mt-6 rounded-lg border border-border bg-surface p-6"
+        >
+          <h2 id="google-heading" className="text-base font-semibold">
+            Google Calendar
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Optional. See your Google events next to your plan, and send time blocks to Google.
+          </p>
+          <GoogleCalendarSettings
+            state={google.state}
+            calendars={owned.calendars.map(({ id, name, primary }) => ({ id, name, primary }))}
+            calendarsError={owned.error}
+            outcome={typeof googleOutcome === "string" ? googleOutcome : null}
+            timezone={ctx.timezone}
+          />
         </section>
         <section
           aria-labelledby="appearance-heading"

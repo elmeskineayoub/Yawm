@@ -293,6 +293,7 @@ export default async function PlannerPage({
           openTasks={data.calendar.openTasks}
           reschedule={data.calendar.reschedule}
           priorityIds={data.items.flatMap((i) => (i.kind === "task" ? [i.task.id] : []))}
+          google={data.calendar.google}
           focus={focus}
         />
       )}
