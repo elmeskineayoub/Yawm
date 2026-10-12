@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { GoalSelect } from "@/components/goals/goal-links";
 import { ProjectEditForm } from "@/components/projects/project-edit-form";
 import { QuickAddTask } from "@/components/tasks/quick-add-task";
 import { TaskList } from "@/components/tasks/task-row";
@@ -10,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { PROJECT_STATUS_LABELS } from "@/features/projects/schemas";
 import { compareTasks, isOpen, progressOf } from "@/features/tasks/logic";
+import { loadGoalOptions } from "@/features/goals/queries";
 import { enrichTasks, loadLookups, TASK_COLUMNS } from "@/features/tasks/queries";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
@@ -21,7 +23,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const ctx = await getWorkspaceContext();
   const { supabase } = ctx;
 
-  const [project, taskRows, lookups] = await Promise.all([
+  const [project, taskRows, lookups, goals] = await Promise.all([
     supabase
       .from("projects")
       .select("*")
@@ -35,6 +37,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       .eq("workspace_id", ctx.workspace.id)
       .limit(1000),
     loadLookups(ctx),
+    loadGoalOptions(ctx),
   ]);
   if (project.error || taskRows.error) throw new Error("Could not load the project.");
   if (!project.data) notFound();
@@ -93,6 +96,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             className="rounded-lg border border-border bg-surface p-5"
           >
             <ProjectEditForm project={project.data} areas={lookups.areas} />
+          </section>
+          <section
+            aria-label="Project goal"
+            className="rounded-lg border border-border bg-surface p-5"
+          >
+            <GoalSelect
+              kind="project"
+              targetId={project.data.id}
+              goalId={project.data.goal_id}
+              goals={goals}
+            />
           </section>
           <DeleteProjectButton
             projectId={project.data.id}

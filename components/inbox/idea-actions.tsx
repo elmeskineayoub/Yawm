@@ -18,6 +18,7 @@ type IdeaActionsProps = {
     status: IdeaStatus;
     converted_task_id: string | null;
     converted_project_id: string | null;
+    converted_goal_id: string | null;
   };
   afterDelete?: string;
 };
@@ -26,7 +27,7 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const convert = (target: "task" | "project") =>
+  const convert = (target: "task" | "project" | "goal") =>
     startTransition(async () => {
       const result = await convertIdea(idea.id, target);
       if (!result.ok) {
@@ -97,6 +98,24 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
           → Project
         </Button>
       )}
+      {idea.converted_goal_id ? (
+        <Link
+          href={`/goals/${idea.converted_goal_id}`}
+          className="px-2 text-xs text-accent hover:underline"
+        >
+          Open goal
+        </Link>
+      ) : (
+        <Button
+          variant="secondary"
+          className="px-2 py-1 text-xs"
+          disabled={pending}
+          onClick={() => convert("goal")}
+          aria-label={`Convert “${idea.title}” to a goal`}
+        >
+          → Goal
+        </Button>
+      )}
       <ConfirmDialog
         trigger={
           <Button
@@ -110,8 +129,8 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
         title="Delete this idea?"
         description={
           <p>
-            “{idea.title}” will be permanently deleted. Tasks or projects made from it are kept. To
-            keep it out of the way instead, set its status to Archived.
+            “{idea.title}” will be permanently deleted. Tasks, projects, or goals made from it are
+            kept. To keep it out of the way instead, set its status to Archived.
           </p>
         }
         confirmLabel="Delete"

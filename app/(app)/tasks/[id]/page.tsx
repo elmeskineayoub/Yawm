@@ -5,9 +5,11 @@ import { z } from "zod";
 import { DeleteTaskButton } from "@/components/tasks/delete-task-button";
 import { DependencyEditor } from "@/components/tasks/dependency-editor";
 import { QuickAddTask } from "@/components/tasks/quick-add-task";
+import { GoalSelect } from "@/components/goals/goal-links";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
 import { TaskList } from "@/components/tasks/task-row";
 import { describeRecurrence, STATUS_LABELS } from "@/features/tasks/logic";
+import { loadGoalOptions } from "@/features/goals/queries";
 import { enrichTasks, loadLookups, TASK_COLUMNS } from "@/features/tasks/queries";
 import { addDays, dateOfInstant, formatDate, formatPeriod, type PlanPeriod } from "@/lib/dates";
 import { formatTimeRange, instantToLocal, zonedDayRange } from "@/lib/dates/zoned";
@@ -40,6 +42,8 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
     planRows,
     candidateRows,
     parent,
+    goalLink,
+    goals,
   ] = await Promise.all([
     loadLookups(ctx),
     supabase.from("tasks").select(TASK_COLUMNS).eq("parent_task_id", id).order("created_at"),
@@ -58,6 +62,8 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
     task.parent_task_id
       ? supabase.from("tasks").select("id, title").eq("id", task.parent_task_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    supabase.from("tasks").select("goal_id").eq("id", id).maybeSingle(),
+    loadGoalOptions(ctx),
   ]);
   if (subtaskRows.error || tagRows.error || dependsOnRows.error || blocksRows.error) {
     throw new Error("Could not load the task details.");
@@ -146,6 +152,17 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         </section>
 
         <div className="space-y-6">
+          <section
+            aria-label="Task goal"
+            className="rounded-lg border border-border bg-surface p-5"
+          >
+            <GoalSelect
+              kind="task"
+              targetId={task.id}
+              goalId={goalLink.data?.goal_id ?? null}
+              goals={goals}
+            />
+          </section>
           {!task.parent_task_id && (
             <section
               aria-labelledby="subtasks-heading"

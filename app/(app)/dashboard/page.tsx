@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { HabitList } from "@/components/habits/habit-row";
 import { ScheduledList } from "@/components/planner/scheduled-list";
 import { TaskList } from "@/components/tasks/task-row";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { isDone } from "@/features/habits/logic";
+import { loadHabitsForDay } from "@/features/habits/queries";
 import { countInbox } from "@/features/inbox/queries";
 import { loadProjectSummaries } from "@/features/projects/queries";
 import { loadLookups } from "@/features/tasks/queries";
+import { planItemLink } from "@/features/planning/queries";
 import { plannerHref } from "@/features/planning/view";
 import { loadToday } from "@/features/tasks/today";
 import { formatDate, formatPeriod } from "@/lib/dates";
@@ -71,11 +75,13 @@ function Card({
 export default async function DashboardPage() {
   const ctx = await getWorkspaceContext();
   const lookups = await loadLookups(ctx);
-  const [today, inboxCount, projects] = await Promise.all([
+  const [today, inboxCount, projects, habits] = await Promise.all([
     loadToday(ctx, lookups),
     countInbox(ctx),
     loadProjectSummaries(ctx, { statuses: ["active"] }),
+    loadHabitsForDay(ctx, ctx.today),
   ]);
+  const habitsDone = habits.filter((h) => isDone(h.habit, h.log ?? undefined)).length;
   const { data: weekPlan } = await ctx.supabase
     .from("plans")
     .select("theme")
@@ -131,8 +137,8 @@ export default async function DashboardPage() {
                         {item.task.title}
                       </Link>
                     ) : (
-                      <Link href={`/projects/${item.project.id}`} className="hover:underline">
-                        {item.project.name} (project)
+                      <Link href={planItemLink(item).href} className="hover:underline">
+                        {planItemLink(item).title} ({planItemLink(item).label})
                       </Link>
                     )}
                   </li>
@@ -157,6 +163,27 @@ export default async function DashboardPage() {
               timezone={ctx.timezone}
               dayHref={plannerHref("day", ctx.today)}
             />
+          </Card>
+
+          <Card
+            title="Today's habits"
+            action={
+              <Link href="/habits" className="text-sm text-accent hover:underline">
+                {habits.length ? `${habitsDone} of ${habits.length} done` : "Habits"}
+              </Link>
+            }
+          >
+            {habits.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No habits due today.</p>
+            ) : (
+              <HabitList
+                summaries={habits}
+                date={ctx.today}
+                today={ctx.today}
+                label="Today's habits"
+                showStrip={false}
+              />
+            )}
           </Card>
 
           <Card

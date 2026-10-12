@@ -41,8 +41,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Start local Supabase (services Phase 1 does not use are excluded)
-        run: npx supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor,studio,postgres-meta
+      - name: Start local Supabase (unused services are excluded; Storage is needed for the vision board)
+        run: npx supabase start -x realtime,imgproxy,edge-runtime,logflare,vector,supavisor,studio,postgres-meta
       - name: Generated database types match the migrations
         run: |
           npm run db:types

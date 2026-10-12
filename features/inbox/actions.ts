@@ -86,12 +86,15 @@ export async function deleteIdea(ideaId: string): Promise<ActionResult> {
 /** Converts in one database transaction; converting again returns the same task/project. */
 export async function convertIdea(
   ideaId: string,
-  target: "task" | "project",
+  target: "task" | "project" | "goal",
 ): Promise<ActionResult<{ href: string }>> {
-  if (!uuid.safeParse(ideaId).success) return fail("Invalid request.");
+  if (!uuid.safeParse(ideaId).success || !["task", "project", "goal"].includes(target)) {
+    return fail("Invalid request.");
+  }
   const { supabase, workspace } = await getWorkspaceContext();
   const result = await convertIdeaInWorkspace(supabase, workspace.id, ideaId, target);
   if (!result.ok) return result;
   refresh();
-  return ok({ href: `/${target === "task" ? "tasks" : "projects"}/${result.data.id}` });
+  const base = { task: "tasks", project: "projects", goal: "goals" }[target];
+  return ok({ href: `/${base}/${result.data.id}` });
 }

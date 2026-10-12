@@ -5,19 +5,20 @@ import type { Database } from "@/types/database";
 export type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 export type ProjectSummary = Pick<
   ProjectRow,
-  "id" | "name" | "status" | "due_date" | "area_id" | "sort_order"
+  "id" | "name" | "status" | "due_date" | "area_id" | "sort_order" | "goal_id"
 > & { progress: ProgressSummary; openTasks: number };
 
 /** Projects with progress derived from their tasks (never stored). */
 export async function loadProjectSummaries(
   { supabase, workspace }: WorkspaceContext,
-  options: { statuses?: ProjectRow["status"][] } = {},
+  options: { statuses?: ProjectRow["status"][]; goalId?: string } = {},
 ): Promise<ProjectSummary[]> {
   let query = supabase
     .from("projects")
-    .select("id, name, status, due_date, area_id, sort_order")
+    .select("id, name, status, due_date, area_id, sort_order, goal_id")
     .eq("workspace_id", workspace.id);
   if (options.statuses) query = query.in("status", options.statuses);
+  if (options.goalId) query = query.eq("goal_id", options.goalId);
   const [projects, tasks] = await Promise.all([
     query.order("sort_order").order("name"),
     supabase
