@@ -11,18 +11,20 @@ import {
   type WorkspaceFixture,
 } from "./helpers";
 
+// Import preserves record ids (so references resolve), and ids are global primary keys. The
+// supported case is restoring your OWN backup into your OWN workspace: replace frees the ids first,
+// then re-inserts them. (Importing someone else's backup while their rows still exist elsewhere
+// would hit the primary key and be skipped — a documented limitation.)
+
 let alice: TestUser;
-let bob: TestUser;
 let carol: TestUser;
 let a: WorkspaceFixture;
-let b: WorkspaceFixture;
 let bundle: Json;
 
 beforeAll(async () => {
   alice = await createConfirmedUser("alice-import");
-  bob = await createConfirmedUser("bob-import");
   carol = await createConfirmedUser("carol-import");
-  [a, b] = await Promise.all([seedWorkspace(alice), seedWorkspace(bob)]);
+  a = await seedWorkspace(alice);
   const ctx = {
     supabase: alice.client,
     user: { id: alice.id, email: alice.email },
@@ -35,36 +37,38 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await deleteUsers(alice, bob, carol);
+  await deleteUsers(alice, carol);
 });
 
 describe("import_workspace", () => {
-  it("replace restores the backup and clears what was there", async () => {
-    const { data, error } = await bob.client.rpc("import_workspace", {
-      target_workspace: b.workspaceId,
+  it("replace restores the backup and clears records not in it", async () => {
+    // A task created after the export; a replace restore should remove it.
+    const extra = (
+      await alice.client
+        .from("tasks")
+        .insert({ workspace_id: a.workspaceId, title: "Created after export" })
+        .select("id")
+        .single()
+    ).data!.id;
+
+    const { data, error } = await alice.client.rpc("import_workspace", {
+      target_workspace: a.workspaceId,
       payload: bundle,
       mode: "replace",
     });
     expect(error).toBeNull();
+    expect((data as { inserted: number }).inserted).toBeGreaterThan(0);
 
     const admin = adminClient();
-    // Alice's task now lives in Bob's workspace, with the workspace rewritten.
-    const restored = await admin
-      .from("tasks")
-      .select("id, workspace_id")
-      .eq("id", a.taskId)
-      .maybeSingle();
-    expect(restored.data?.workspace_id).toBe(b.workspaceId);
-    // Bob's original seeded task was deleted by the replace.
-    const original = await admin.from("tasks").select("id").eq("id", b.taskId).maybeSingle();
-    expect(original.data).toBeNull();
-    // The reported count matches what landed.
-    expect((data as { inserted: number }).inserted).toBeGreaterThan(0);
+    const restored = await admin.from("tasks").select("id").eq("id", a.taskId).maybeSingle();
+    expect(restored.data?.id).toBe(a.taskId);
+    const gone = await admin.from("tasks").select("id").eq("id", extra).maybeSingle();
+    expect(gone.data).toBeNull();
   });
 
   it("merge is idempotent: re-importing the same backup inserts nothing", async () => {
-    const { data, error } = await bob.client.rpc("import_workspace", {
-      target_workspace: b.workspaceId,
+    const { data, error } = await alice.client.rpc("import_workspace", {
+      target_workspace: a.workspaceId,
       payload: bundle,
       mode: "merge",
     });
@@ -73,8 +77,8 @@ describe("import_workspace", () => {
   });
 
   it("rejects an unsupported schema version", async () => {
-    const { error } = await bob.client.rpc("import_workspace", {
-      target_workspace: b.workspaceId,
+    const { error } = await alice.client.rpc("import_workspace", {
+      target_workspace: a.workspaceId,
       payload: { schema_version: 2, records: {} } as Json,
       mode: "replace",
     });
@@ -82,22 +86,17 @@ describe("import_workspace", () => {
   });
 
   it("refuses to import into a workspace the caller isn't a member of", async () => {
+    const { data: carolWs } = await adminClient()
+      .from("workspaces")
+      .select("id")
+      .eq("created_by", carol.id)
+      .eq("is_personal", true)
+      .single();
     const { error } = await alice.client.rpc("import_workspace", {
-      target_workspace: await bobWorkspaceOutsider(),
+      target_workspace: carolWs!.id,
       payload: { schema_version: 1, records: {} } as Json,
       mode: "merge",
     });
     expect(error?.message).toContain("FORBIDDEN");
   });
 });
-
-/** Carol's workspace, which Alice is not a member of. */
-async function bobWorkspaceOutsider(): Promise<string> {
-  const { data } = await adminClient()
-    .from("workspaces")
-    .select("id")
-    .eq("created_by", carol.id)
-    .eq("is_personal", true)
-    .single();
-  return data!.id;
-}
