@@ -3,7 +3,9 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AreasManager } from "@/components/settings/areas-manager";
 import { GoogleCalendarSettings } from "@/components/settings/google-calendar";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { ImportRestore } from "@/components/settings/import-restore";
 import { ReminderSettings } from "@/components/settings/reminder-settings";
+import { SnapshotManager } from "@/components/settings/snapshot-manager";
 import { ThemeSelector } from "@/components/shared/theme-selector";
 import { loadGoogleOverview, loadOwnedCalendars } from "@/features/google-calendar/queries";
 import { loadReminderPreferences } from "@/features/reminders/queries";
@@ -122,6 +124,45 @@ export default async function SettingsPage({
             notifications when it is closed.
           </p>
           <ReminderSettings initial={reminderPrefs} />
+        </section>
+        <section
+          aria-labelledby="data-heading"
+          className="rounded-lg border border-border bg-surface p-6"
+        >
+          <h2 id="data-heading" className="text-base font-semibold">
+            Data &amp; backup
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Download your workspace, or restore it from a backup file. The JSON backup is the
+            complete copy; CSV and Markdown are for use in other tools. Vision-board images are
+            referenced by path, not included in these files. Secrets (Google tokens) are never
+            exported.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a
+              href="/api/export?format=json"
+              download
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              Download full backup (JSON)
+            </a>
+            <a
+              href="/api/export?format=tasks-csv"
+              download
+              className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-surface-muted"
+            >
+              Tasks (CSV)
+            </a>
+            <a
+              href="/api/export?format=journal-md"
+              download
+              className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-surface-muted"
+            >
+              Journal (Markdown)
+            </a>
+          </div>
+          <ImportRestore workspaceId={workspace.id} />
+          <SnapshotManager workspaceId={workspace.id} today={ctx.today} timezone={ctx.timezone} />
         </section>
         <section
           aria-labelledby="appearance-heading"
