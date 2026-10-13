@@ -5,6 +5,7 @@ import { GoogleCalendarSettings } from "@/components/settings/google-calendar";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ImportRestore } from "@/components/settings/import-restore";
 import { ReminderSettings } from "@/components/settings/reminder-settings";
+import { SnapshotManager } from "@/components/settings/snapshot-manager";
 import { ThemeSelector } from "@/components/shared/theme-selector";
 import { loadGoogleOverview, loadOwnedCalendars } from "@/features/google-calendar/queries";
 import { loadReminderPreferences } from "@/features/reminders/queries";
@@ -160,7 +161,8 @@ export default async function SettingsPage({
               Journal (Markdown)
             </a>
           </div>
-          <ImportRestore />
+          <ImportRestore workspaceId={workspace.id} />
+          <SnapshotManager workspaceId={workspace.id} today={ctx.today} timezone={ctx.timezone} />
         </section>
         <section
           aria-labelledby="appearance-heading"

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { QuickCapture } from "@/components/shared/quick-capture";
 import type { Reminder } from "@/features/reminders/logic";
 import { AccountMenu } from "./account-menu";
+import { OfflineBanner } from "./offline-banner";
 import { ReminderCenter } from "./reminder-center";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -137,6 +138,7 @@ export function AppShell({
             </div>
           )}
         </header>
+        <OfflineBanner />
         <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-8">
           {children}
         </main>

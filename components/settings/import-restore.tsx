@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { importWorkspace } from "@/features/backups/actions";
 import { summarizeImport, type ImportMode, type ImportSummary } from "@/features/backups/import";
+import { createSnapshot } from "@/lib/offline/snapshots";
 
 /** Upload a JSON backup, preview what it contains, choose merge or replace, then restore it. */
-export function ImportRestore() {
+export function ImportRestore({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [bundle, setBundle] = useState<unknown>(null);
@@ -33,6 +34,17 @@ export function ImportRestore() {
   };
 
   const run = async (): Promise<string | null> => {
+    // A replace is destructive: snapshot the current workspace first (best-effort).
+    if (mode === "replace") {
+      try {
+        const current = await (
+          await fetch("/api/export?format=json", { cache: "no-store" })
+        ).json();
+        await createSnapshot(workspaceId, "before-import", current);
+      } catch {
+        // A failed local snapshot must not block the restore itself.
+      }
+    }
     const result = await importWorkspace(bundle, mode);
     if (!result.ok) return result.error;
     toast.success(
