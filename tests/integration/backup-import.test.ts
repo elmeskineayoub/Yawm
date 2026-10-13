@@ -46,7 +46,6 @@ describe("import_workspace", () => {
       mode: "replace",
     });
     expect(error).toBeNull();
-    expect((data as { inserted: number }).inserted).toBeGreaterThan(0);
 
     const admin = adminClient();
     // Alice's task now lives in Bob's workspace, with the workspace rewritten.
@@ -59,6 +58,8 @@ describe("import_workspace", () => {
     // Bob's original seeded task was deleted by the replace.
     const original = await admin.from("tasks").select("id").eq("id", b.taskId).maybeSingle();
     expect(original.data).toBeNull();
+    // The reported count matches what landed.
+    expect((data as { inserted: number }).inserted).toBeGreaterThan(0);
   });
 
   it("merge is idempotent: re-importing the same backup inserts nothing", async () => {

@@ -71,11 +71,12 @@ begin
       from jsonb_array_elements(rows) elem
     );
     execute format(
-      'insert into public.%I select * from jsonb_populate_recordset(null::public.%I, $1) '
-      'on conflict do nothing',
+      'with ins as ('
+      '  insert into public.%I select * from jsonb_populate_recordset(null::public.%I, $1) '
+      '  on conflict do nothing returning 1'
+      ') select count(*)::int from ins',
       tbl, tbl
-    ) using rewritten;
-    get diagnostics inserted = row_count;
+    ) into inserted using rewritten;
     total := total + inserted;
     summary := summary || jsonb_build_object(tbl, inserted);
   end loop;
