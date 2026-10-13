@@ -124,6 +124,42 @@ export default async function SettingsPage({
           <ReminderSettings initial={reminderPrefs} />
         </section>
         <section
+          aria-labelledby="data-heading"
+          className="rounded-lg border border-border bg-surface p-6"
+        >
+          <h2 id="data-heading" className="text-base font-semibold">
+            Data &amp; backup
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Download your workspace. The JSON backup is the complete copy (import/restore is
+            coming); CSV and Markdown are for use in other tools. Vision-board images are referenced
+            by path, not included in these files. Secrets (Google tokens) are never exported.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a
+              href="/api/export?format=json"
+              download
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              Download full backup (JSON)
+            </a>
+            <a
+              href="/api/export?format=tasks-csv"
+              download
+              className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-surface-muted"
+            >
+              Tasks (CSV)
+            </a>
+            <a
+              href="/api/export?format=journal-md"
+              download
+              className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-surface-muted"
+            >
+              Journal (Markdown)
+            </a>
+          </div>
+        </section>
+        <section
           aria-labelledby="appearance-heading"
           className="rounded-lg border border-border bg-surface p-6"
         >
