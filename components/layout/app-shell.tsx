@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { QuickCapture } from "@/components/shared/quick-capture";
 import type { Reminder } from "@/features/reminders/logic";
 import { AccountMenu } from "./account-menu";
+import { BrandLogo } from "./brand-logo";
 import { OfflineBanner } from "./offline-banner";
 import { ReminderCenter } from "./reminder-center";
 import { SidebarNav } from "./sidebar-nav";
@@ -73,13 +74,14 @@ export function AppShell({
         )}
       >
         {collapsed ? (
-          <div className="flex flex-col items-center gap-1 px-2 pt-2">
+          <div className="flex flex-col items-center gap-1 px-2 pt-3">
+            <BrandLogo showText={false} heightRem={1.3} className="mb-1" />
             {toggleButton}
             {account && <ReminderCenter reminders={reminders} align="left" />}
           </div>
         ) : (
           <div className="flex h-14 items-center justify-between px-3">
-            <span className="px-2 text-base font-semibold">Yawm</span>
+            <BrandLogo className="px-1" />
             <div className="flex items-center gap-1">
               {account && <ReminderCenter reminders={reminders} align="left" />}
               {toggleButton}
@@ -109,7 +111,7 @@ export function AppShell({
             className="absolute inset-y-0 left-0 flex w-64 flex-col bg-surface shadow-lg"
           >
             <div className="flex h-14 items-center justify-between px-3">
-              <span className="px-2 text-base font-semibold">Yawm</span>
+              <BrandLogo className="px-1" />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
@@ -142,7 +144,7 @@ export function AppShell({
           >
             <Menu aria-hidden className="size-5" />
           </button>
-          <span className="text-base font-semibold">Yawm</span>
+          <BrandLogo />
           {account && (
             <div className="ml-auto">
               <ReminderCenter reminders={reminders} />
