@@ -40,6 +40,22 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
 
+  const toggleButton = (
+    <button
+      type="button"
+      onClick={() => setCollapsed((value) => !value)}
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      aria-expanded={!collapsed}
+      className="rounded p-2 text-muted-foreground hover:bg-surface-muted"
+    >
+      {collapsed ? (
+        <PanelLeftOpen aria-hidden className="size-4" />
+      ) : (
+        <PanelLeftClose aria-hidden className="size-4" />
+      )}
+    </button>
+  );
+
   return (
     <div className="flex min-h-dvh">
       <a
@@ -56,27 +72,22 @@ export function AppShell({
           collapsed ? "w-16" : "w-60",
         )}
       >
-        <div className="flex h-14 items-center justify-between px-3">
-          {!collapsed && <span className="px-2 text-base font-semibold">Yawm</span>}
-          <div className="flex items-center gap-1">
-            {account && <ReminderCenter reminders={reminders} />}
-            <button
-              type="button"
-              onClick={() => setCollapsed((value) => !value)}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              aria-expanded={!collapsed}
-              className="rounded p-2 text-muted-foreground hover:bg-surface-muted"
-            >
-              {collapsed ? (
-                <PanelLeftOpen aria-hidden className="size-4" />
-              ) : (
-                <PanelLeftClose aria-hidden className="size-4" />
-              )}
-            </button>
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-1 px-2 pt-2">
+            {toggleButton}
+            {account && <ReminderCenter reminders={reminders} align="left" />}
           </div>
-        </div>
+        ) : (
+          <div className="flex h-14 items-center justify-between px-3">
+            <span className="px-2 text-base font-semibold">Yawm</span>
+            <div className="flex items-center gap-1">
+              {account && <ReminderCenter reminders={reminders} align="left" />}
+              {toggleButton}
+            </div>
+          </div>
+        )}
         {account && (
-          <div className="px-2 pb-3">
+          <div className={cn("pb-3", collapsed ? "px-2 pt-2" : "px-2")}>
             <QuickCapture collapsed={collapsed} />
           </div>
         )}

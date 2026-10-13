@@ -13,7 +13,14 @@ import { cn } from "@/lib/utils";
  * upcoming time blocks. Dismissing one hides it immediately and records the dismissal so it does
  * not come back on refresh. Reminders only appear while the app is open.
  */
-export function ReminderCenter({ reminders }: { reminders: Reminder[] }) {
+export function ReminderCenter({
+  reminders,
+  align = "right",
+}: {
+  reminders: Reminder[];
+  /** Which edge the dropdown is anchored to: "right" opens leftwards (top bar), "left" rightwards (sidebar). */
+  align?: "left" | "right";
+}) {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const [, startTransition] = useTransition();
@@ -71,7 +78,12 @@ export function ReminderCenter({ reminders }: { reminders: Reminder[] }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-border bg-background shadow-lg">
+        <div
+          className={cn(
+            "absolute z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-border bg-background shadow-lg",
+            align === "left" ? "left-0" : "right-0",
+          )}
+        >
           <div className="border-b border-border px-4 py-2 text-sm font-semibold">Reminders</div>
           {visible.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">
