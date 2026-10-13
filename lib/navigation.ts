@@ -33,6 +33,6 @@ export const primaryNavigation: NavItem[] = [
   { label: "Goals & Vision", href: "/goals", icon: Star, available: true },
   { label: "Notes", href: "/notes", icon: NotebookPen, available: true },
   { label: "Journal", href: "/journal", icon: BookOpen, available: true },
-  { label: "Reviews", href: "/reviews", icon: TrendingUp, available: false },
+  { label: "Reviews", href: "/reviews", icon: TrendingUp, available: true },
   { label: "Settings", href: "/settings", icon: Settings, available: true },
 ];

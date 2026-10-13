@@ -97,9 +97,17 @@ test("capture an idea, plan it, and get it done", async ({ page }) => {
     await expect(page.getByRole("link", { name: "Pick a platform" })).toBeHidden();
     await page.getByRole("checkbox", { name: "Complete “Write first issue”" }).click();
 
-    // Completing a weekly task creates next week's occurrence.
-    await page.goto("/tasks?status=all&q=Write+first+issue");
-    await expect(page.getByRole("link", { name: "Write first issue" })).toHaveCount(2);
+    // Completing a weekly task creates next week's occurrence. The completion is an async server
+    // action, so re-navigate until the new occurrence has landed rather than asserting once.
+    await expect
+      .poll(
+        async () => {
+          await page.goto("/tasks?status=all&q=Write+first+issue");
+          return page.getByRole("link", { name: "Write first issue" }).count();
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(2);
     await page.goto("/projects");
     await expect(
       page.getByRole("progressbar", { name: "Launch a newsletter progress" }),

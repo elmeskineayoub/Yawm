@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { primaryNavigation } from "@/lib/navigation";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard" }));
 
@@ -14,13 +15,21 @@ describe("SidebarNav", () => {
     expect(screen.getByRole("link", { name: "Settings" })).not.toHaveAttribute("aria-current");
   });
 
-  it("does not link modules that are not implemented yet", () => {
+  it("renders every available module as a link, and disabled ones as non-links", () => {
     render(<SidebarNav collapsed={false} />);
-    expect(screen.queryByRole("link", { name: /Reviews/ })).not.toBeInTheDocument();
-    expect(screen.getByText("Reviews").closest("[aria-disabled]")).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    for (const item of primaryNavigation) {
+      if (item.available) {
+        expect(screen.getByRole("link", { name: item.label })).toBeInTheDocument();
+      } else {
+        expect(screen.queryByRole("link", { name: item.label })).not.toBeInTheDocument();
+        expect(screen.getByText(item.label).closest("[aria-disabled]")).toHaveAttribute(
+          "aria-disabled",
+          "true",
+        );
+      }
+    }
+    // Reviews shipped in Phase 5.
+    expect(screen.getByRole("link", { name: "Reviews" })).toBeInTheDocument();
   });
 
   it("keeps labels available to screen readers when collapsed", () => {

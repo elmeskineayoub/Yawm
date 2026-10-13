@@ -3,8 +3,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AreasManager } from "@/components/settings/areas-manager";
 import { GoogleCalendarSettings } from "@/components/settings/google-calendar";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { ReminderSettings } from "@/components/settings/reminder-settings";
 import { ThemeSelector } from "@/components/shared/theme-selector";
 import { loadGoogleOverview, loadOwnedCalendars } from "@/features/google-calendar/queries";
+import { loadReminderPreferences } from "@/features/reminders/queries";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -18,7 +20,7 @@ export default async function SettingsPage({
   const { supabase, user, workspace } = ctx;
   const googleOutcome = (await searchParams).google;
   const google = await loadGoogleOverview(ctx);
-  const [{ data: profile }, areas, usage, owned] = await Promise.all([
+  const [{ data: profile }, areas, usage, owned, reminderPrefs] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, timezone, week_start")
@@ -37,6 +39,7 @@ export default async function SettingsPage({
       .not("area_id", "is", null)
       .limit(10_000),
     loadOwnedCalendars(google),
+    loadReminderPreferences(ctx),
   ]);
   const usageByArea = new Map<string, number>();
   for (const row of usage.data ?? []) {
@@ -106,6 +109,19 @@ export default async function SettingsPage({
             outcome={typeof googleOutcome === "string" ? googleOutcome : null}
             timezone={ctx.timezone}
           />
+        </section>
+        <section
+          aria-labelledby="reminders-heading"
+          className="rounded-lg border border-border bg-surface p-6"
+        >
+          <h2 id="reminders-heading" className="text-base font-semibold">
+            Reminders
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose which reminders appear in the bell while Yawm is open. Yawm does not send
+            notifications when it is closed.
+          </p>
+          <ReminderSettings initial={reminderPrefs} />
         </section>
         <section
           aria-labelledby="appearance-heading"

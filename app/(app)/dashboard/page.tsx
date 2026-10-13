@@ -2,12 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { JournalPromptCard } from "@/components/dashboard/journal-prompt-card";
+import { TrendBars } from "@/components/dashboard/trend-bars";
 import { HabitList } from "@/components/habits/habit-row";
 import { ScheduledList } from "@/components/planner/scheduled-list";
 import { TaskList } from "@/components/tasks/task-row";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { dailyPrompt } from "@/features/dashboard/logic";
+import { loadDashboardInsights } from "@/features/dashboard/queries";
 import { formatDuration } from "@/features/focus/logic";
 import { loadFocusSummary } from "@/features/focus/queries";
+import { ratePercent } from "@/features/reviews/logic";
 import { isDone } from "@/features/habits/logic";
 import { loadHabitsForDay } from "@/features/habits/queries";
 import { countInbox } from "@/features/inbox/queries";
@@ -77,13 +82,15 @@ function Card({
 export default async function DashboardPage() {
   const ctx = await getWorkspaceContext();
   const lookups = await loadLookups(ctx);
-  const [today, inboxCount, projects, habits, focus] = await Promise.all([
+  const [today, inboxCount, projects, habits, focus, insights] = await Promise.all([
     loadToday(ctx, lookups),
     countInbox(ctx),
     loadProjectSummaries(ctx, { statuses: ["active"] }),
     loadHabitsForDay(ctx, ctx.today),
     loadFocusSummary(ctx),
+    loadDashboardInsights(ctx),
   ]);
+  const habitWeekPercent = ratePercent(insights.habits.rate);
   const habitsDone = habits.filter((h) => isDone(h.habit, h.log ?? undefined)).length;
   const { data: weekPlan } = await ctx.supabase
     .from("plans")
@@ -109,6 +116,52 @@ export default async function DashboardPage() {
           <Tile href="/today" label="Due today" value={today.dueToday.length} />
           <Tile href="/inbox" label="Ideas in inbox" value={inboxCount} />
           <Tile href="/projects" label="Active projects" value={projects.length} />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card
+            title="Completed last 7 days"
+            action={
+              <Link href="/reviews" className="text-sm text-accent hover:underline">
+                Weekly review
+              </Link>
+            }
+          >
+            <TrendBars days={insights.trend} />
+            <p className="mt-3 text-sm text-muted-foreground">
+              {insights.trendTotal} task{insights.trendTotal === 1 ? "" : "s"} completed in the last
+              7 days.
+            </p>
+          </Card>
+
+          <Card title="This week's progress">
+            <dl className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <dt className="text-muted-foreground">Tasks due this week done</dt>
+                <dd className="tabular-nums">
+                  {insights.weekTaskRate === null ? "—" : `${insights.weekTaskRate}%`}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <dt className="text-muted-foreground">Habits (scheduled days)</dt>
+                <dd className="tabular-nums">
+                  {habitWeekPercent === null ? "—" : `${habitWeekPercent}%`}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <dt className="text-muted-foreground">Focus time</dt>
+                <dd className="tabular-nums">{formatDuration(focus.weekSeconds)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <dt className="text-muted-foreground">Completed this week</dt>
+                <dd className="tabular-nums">{today.completedThisWeek}</dd>
+              </div>
+            </dl>
+          </Card>
+
+          <Card title="Reflect">
+            <JournalPromptCard prompt={dailyPrompt(ctx.today)} today={ctx.today} />
+          </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
