@@ -134,6 +134,39 @@ export async function loadHabitsForDay(ctx: WorkspaceContext, date: IsoDate) {
   return all.filter((s) => s.due);
 }
 
+export type HabitRangeRate = { id: string; title: string } & CompletionRate;
+
+/**
+ * Completion rate per active habit over [from, to] (inclusive), counting only scheduled days (the
+ * weekly review's habit statistics). Rest days and open days are excluded by `completionRate`.
+ */
+export async function loadHabitRatesForRange(
+  ctx: WorkspaceContext,
+  from: IsoDate,
+  to: IsoDate,
+): Promise<HabitRangeRate[]> {
+  const { data, error } = await ctx.supabase
+    .from("habits")
+    .select(habitColumns)
+    .eq("workspace_id", ctx.workspace.id)
+    .is("archived_at", null)
+    .order("sort_order")
+    .order("created_at");
+  if (error) throw new Error("Could not load your habits.");
+  const habits = data.map(toHabit);
+  // Weekly habits need their whole week's logs; widen the lower bound to that week's start.
+  const logs = await loadLogs(
+    ctx,
+    habits.map((h) => h.id),
+    periodStart("week", from, ctx.weekStart),
+  );
+  return habits.map((h) => ({
+    id: h.id,
+    title: h.title,
+    ...completionRate(h, logs.get(h.id) ?? [], from, to, ctx.today, ctx.weekStart),
+  }));
+}
+
 export type HabitDetail = HabitSummary & {
   logs: HabitLog[];
   rates: { week: CompletionRate; month: CompletionRate; last30: CompletionRate };

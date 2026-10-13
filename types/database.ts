@@ -1503,6 +1503,51 @@ export type Database = {
           },
         ];
       };
+      weekly_reviews: {
+        Row: {
+          could_improve: string | null;
+          created_at: string;
+          id: string;
+          lessons: string | null;
+          next_focus: string | null;
+          updated_at: string;
+          week_start: string;
+          went_well: string | null;
+          workspace_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          could_improve?: string | null;
+          created_at?: string;
+          id?: string;
+          lessons?: string | null;
+          next_focus?: string | null;
+          updated_at?: string;
+          week_start: string;
+          went_well?: string | null;
+          workspace_id: string;
+        };
+        Update: {
+          could_improve?: string | null;
+          created_at?: string;
+          id?: string;
+          lessons?: string | null;
+          next_focus?: string | null;
+          updated_at?: string;
+          week_start?: string;
+          went_well?: string | null;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reviews_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspace_members: {
         Row: {
           created_at: string;
