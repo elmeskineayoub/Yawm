@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AreasManager } from "@/components/settings/areas-manager";
 import { GoogleCalendarSettings } from "@/components/settings/google-calendar";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { ImportRestore } from "@/components/settings/import-restore";
 import { ReminderSettings } from "@/components/settings/reminder-settings";
 import { ThemeSelector } from "@/components/shared/theme-selector";
 import { loadGoogleOverview, loadOwnedCalendars } from "@/features/google-calendar/queries";
@@ -131,9 +132,10 @@ export default async function SettingsPage({
             Data &amp; backup
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Download your workspace. The JSON backup is the complete copy (import/restore is
-            coming); CSV and Markdown are for use in other tools. Vision-board images are referenced
-            by path, not included in these files. Secrets (Google tokens) are never exported.
+            Download your workspace, or restore it from a backup file. The JSON backup is the
+            complete copy; CSV and Markdown are for use in other tools. Vision-board images are
+            referenced by path, not included in these files. Secrets (Google tokens) are never
+            exported.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <a
@@ -158,6 +160,7 @@ export default async function SettingsPage({
               Journal (Markdown)
             </a>
           </div>
+          <ImportRestore />
         </section>
         <section
           aria-labelledby="appearance-heading"

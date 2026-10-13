@@ -1623,6 +1623,10 @@ export type Database = {
       convert_idea_to_goal: { Args: { idea_id: string }; Returns: string };
       convert_idea_to_project: { Args: { idea_id: string }; Returns: string };
       convert_idea_to_task: { Args: { idea_id: string }; Returns: string };
+      import_workspace: {
+        Args: { mode: string; payload: Json; target_workspace: string };
+        Returns: Json;
+      };
       set_idea_tags: { Args: { tag_names: string[]; target_idea_id: string }; Returns: undefined };
       set_journal_tags: {
         Args: { tag_names: string[]; target_entry_id: string };
