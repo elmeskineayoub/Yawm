@@ -2,7 +2,7 @@
 
 A planning and self-management app for tasks, connected yearly-to-daily plans, projects, habits, goals, a vision board, brainstorming, notes, journaling, time blocking, focus sessions, and weekly reviews.
 
-This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–6 are done: alongside the full app (planner, tasks, projects, calendar + optional Google Calendar, habits, goals/vision board, notes, journal, focus timer, reminders, weekly review, dashboard insights), you can export a full backup (JSON + tasks CSV + journal Markdown), restore it (merge or replace), rely on automatic browser-local snapshots, install it as a PWA, and see an honest offline indicator. Phase 7 (production deployment checklist) remains, along with deferred items: service-worker shell caching, bundling vision-board images into the backup, global search, and account/workspace deletion.
+This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md`. Phases 0–6 are done: alongside the full app (planner, tasks, projects, calendar + optional Google Calendar, habits, goals/vision board, notes, journal, focus timer, reminders, weekly review, dashboard insights), you can export a full backup (JSON + tasks CSV + journal Markdown), restore it (merge or replace), rely on automatic browser-local snapshots, install it as a PWA, and see an honest offline indicator. Phase 7 adds the production deployment runbook and operational checklist (`DEPLOYMENT.md`), security response headers, and a private-app `robots.txt`. Deferred items remain: service-worker shell caching, bundling vision-board images into the backup, global search, and account/workspace deletion.
 
 ## Current status
 
@@ -15,7 +15,8 @@ This repository is being implemented phase-by-phase from `IMPLEMENTATION_PLAN.md
 | 4 — Habits, goals, vision, notes        | Done: habits (daily/weekly, measurable, rest days, streaks, history), goals with milestones linked to projects, tasks, and plans, vision board (private images), text notes, and a dated journal with autosave                                                                                                                                                                                                           |
 | 5 — Focus, reminders, reviews, insights | Done: reload-resilient focus timer with session history, and an in-app reminder centre (due tasks, habits, upcoming blocks) with per-category settings; weekly review with date-scoped statistics and reflection prompts; dashboard insights (7-day completion trend, weekly progress, daily reflection prompt)                                                                                                          |
 | 6 — Backup, restore, PWA, a11y          | Done: full workspace export (JSON backup, tasks CSV, journal Markdown) and validated import/restore with preview and a merge/replace choice, automatic browser-local snapshots (daily + before a replace, newest 7, restore/download/delete), a PWA manifest with an offline indicator, and a browser e2e for the backup round-trip (Settings → Data & backup). Service-worker shell caching and image bundling deferred |
-| 7+                                      | Not started                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 7 — Production deploy & operations      | Done: DEPLOYMENT.md runbook (apply migrations to hosted Supabase, auth URLs, Vercel env, optional Google) with a production smoke-test checklist, security response headers (next.config.ts), and a private-app robots.txt                                                                                                                                                                                               |
+| Later — collaboration                   | Not started (schema is collaboration-ready)                                                                                                                                                                                                                                                                                                                                                                              |
 
 What exists today:
 
@@ -280,11 +281,13 @@ How it is protected:
 
 ## Deploying to Vercel
 
+See **`DEPLOYMENT.md`** for the full production runbook (apply migrations to hosted Supabase, Auth URLs, Vercel environment variables, optional Google Calendar) and the production smoke-test checklist. In short:
+
 1. Push the repository to GitHub.
 2. Import it into Vercel.
 3. Add the same required environment variables in Vercel Project Settings.
 4. Configure Supabase production redirect/site URLs to match the deployed domain.
-5. Deploy and run the production smoke-test checklist from `IMPLEMENTATION_PLAN.md`.
+5. Deploy and run the production smoke-test checklist in `DEPLOYMENT.md`.
 
 ## Backups and free-tier limitations
 
