@@ -61,7 +61,7 @@ export function SnapshotManager({
       try {
         await createSnapshot(workspaceId, reason, await fetchBundle());
         await refresh();
-        setStatus(`Snapshot saved ${new Date().toLocaleString()}`);
+        setStatus(`Snapshot stored ${new Date().toLocaleString()}`);
       } catch {
         setStatus("Could not save a snapshot in this browser.");
       } finally {
