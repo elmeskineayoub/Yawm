@@ -3,28 +3,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --surface: #fafaf9;
-  --surface-muted: #f5f5f4;
-  --foreground: #1c1917;
-  --muted-foreground: #57534e;
-  --border: #e7e5e4;
-  --accent: #c2410c;
-  --accent-foreground: #ffffff;
+  --background: #f8f9fa;
+  --surface: #ffffff;
+  --surface-muted: #e9ecef;
+  --foreground: #212529;
+  --muted-foreground: #6c757d;
+  --border: #dee2e6;
+  --accent: #212529;
+  --accent-foreground: #f8f9fa;
   --warning-bg: #fffbeb;
   --warning-border: #fcd34d;
   --warning-foreground: #78350f;
 }
 
 .dark {
-  --background: #1c1917;
-  --surface: #232120;
-  --surface-muted: #2c2a28;
-  --foreground: #f5f5f4;
-  --muted-foreground: #a8a29e;
-  --border: #3a3734;
-  --accent: #fb923c;
-  --accent-foreground: #1c1917;
+  --background: #212529;
+  --surface: #343a40;
+  --surface-muted: #495057;
+  --foreground: #f8f9fa;
+  --muted-foreground: #adb5bd;
+  --border: #495057;
+  --accent: #e9ecef;
+  --accent-foreground: #212529;
   --warning-bg: #2a2111;
   --warning-border: #92400e;
   --warning-foreground: #fde68a;
@@ -42,7 +42,9 @@
   --color-warning-bg: var(--warning-bg);
   --color-warning-border: var(--warning-border);
   --color-warning-foreground: var(--warning-foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
@@ -56,6 +58,14 @@ html.dark {
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Headings use the display font (Plus Jakarta Sans); body/UI uses Inter via font-sans. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
 }
 
 :focus-visible {
