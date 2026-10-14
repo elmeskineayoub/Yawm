@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { tasksToCsv } from "@/features/backups/csv";
 import { buildExportBundle } from "@/features/backups/export";
 import { journalToMarkdown } from "@/features/backups/markdown";
+import { rateLimit } from "@/lib/rate-limit";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 // A signed-in user downloads their own workspace. The proxy already requires a session for /api/*
@@ -20,6 +21,16 @@ export async function GET(request: NextRequest) {
   const format: Format = isFormat(requested) ? requested : "json";
 
   const ctx = await getWorkspaceContext();
+
+  // A full export is expensive; cap it per user (10 per 5 minutes).
+  const limit = await rateLimit(ctx.supabase, "export", ctx.user.id, 10, 300);
+  if (!limit.allowed) {
+    return new Response("Too many export requests. Please try again shortly.", {
+      status: 429,
+      headers: { "Retry-After": String(limit.retryAfter), "Cache-Control": "no-store" },
+    });
+  }
+
   const bundle = await buildExportBundle(ctx);
   const stamp = ctx.today;
 

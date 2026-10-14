@@ -3,7 +3,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LOGIN_PATH, safeRedirectPath } from "@/lib/auth/routes";
+import type { Db } from "@/lib/db/types";
 import { getAppUrl } from "@/lib/env";
+import { clientIp, rateLimit, type RateBucket } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "./form-state";
 import {
@@ -15,6 +17,19 @@ import {
 } from "./schemas";
 
 // Never log form values here: they include passwords and personal data.
+
+/** Per-IP guard for auth endpoints (app-level, in addition to Supabase's own limits). */
+async function tooManyAuthAttempts(
+  db: Db,
+  bucket: RateBucket,
+  max: number,
+  windowSeconds: number,
+): Promise<string | null> {
+  const { allowed, retryAfter } = await rateLimit(db, bucket, await clientIp(), max, windowSeconds);
+  return allowed
+    ? null
+    : `Too many attempts. Please wait ${Math.ceil(retryAfter / 60)} minute(s) and try again.`;
+}
 
 async function appOrigin(): Promise<string> {
   const configured = getAppUrl();
@@ -36,6 +51,9 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   }
 
   const supabase = await createClient();
+  const limited = await tooManyAuthAttempts(supabase, "auth:signin", 10, 300);
+  if (limited) return { status: "error", message: limited, email };
+
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     if (error.code === "email_not_confirmed") {
@@ -68,6 +86,9 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
 
   const { email: address, password, displayName, timezone } = parsed.data;
   const supabase = await createClient();
+  const limited = await tooManyAuthAttempts(supabase, "auth:signup", 5, 900);
+  if (limited) return { status: "error", message: limited, email };
+
   const { error } = await supabase.auth.signUp({
     email: address,
     password,
@@ -113,6 +134,9 @@ export async function requestPasswordReset(
   }
 
   const supabase = await createClient();
+  const limited = await tooManyAuthAttempts(supabase, "auth:reset", 5, 900);
+  if (limited) return { status: "error", message: limited, email };
+
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${await appOrigin()}/auth/callback?next=/reset-password`,
   });
