@@ -3,6 +3,7 @@ import type { WorkspaceContext } from "@/lib/workspace-context";
 import {
   completionRate,
   dayStatus,
+  isDone,
   isDueOn,
   streaks,
   weekProgress,
@@ -132,6 +133,41 @@ export async function loadHabitSummaries(
 export async function loadHabitsForDay(ctx: WorkspaceContext, date: IsoDate) {
   const all = await loadHabitSummaries(ctx, { date });
   return all.filter((s) => s.due);
+}
+
+/**
+ * Lightweight "habits due today and not yet done" for the reminder centre. Unlike
+ * loadHabitSummaries it loads only this week's logs (not years of history for streaks), so it's
+ * cheap enough to run on the app shell.
+ */
+export async function loadHabitsDueToday(
+  ctx: WorkspaceContext,
+): Promise<{ id: string; title: string }[]> {
+  const { data, error } = await ctx.supabase
+    .from("habits")
+    .select(habitColumns)
+    .eq("workspace_id", ctx.workspace.id)
+    .is("archived_at", null)
+    .order("sort_order")
+    .order("created_at");
+  if (error) throw new Error("Could not load your habits.");
+  const habits = data.map(toHabit);
+  const logs = await loadLogs(
+    ctx,
+    habits.map((h) => h.id),
+    periodStart("week", ctx.today, ctx.weekStart),
+  );
+  return habits
+    .filter((habit) => {
+      const habitLogs = logs.get(habit.id) ?? [];
+      const todayLog = habitLogs.find((l) => l.log_date === ctx.today);
+      return (
+        isDueOn(habit, habitLogs, ctx.today, ctx.weekStart) &&
+        !todayLog?.rest &&
+        !isDone(habit, todayLog)
+      );
+    })
+    .map((habit) => ({ id: habit.id, title: habit.title }));
 }
 
 export type HabitRangeRate = { id: string; title: string } & CompletionRate;
