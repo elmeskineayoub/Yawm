@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
+import { rateLimit } from "@/lib/rate-limit";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 import { decryptSecret, tokenContext } from "./crypto";
 import { loadConnectionRow, messageFor, updateConnection, withAccessToken } from "./connection";
@@ -113,6 +114,13 @@ export async function syncGoogleCalendar(manual = false): Promise<ActionResult<S
   const ctx = await getWorkspaceContext();
   const deps = googleDepsFor(ctx);
   if (!deps) return fail(NOT_AVAILABLE);
+
+  // Sync calls the Google API; cap it per user (30 per 5 minutes) so it can't be hammered.
+  const limit = await rateLimit(ctx.supabase, "google:sync", ctx.user.id, 30, 300);
+  if (!limit.allowed) {
+    return fail(`Syncing too often. Please wait ${Math.ceil(limit.retryAfter / 60)} minute(s).`);
+  }
+
   const conn = await loadConnectionRow(deps);
   if (!conn) {
     return ok({

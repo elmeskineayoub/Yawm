@@ -1,5 +1,6 @@
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import type { Db, Tables } from "@/lib/db/types";
+import { isSupportedImage } from "@/lib/image-signature";
 import { isCardImagePath, reorder, VISION_BUCKET } from "./logic";
 
 // ID-based vision-board writes, scoped to the active workspace in addition to RLS and the
@@ -90,6 +91,18 @@ export async function setCardImageInWorkspace(
   if (listError || !files?.some((f) => f.name === name)) {
     return fail("The image didn't finish uploading. Please try again.");
   }
+
+  // Verify the file's actual content, not just its declared type (a renamed file can lie).
+  const { data: blob, error: downloadError } = await db.storage.from(VISION_BUCKET).download(path);
+  if (downloadError || !blob) {
+    return fail("The image didn't finish uploading. Please try again.");
+  }
+  const head = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+  if (!isSupportedImage(head)) {
+    await removeFiles(db, [path]);
+    return fail("That file isn't a supported image (JPEG, PNG, GIF, or WebP).");
+  }
+
   const result = await updateCardInWorkspace(db, workspaceId, cardId, {
     image_path: path,
     image_alt: alt,

@@ -74,7 +74,8 @@ Schemas: `supabase/migrations/20261011230000_identity_and_workspaces.sql` (Phase
 - Database functions called from the app (`convert_idea_to_task/project/goal`, `set_task_tags`, `set_idea_tags`, `set_note_tags`, `set_journal_tags`, `add_task_to_plan`, `add_project_to_plan`, `add_goal_to_plan`) run with the caller's permissions, so RLS applies. Membership checks are `security definer` helpers in a non-exposed `private` schema. The one exception is `import_workspace`, which is `security definer` (it must set trigger-managed columns a restore needs) but checks the caller's membership of the target workspace itself (`auth.uid()` is the caller's even inside a definer function) before writing.
 - `anon` (signed-out) has no privileges on any of these tables.
 - The app uses only the publishable key. No service-role/secret key is used by the app; integration tests use the local stack's secret key only to create test users.
-- Task, idea, project, habit, goal, vision-board, note, and journal content is never logged or sent to third parties. Journal and note text stays in Supabase and is never sent to Google, analytics, or any AI service. Vision images go only to your Supabase Storage bucket, uploaded from the browser with your own session (so Storage RLS applies), then attached to the card by a server action that checks the path and that the file exists.
+- Task, idea, project, habit, goal, vision-board, note, and journal content is never logged or sent to third parties. Journal and note text stays in Supabase and is never sent to Google, analytics, or any AI service. Vision images go only to your Supabase Storage bucket, uploaded from the browser with your own session (so Storage RLS applies), then attached to the card by a server action that checks the path, that the file exists, and that its leading bytes are a real JPEG/PNG/GIF/WebP (not just a renamed file) before it is saved.
+- **Rate limiting** is enforced application-side by a durable Postgres counter (`private.rate_limits` + the `rate_limit_hit` security-definer RPC, exposed to no table grants): per-IP on sign-in/sign-up/password-reset (in addition to Supabase's own limits) and per-user on the full export and on Google sync. It fails open if the counter errors, so a database hiccup never locks anyone out.
 
 Known limitations / notes:
 
@@ -212,6 +213,12 @@ What Phase 5's migrations do to a hosted database:
 - None of the three change or delete existing tables, rows, or policies. Undo: restore from backup,
   or a new migration that drops the new tables/enum (this deletes focus history, reminder settings,
   and weekly-review reflections).
+
+What `20261020090000_rate_limits.sql` does to a hosted database:
+
+- It **adds** a `private.rate_limits` table (not exposed to PostgREST) and the `rate_limit_hit`
+  security-definer function (granted to `anon` and `authenticated`, restricted to a fixed bucket
+  allowlist). No public tables or policies change. Undo: drop the function and table.
 
 What `20261019090000_import_workspace.sql` (Phase 6) does to a hosted database:
 

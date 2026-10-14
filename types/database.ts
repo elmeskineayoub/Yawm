@@ -1627,6 +1627,15 @@ export type Database = {
         Args: { mode: string; payload: Json; target_workspace: string };
         Returns: Json;
       };
+      rate_limit_hit: {
+        Args: {
+          p_bucket: string;
+          p_identifier: string;
+          p_max: number;
+          p_window_seconds: number;
+        };
+        Returns: Json;
+      };
       set_idea_tags: { Args: { tag_names: string[]; target_idea_id: string }; Returns: undefined };
       set_journal_tags: {
         Args: { tag_names: string[]; target_entry_id: string };
