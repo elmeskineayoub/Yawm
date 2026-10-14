@@ -21,7 +21,7 @@ import { loadLookups } from "@/features/tasks/queries";
 import { planItemLink } from "@/features/planning/queries";
 import { plannerHref } from "@/features/planning/view";
 import { loadToday } from "@/features/tasks/today";
-import { formatDate, formatPeriod } from "@/lib/dates";
+import { formatDate, formatPeriod, periodStart } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
@@ -82,23 +82,27 @@ function Card({
 export default async function DashboardPage() {
   const ctx = await getWorkspaceContext();
   const lookups = await loadLookups(ctx);
-  const [today, inboxCount, projects, habits, focus, insights] = await Promise.all([
+  const weekStartDate = periodStart("week", ctx.today, ctx.weekStart);
+  // One parallel batch (incl. the week plan) rather than a trailing serial query — one fewer
+  // round-trip, which matters most when the database is a round-trip away.
+  const [today, inboxCount, projects, habits, focus, insights, weekPlanResult] = await Promise.all([
     loadToday(ctx, lookups),
     countInbox(ctx),
     loadProjectSummaries(ctx, { statuses: ["active"] }),
     loadHabitsForDay(ctx, ctx.today),
     loadFocusSummary(ctx),
     loadDashboardInsights(ctx),
+    ctx.supabase
+      .from("plans")
+      .select("theme")
+      .eq("workspace_id", ctx.workspace.id)
+      .eq("period", "week")
+      .eq("period_start", weekStartDate)
+      .maybeSingle(),
   ]);
+  const weekPlan = weekPlanResult.data;
   const habitWeekPercent = ratePercent(insights.habits.rate);
   const habitsDone = habits.filter((h) => isDone(h.habit, h.log ?? undefined)).length;
-  const { data: weekPlan } = await ctx.supabase
-    .from("plans")
-    .select("theme")
-    .eq("workspace_id", ctx.workspace.id)
-    .eq("period", "week")
-    .eq("period_start", today.weekStartDate)
-    .maybeSingle();
 
   const attention = [...today.overdue, ...today.dueToday];
 
