@@ -1,6 +1,23 @@
 import "server-only";
 import { headers } from "next/headers";
 import type { Db } from "@/lib/db/types";
+import { getSupabasePublicConfig } from "@/lib/env";
+
+/**
+ * App-level rate limiting is a production concern. Against a local Supabase stack (dev, CI, e2e)
+ * every request shares one loopback IP, which would false-positive, so it is skipped there. Hosted
+ * (https) deployments always enforce it; Supabase Auth also rate-limits auth endpoints regardless.
+ */
+function limiterActive(): boolean {
+  const config = getSupabasePublicConfig();
+  if (!config.configured) return false;
+  try {
+    const host = new URL(config.url).hostname;
+    return host !== "localhost" && host !== "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Application-level rate limiting backed by a durable Postgres counter (see
@@ -20,6 +37,7 @@ export async function rateLimit(
   max: number,
   windowSeconds: number,
 ): Promise<RateLimitResult> {
+  if (!limiterActive()) return { allowed: true, retryAfter: 0 };
   const { data, error } = await db.rpc("rate_limit_hit", {
     p_bucket: bucket,
     p_identifier: identifier || "unknown",
