@@ -1,6 +1,5 @@
 import { loadBlocks } from "@/features/calendar/queries";
-import { isDone } from "@/features/habits/logic";
-import { loadHabitsForDay } from "@/features/habits/queries";
+import { loadHabitsDueToday } from "@/features/habits/queries";
 import { zonedDayRange } from "@/lib/dates/zoned";
 import { instantToLocal } from "@/lib/dates/zoned";
 import type { WorkspaceContext } from "@/lib/workspace-context";
@@ -33,7 +32,7 @@ export async function loadReminders(ctx: WorkspaceContext): Promise<Reminder[]> 
       .lte("due_date", today)
       .order("due_date")
       .limit(50),
-    loadHabitsForDay(ctx, today),
+    loadHabitsDueToday(ctx),
     loadBlocks(ctx, zonedDayRange(today, timezone)),
     supabase
       .from("reminder_dismissals")
@@ -50,9 +49,8 @@ export async function loadReminders(ctx: WorkspaceContext): Promise<Reminder[]> 
     .filter((t) => t.due_date === today)
     .map((t) => ({ id: t.id, title: t.title, due_date: t.due_date! }));
 
-  const habitReminders = habits
-    .filter((s) => s.due && !s.log?.rest && !isDone(s.habit, s.log ?? undefined))
-    .map((s) => ({ id: s.habit.id, title: s.habit.title }));
+  // Already filtered to "due today and not done" by loadHabitsDueToday.
+  const habitReminders = habits;
 
   const blockReminders = blocks
     .filter((b) => b.starts_at > nowInstant)
