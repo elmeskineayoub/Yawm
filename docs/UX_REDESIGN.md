@@ -199,6 +199,8 @@ affected e2e specs, and a production build. Accessible names used by e2e tests s
   shared `useAutosave` hook (honest states, empty title blocked, leave warning); details folded.
 - **4.5** Journal: month calendar navigator (week start aware; marked days open entries, empty
   days start one), older/newer links on entries, editor on `useAutosave`, serif writing surface.
+- **4.6** Reviews: three steps (Look back, Reflect, Decide); Decide carries unfinished tasks
+  forward with Undo and shows next week's plan with a link to the Planner.
 
 Habits (checklist first, creation in a sheet), Goals & Vision (grouped by area, next
 milestone), Inbox (short rows, one Convert menu, undo on archive), Notes (two-pane, autosave),

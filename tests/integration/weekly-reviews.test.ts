@@ -99,6 +99,11 @@ describe("weekly statistics", () => {
     expect(review.completedCount).toBeGreaterThanOrEqual(1);
     expect(review.completedTasks.some((t) => t.title === "Done this week")).toBe(true);
     expect(review.carriedForward).toBeGreaterThanOrEqual(1);
+    // The Decide step lists the same open tasks, each due inside the week.
+    expect(review.carriedTasks.length).toBe(Math.min(review.carriedForward, 100));
+    expect(
+      review.carriedTasks.every((t) => t.due_date >= weekStart && t.due_date <= review.weekEnd),
+    ).toBe(true);
     expect(review.focusSeconds).toBeGreaterThanOrEqual(1500);
   });
 });

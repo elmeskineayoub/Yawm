@@ -4,6 +4,7 @@ import { InlineEdit } from "@/components/ui/inline-edit";
 import { saveReviewField } from "@/features/reviews/actions";
 import { REVIEW_FIELDS, REVIEW_PROMPTS } from "@/features/reviews/logic";
 import type { ReviewText } from "@/features/reviews/queries";
+import { safeAction } from "@/lib/safe-action";
 
 /** The four reflection prompts, each click-to-edit and saved on its own (honest Saving/Saved). */
 export function ReviewEditor({ weekStart, text }: { weekStart: string; text: ReviewText }) {
@@ -19,7 +20,7 @@ export function ReviewEditor({ weekStart, text }: { weekStart: string; text: Rev
           multiline
           maxLength={5000}
           onSave={async (value) => {
-            const result = await saveReviewField(weekStart, field, value);
+            const result = await safeAction(() => saveReviewField(weekStart, field, value));
             return result.ok ? null : result.error;
           }}
         />
