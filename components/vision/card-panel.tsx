@@ -35,7 +35,7 @@ export function CardPanel({
   return (
     <Dialog.Root open={card !== null} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
         <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-border bg-background p-5 shadow-xl">
           {card && (
             <CardForm key={card.id} card={card} areas={areas} goals={goals} onClose={onClose} />
@@ -231,7 +231,7 @@ function CardForm({
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         )}
@@ -254,7 +254,7 @@ function CardForm({
             <Button
               variant="ghost"
               disabled={busy}
-              className={cn(confirmDelete && "text-red-700 dark:text-red-400")}
+              className={cn(confirmDelete && "text-danger")}
               onClick={() =>
                 confirmDelete
                   ? startTransition(async () => {

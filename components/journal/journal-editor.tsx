@@ -201,10 +201,7 @@ export function JournalEditor({ entry }: { entry: JournalEntryInit }) {
         <span
           role="status"
           aria-live="polite"
-          className={cn(
-            "text-sm",
-            isError ? "text-red-700 dark:text-red-400" : "text-muted-foreground",
-          )}
+          className={cn("text-sm", isError ? "text-danger" : "text-muted-foreground")}
         >
           {statusText}
         </span>

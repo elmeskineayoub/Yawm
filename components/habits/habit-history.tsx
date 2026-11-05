@@ -8,6 +8,7 @@ import { logHabit } from "@/features/habits/actions";
 import type { DayStatus, HabitLog } from "@/features/habits/logic";
 import type { LogEntry } from "@/features/habits/schemas";
 import { formatDate, type IsoDate } from "@/lib/dates";
+import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { statusClass } from "./habit-row";
 
@@ -190,7 +191,7 @@ function DayCell({
                 step="any"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-20 rounded-md border border-border bg-background px-2 py-1"
+                className={cn(controlClass, "w-20 px-2 py-1")}
               />
               <span className="text-xs text-muted-foreground">
                 / {target} {unit}

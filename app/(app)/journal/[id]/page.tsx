@@ -30,7 +30,7 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
         </nav>
         <JournalActions entry={{ id: entry.id, label: heading }} afterDelete="/journal" />
       </div>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight break-words">{heading}</h1>
+      <h1 className="mb-6 page-title">{heading}</h1>
       <section
         aria-label="Journal entry"
         className="rounded-lg border border-border bg-surface p-5"

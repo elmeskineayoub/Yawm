@@ -95,10 +95,7 @@ export function InlineEdit({
         <span
           role="status"
           aria-live="polite"
-          className={cn(
-            "text-xs",
-            status === "error" ? "text-red-700 dark:text-red-400" : "text-muted-foreground",
-          )}
+          className={cn("text-xs", status === "error" ? "text-danger" : "text-muted-foreground")}
         >
           {statusText}
         </span>

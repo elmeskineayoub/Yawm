@@ -72,11 +72,7 @@ export function GoogleCalendarSettings({
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
-          className={
-            notice.tone === "error"
-              ? "text-sm text-red-700 dark:text-red-400"
-              : "text-sm text-green-800 dark:text-green-300"
-          }
+          className={notice.tone === "error" ? "text-sm text-danger" : "text-sm text-success"}
         >
           {notice.text}
         </p>
@@ -212,7 +208,7 @@ function Connected({
 
       {needsReconnect && (
         <div role="alert" className="space-y-2">
-          <p className="text-red-700 dark:text-red-400">
+          <p className="text-danger">
             {state.lastError ?? "Google Calendar access was revoked or expired."} Your time blocks
             are safe in Yawm.
           </p>
@@ -224,7 +220,7 @@ function Connected({
         <fieldset className="space-y-3" disabled={saving}>
           <legend className="font-medium">Calendars</legend>
           {calendarsError ? (
-            <p role="alert" className="text-red-700 dark:text-red-400">
+            <p role="alert" className="text-danger">
               Your calendars couldn&apos;t be loaded. {calendarsError}
             </p>
           ) : calendars.length === 0 ? (
@@ -293,7 +289,7 @@ function Connected({
             {state.failed > 0 && `${state.failed} failed. `}
           </p>
           {state.lastError && state.status !== "reconnect_required" && (
-            <p className="text-amber-800 dark:text-amber-300">{state.lastError}</p>
+            <p className="text-warning">{state.lastError}</p>
           )}
           <Button
             variant="secondary"
@@ -308,7 +304,7 @@ function Connected({
       {message && (
         <p
           role={message.tone === "error" ? "alert" : "status"}
-          className={message.tone === "error" ? "text-red-700 dark:text-red-400" : undefined}
+          className={message.tone === "error" ? "text-danger" : undefined}
         >
           {message.text}
         </p>

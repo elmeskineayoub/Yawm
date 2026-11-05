@@ -7,8 +7,13 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Shared look for text inputs, selects, and textareas: a light surface with a 3:1 border, a darker
+ * border on hover, and an accent border plus soft halo on focus. Invalid controls turn danger.
+ * `control` hooks the custom select chevron in globals.css.
+ */
 export const controlClass =
-  "block w-full rounded-md border border-border bg-background px-3 py-2 text-sm aria-invalid:border-red-600 disabled:opacity-60";
+  "control block w-full rounded-md border border-input-border bg-surface px-3 py-2 text-sm text-foreground shadow-[inset_0_1px_0_rgb(0_0_0/0.02)] transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground hover:border-muted-foreground focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/20 focus-visible:outline-none aria-invalid:border-danger aria-invalid:focus-visible:ring-danger/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted-foreground";
 
 type FieldShellProps = {
   label: string;
@@ -54,7 +59,7 @@ export function FieldShell({
         </p>
       )}
       {hasError && (
-        <p id={errorId} className="text-xs text-red-700 dark:text-red-400">
+        <p id={errorId} className="text-xs text-danger">
           {errors!.join(" ")}
         </p>
       )}

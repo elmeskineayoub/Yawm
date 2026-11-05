@@ -103,7 +103,7 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-label="Calendar" className="order-2 min-w-0 lg:order-1">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div
@@ -136,7 +136,7 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
             <span
               role="status"
               aria-live="polite"
-              className={cn(saving === "error" && "text-red-700 dark:text-red-400")}
+              className={cn(saving === "error" && "text-danger")}
             >
               {saving === "saving"
                 ? "Saving…"
@@ -172,7 +172,7 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
           </p>
         )}
         {props.google.eventsError && (
-          <p role="alert" className="mb-2 text-xs text-amber-800 dark:text-amber-300">
+          <p role="alert" className="mb-2 text-xs text-warning">
             {props.google.eventsError}
           </p>
         )}

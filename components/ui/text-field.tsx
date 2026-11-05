@@ -1,5 +1,6 @@
 import { useId, type InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { controlClass } from "./field";
 
 type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -25,7 +26,7 @@ export function TextField({ label, errors, hint, className, id, ...props }: Text
         id={inputId}
         aria-invalid={hasError || undefined}
         aria-describedby={describedBy || undefined}
-        className="block w-full rounded-md border border-border bg-background px-3 py-2 text-sm aria-invalid:border-red-600"
+        className={controlClass}
         {...props}
       />
       {hint && (
@@ -34,7 +35,7 @@ export function TextField({ label, errors, hint, className, id, ...props }: Text
         </p>
       )}
       {hasError && (
-        <p id={errorId} className="text-xs text-red-700 dark:text-red-400">
+        <p id={errorId} className="text-xs text-danger">
           {errors!.join(" ")}
         </p>
       )}

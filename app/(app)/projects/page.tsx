@@ -57,7 +57,7 @@ export default async function ProjectsPage() {
             <span className="inline-flex items-center gap-1">
               <span
                 aria-hidden
-                className="size-2 rounded-full"
+                className="size-2 rounded-full ring-1 ring-foreground/20 ring-inset"
                 style={{ backgroundColor: area.color }}
               />
               {area.name}

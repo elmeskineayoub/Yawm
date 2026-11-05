@@ -124,7 +124,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           </>
         )}
       </nav>
-      <h1 className="mb-1 text-2xl font-semibold tracking-tight break-words">{task.title}</h1>
+      <h1 className="mb-1 page-title">{task.title}</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         {STATUS_LABELS[task.status]}
         {task.completed_at &&

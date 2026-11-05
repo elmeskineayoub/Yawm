@@ -2,32 +2,69 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Design tokens — editorial minimalism (docs/UX_REDESIGN.md §5).
+ * Warm neutrals, one forest-sage accent, muted semantic colours. Every text colour below meets
+ * WCAG AA (4.5:1) on background, surface, and surface-muted; --input-border meets 3:1 for
+ * control boundaries. --border is a decorative hairline for dividers only.
+ */
 :root {
-  --background: #f8f9fa;
-  --surface: #ffffff;
-  --surface-muted: #e9ecef;
-  --foreground: #212529;
-  --muted-foreground: #6c757d;
-  --border: #dee2e6;
-  --accent: #212529;
-  --accent-foreground: #f8f9fa;
-  --warning-bg: #fffbeb;
-  --warning-border: #fcd34d;
-  --warning-foreground: #78350f;
+  --background: #f7f5f0;
+  --surface: #fcfbf8;
+  --surface-muted: #efece5;
+  --foreground: #23221f;
+  --muted-foreground: #6b675f;
+  --border: #e4e0d7;
+  --input-border: #8f897d;
+
+  --accent: #3d5a47;
+  --accent-foreground: #f7f5f0;
+  --accent-soft: #e3e9e2;
+
+  --success: var(--accent);
+  --success-soft: var(--accent-soft);
+  --danger: #a23b2a;
+  --danger-foreground: #fcfbf8;
+  --danger-soft: #f6e4df;
+  --warning: #8a5d12;
+  --warning-soft: #f6ecd9;
+  --info: #4a6378;
+  --info-soft: #e4eaef;
+
+  /* Priority reuses the semantic palette; no extra hues. */
+  --priority-urgent: var(--danger);
+  --priority-high: var(--warning);
+  --priority-medium: var(--accent);
+  --priority-low: var(--muted-foreground);
+
+  --ring: var(--accent);
+  --overlay: rgb(35 34 31 / 0.32);
+  --shadow-overlay: 0 12px 32px -12px rgb(35 34 31 / 0.22), 0 2px 6px -2px rgb(35 34 31 / 0.08);
 }
 
 .dark {
-  --background: #212529;
-  --surface: #343a40;
-  --surface-muted: #495057;
-  --foreground: #f8f9fa;
-  --muted-foreground: #adb5bd;
-  --border: #495057;
-  --accent: #e9ecef;
-  --accent-foreground: #212529;
-  --warning-bg: #2a2111;
-  --warning-border: #92400e;
-  --warning-foreground: #fde68a;
+  --background: #1a1a18;
+  --surface: #22221f;
+  --surface-muted: #2b2a27;
+  --foreground: #ebe8e1;
+  --muted-foreground: #a8a49b;
+  --border: #34332f;
+  --input-border: #716d65;
+
+  --accent: #8fae96;
+  --accent-foreground: #1a1a18;
+  --accent-soft: #2c3a30;
+
+  --danger: #e08a78;
+  --danger-foreground: #1a1a18;
+  --danger-soft: #3a2420;
+  --warning: #d9a95a;
+  --warning-soft: #352a17;
+  --info: #9db4c7;
+  --info-soft: #232c34;
+
+  --overlay: rgb(0 0 0 / 0.55);
+  --shadow-overlay: 0 12px 32px -12px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
 }
 
 @theme inline {
@@ -37,14 +74,40 @@
   --color-foreground: var(--foreground);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-input-border: var(--input-border);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-warning-bg: var(--warning-bg);
-  --color-warning-border: var(--warning-border);
-  --color-warning-foreground: var(--warning-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --shadow-overlay: var(--shadow-overlay);
+
   --font-sans:
     var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, "Times New Roman", serif;
+  /* Kept as an alias so existing `font-display` usages (the wordmark) pick up the serif. */
+  --font-display: var(--font-serif);
+
+  /* Editorial type scale: [size, line-height]. */
+  --text-title: 1.875rem;
+  --text-title--line-height: 2.25rem;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1rem;
+  --text-prose: 1.0625rem;
+  --text-prose--line-height: 1.75rem;
 }
 
 html {
@@ -58,19 +121,82 @@ html.dark {
 body {
   background: var(--background);
   color: var(--foreground);
+  font-feature-settings: "cv11", "ss01";
 }
 
-/* Headings use the display font (Plus Jakarta Sans); body/UI uses Inter via font-sans. */
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display);
+/*
+ * Page titles are set in the serif; every other heading (section titles, dialog titles) stays in
+ * Inter so dense UI reads as UI. Opt into the serif elsewhere with `font-serif`. In the base
+ * layer so utility classes on an individual heading still win.
+ */
+@layer base {
+  /* Native checkboxes, radios, and ranges pick up the accent. */
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  progress {
+    accent-color: var(--accent);
+  }
+
+  /* Form controls (see controlClass): a quiet chevron replaces the platform select arrow. */
+  select.control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23857f74' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 0.875rem;
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    font-optical-sizing: auto;
+  }
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/*
+ * Room for the select chevron. Unlayered on purpose: it must win over per-field padding utilities
+ * such as px-3 that callers pass alongside controlClass.
+ */
+select.control {
+  padding-right: 2rem;
+}
+
+/* Page title: the one serif headline per page. 26px on phones, 30px from the sm breakpoint. */
+@utility page-title {
+  font-family: var(--font-serif);
+  font-size: 1.625rem;
+  line-height: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  @media (width >= 40rem) {
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+  }
+}
+
+/* Section label: small, letter-spaced, muted. Used for editorial section headings. */
+@utility label-caps {
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -94,7 +220,7 @@ h4 {
   --fc-event-text-color: var(--foreground);
   --fc-event-selected-overlay-color: color-mix(in srgb, var(--accent) 20%, transparent);
   --fc-highlight-color: color-mix(in srgb, var(--accent) 14%, transparent);
-  --fc-now-indicator-color: #dc2626;
+  --fc-now-indicator-color: var(--danger);
   --fc-list-event-hover-bg-color: var(--surface-muted);
   font-size: 0.8125rem;
 }
@@ -143,7 +269,7 @@ h4 {
   color: var(--muted-foreground);
 }
 .planner-calendar .fc .planner-block-overlap {
-  outline: 2px dashed #d97706;
+  outline: 2px dashed var(--warning);
   outline-offset: -2px;
 }
 .planner-calendar .fc .planner-block-external {
@@ -174,6 +300,12 @@ h4 {
   white-space: nowrap;
   padding: 0 4px;
   color: var(--foreground);
+}
+/* In the agenda list there is room to read the whole title: wrap instead of widening the table. */
+.planner-calendar .fc .fc-list .planner-deadline-label,
+.planner-calendar .fc .fc-list .planner-block-title {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .planner-calendar .fc .planner-deadline-done .planner-deadline-label {
   text-decoration: line-through;

@@ -130,10 +130,7 @@ export default async function TodayPage() {
 
         {data.overdue.length > 0 && (
           <section aria-labelledby="overdue-heading">
-            <h2
-              id="overdue-heading"
-              className="mb-1 text-sm font-semibold text-red-700 dark:text-red-400"
-            >
+            <h2 id="overdue-heading" className="mb-1 text-sm font-semibold text-danger">
               Overdue <span className="font-normal">{data.overdue.length}</span>
             </h2>
             <TaskList tasks={data.overdue} today={ctx.today} label="Overdue" />

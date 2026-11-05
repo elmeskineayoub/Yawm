@@ -89,10 +89,7 @@ export function GoogleSyncStatus({
   if (!state.available || !state.connected) return null;
   if (state.status === "reconnect_required") {
     return (
-      <Link
-        href="/settings#google"
-        className="text-red-700 underline-offset-2 hover:underline dark:text-red-400"
-      >
+      <Link href="/settings#google" className="text-danger underline-offset-2 hover:underline">
         Reconnect Google Calendar
       </Link>
     );
@@ -113,11 +110,7 @@ export function GoogleSyncStatus({
   const problem = phase === "failed" || phase === "waiting" || (phase === "idle" && waiting > 0);
   return (
     <span className="flex items-center gap-1.5" title={message ?? undefined}>
-      <span
-        role="status"
-        aria-live="polite"
-        className={cn(phase === "failed" && "text-amber-800 dark:text-amber-300")}
-      >
+      <span role="status" aria-live="polite" className={cn(phase === "failed" && "text-warning")}>
         {label}
         {message && <span className="sr-only">: {message}</span>}
       </span>

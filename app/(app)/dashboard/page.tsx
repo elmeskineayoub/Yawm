@@ -46,7 +46,7 @@ function Tile({
       <p
         className={cn(
           "text-2xl font-semibold tabular-nums",
-          tone === "danger" && value > 0 && "text-red-700 dark:text-red-400",
+          tone === "danger" && value > 0 && "text-danger",
         )}
       >
         {value}
@@ -69,10 +69,10 @@ function Card({
   return (
     <section aria-labelledby={id} className="rounded-lg border border-border bg-surface p-5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 id={id} className="text-sm font-semibold">
+        <h2 id={id} className="min-w-0 text-sm font-semibold">
           {title}
         </h2>
-        {action}
+        {action && <div className="shrink-0 whitespace-nowrap">{action}</div>}
       </div>
       {children}
     </section>

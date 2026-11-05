@@ -2,7 +2,7 @@ export function SetupNotice({ problems }: { problems: string[] }) {
   return (
     <div
       role="status"
-      className="rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning-foreground"
+      className="rounded-lg border border-warning/25 bg-warning-soft p-4 text-sm text-foreground"
     >
       <p className="font-semibold">Supabase is not configured — nothing can be loaded or saved.</p>
       <ul className="mt-2 list-disc break-words pl-5">

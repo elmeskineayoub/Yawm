@@ -346,7 +346,7 @@ export default async function PlannerPage({
       <ContextChips data={data} />
 
       {view === "year" || !data.calendar ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="order-2 lg:order-1">
             <YearGrid data={data} today={ctx.today} />
           </div>

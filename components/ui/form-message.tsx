@@ -6,7 +6,7 @@ export function FormMessage({ state }: { state: FormState }) {
     return (
       <p
         role="alert"
-        className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+        className="rounded-md border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger"
       >
         {state.message}
       </p>
@@ -16,7 +16,7 @@ export function FormMessage({ state }: { state: FormState }) {
     return (
       <p
         role="status"
-        className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200"
+        className="rounded-md border border-success/25 bg-success-soft px-3 py-2 text-sm text-success"
       >
         {state.message}
       </p>

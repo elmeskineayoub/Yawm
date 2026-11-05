@@ -70,7 +70,7 @@ export function ImportRestore({ workspaceId }: { workspaceId: string }) {
       />
 
       {summary && !summary.ok && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           {summary.error}
         </p>
       )}
@@ -124,7 +124,9 @@ export function ImportRestore({ workspaceId }: { workspaceId: string }) {
               trigger={
                 <Button
                   className={
-                    mode === "replace" ? "bg-red-700 text-white hover:bg-red-800" : undefined
+                    mode === "replace"
+                      ? "bg-danger text-danger-foreground hover:bg-danger/90"
+                      : undefined
                   }
                 >
                   {mode === "replace" ? "Replace from backup" : "Merge backup"}

@@ -15,6 +15,7 @@ import {
 import type { HabitSummary } from "@/features/habits/queries";
 import type { LogEntry } from "@/features/habits/schemas";
 import { formatDate, type IsoDate } from "@/lib/dates";
+import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<DayStatus, string> = {
@@ -28,7 +29,7 @@ const STATUS_LABEL: Record<DayStatus, string> = {
 export const statusClass: Record<DayStatus, string> = {
   done: "bg-accent border-accent",
   rest: "border-dashed border-muted-foreground/50",
-  missed: "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950",
+  missed: "border-danger/25 bg-danger-soft",
   open: "border-border",
   inactive: "border-transparent bg-surface-muted/40",
 };
@@ -207,7 +208,8 @@ function AmountInput({
           }
         }}
         className={cn(
-          "w-14 rounded-md border border-border bg-background px-1.5 py-0.5 text-right text-sm text-foreground tabular-nums",
+          controlClass,
+          "w-14 px-1.5 py-0.5 text-right tabular-nums",
           done && "border-accent",
         )}
       />

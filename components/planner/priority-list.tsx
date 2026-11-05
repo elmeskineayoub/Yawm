@@ -149,7 +149,7 @@ export function PriorityList({
           className="block w-full rounded-md border border-transparent bg-transparent px-2 py-1.5 text-sm placeholder:text-muted-foreground hover:border-border focus:border-accent"
         />
         {error && (
-          <p role="alert" className="px-2 text-xs text-red-700 dark:text-red-400">
+          <p role="alert" className="px-2 text-xs text-danger">
             {error}
           </p>
         )}
@@ -207,7 +207,7 @@ function OutcomeItem({
               if (!result.ok) toast.error(result.error);
             })
           }
-          className="mt-1 size-4 accent-[var(--accent)]"
+          className="mt-1 size-4 accent-accent"
         />
       ) : (
         <span

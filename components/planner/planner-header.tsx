@@ -67,7 +67,7 @@ export function PlannerHeader({
   return (
     <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="page-title">{title}</h1>
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">

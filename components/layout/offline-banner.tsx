@@ -26,7 +26,7 @@ export function OfflineBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="bg-amber-500/15 px-4 py-1.5 text-center text-sm text-amber-900 dark:text-amber-200"
+      className="bg-warning-soft px-4 py-1.5 text-center text-sm text-warning"
     >
       You&rsquo;re offline — changes won&rsquo;t be saved until you reconnect.
     </div>

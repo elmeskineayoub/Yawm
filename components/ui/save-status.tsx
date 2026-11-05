@@ -8,7 +8,7 @@ export function SaveStatus({ pending, state }: { pending: boolean; state: SaveSt
   else if (state.status === "saved") text = state.message ?? "Saved";
   else if (state.status === "error") {
     text = state.message;
-    className = "text-red-700 dark:text-red-400";
+    className = "text-danger";
   }
   return (
     <span role="status" aria-live="polite" className={`text-sm ${className}`}>

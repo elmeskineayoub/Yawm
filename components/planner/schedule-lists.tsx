@@ -91,9 +91,7 @@ export function UnscheduledTray({
                   <span className="flex gap-1.5 text-xs text-muted-foreground">
                     {priorityIds.has(task.id) && <span>Priority</span>}
                     {task.due_date && (
-                      <span
-                        className={cn(task.due_date < today && "text-red-700 dark:text-red-400")}
-                      >
+                      <span className={cn(task.due_date < today && "text-danger")}>
                         Due {relativeDateLabel(task.due_date, today)}
                       </span>
                     )}
@@ -140,7 +138,7 @@ export function RescheduleList({
   return (
     <section
       aria-labelledby={`${id}-h`}
-      className="rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/40"
+      className="rounded-lg border border-warning/25 bg-warning-soft p-3"
     >
       <h2 id={`${id}-h`} className="flex items-center gap-1.5 text-sm font-semibold">
         <CalendarClock aria-hidden className="size-4" />

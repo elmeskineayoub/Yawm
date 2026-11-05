@@ -54,7 +54,7 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
           type="color"
           name="color"
           defaultValue={area.color}
-          className="h-9 w-10 cursor-pointer rounded border border-border bg-background"
+          className="h-9 w-10 cursor-pointer rounded-md border border-input-border bg-surface"
         />
         <label htmlFor={`${id}-name`} className="sr-only">
           Name of {area.name}
@@ -131,7 +131,7 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
       </form>
       {archived && <p className="text-xs text-muted-foreground">Archived</p>}
       {error && (
-        <p role="alert" className="text-xs text-red-700 dark:text-red-400">
+        <p role="alert" className="text-xs text-danger">
           {error}
         </p>
       )}
@@ -180,8 +180,8 @@ export function AreasManager({ areas }: { areas: Area[] }) {
           id={`${id}-color`}
           type="color"
           name="color"
-          defaultValue="#64748b"
-          className="h-9 w-10 cursor-pointer rounded border border-border bg-background"
+          defaultValue="#78716c"
+          className="h-9 w-10 cursor-pointer rounded-md border border-input-border bg-surface"
         />
         <label htmlFor={`${id}-name`} className="sr-only">
           New area name
@@ -198,7 +198,7 @@ export function AreasManager({ areas }: { areas: Area[] }) {
           {pending ? "Adding…" : "Add area"}
         </Button>
         {error && (
-          <p role="alert" className="w-full text-xs text-red-700 dark:text-red-400">
+          <p role="alert" className="w-full text-xs text-danger">
             {error}
           </p>
         )}

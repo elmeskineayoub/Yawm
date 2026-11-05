@@ -56,7 +56,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           Projects
         </Link>
       </nav>
-      <h1 className="text-2xl font-semibold tracking-tight break-words">{project.data.name}</h1>
+      <h1 className="page-title">{project.data.name}</h1>
       <p className="mt-1 mb-4 text-sm text-muted-foreground">
         {PROJECT_STATUS_LABELS[project.data.status]}
       </p>

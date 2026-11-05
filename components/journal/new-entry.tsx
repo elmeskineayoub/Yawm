@@ -71,7 +71,7 @@ export function NewEntry({ today }: { today: string }) {
         {pending ? "Creating…" : "New entry"}
       </Button>
       {error && (
-        <p role="alert" className="w-full text-xs text-red-700 dark:text-red-400">
+        <p role="alert" className="w-full text-xs text-danger">
           {error}
         </p>
       )}

@@ -77,7 +77,7 @@ export function CaptureNoteForm() {
         </button>
       )}
       {error && (
-        <p role="alert" className="text-xs text-red-700 dark:text-red-400">
+        <p role="alert" className="text-xs text-danger">
           {error}
         </p>
       )}

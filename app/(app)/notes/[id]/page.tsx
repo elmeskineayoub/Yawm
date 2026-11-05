@@ -102,7 +102,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
           Notes
         </Link>
       </nav>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight break-words">
+      <h1 className="mb-6 page-title">
         {note.title}
         {note.archived_at && (
           <span className="ml-2 align-middle text-xs font-normal text-muted-foreground">

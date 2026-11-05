@@ -60,7 +60,7 @@ export function NewProjectForm({ areas }: { areas: { id: string; name: string }[
         {pending ? "Creating…" : "Create"}
       </Button>
       {message && !errors && (
-        <p role="alert" className="text-sm text-red-700 sm:col-span-2 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger sm:col-span-2">
           {message}
         </p>
       )}

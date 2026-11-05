@@ -58,7 +58,7 @@ export function QuickCapture({ collapsed = false }: { collapsed?: boolean }) {
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
         <Dialog.Content className="fixed top-[15%] left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-lg border border-border bg-background p-5 shadow-lg">
           <Dialog.Title className="text-base font-semibold">Quick capture</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-muted-foreground">
@@ -136,7 +136,7 @@ export function QuickCapture({ collapsed = false }: { collapsed?: boolean }) {
               </div>
             )}
             {error && (
-              <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+              <p role="alert" className="text-sm text-danger">
                 {error}
               </p>
             )}

@@ -38,14 +38,14 @@ export function ConfirmDialog({
     >
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
         <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background p-6 shadow-lg">
           <Dialog.Title className="text-base font-semibold">{title}</Dialog.Title>
           <Dialog.Description asChild>
             <div className="mt-2 text-sm text-muted-foreground">{description}</div>
           </Dialog.Description>
           {error && (
-            <p role="alert" className="mt-3 text-sm text-red-700 dark:text-red-400">
+            <p role="alert" className="mt-3 text-sm text-danger">
               {error}
             </p>
           )}
@@ -54,7 +54,9 @@ export function ConfirmDialog({
               <Button variant="secondary">Cancel</Button>
             </Dialog.Close>
             <Button
-              className={destructive ? "bg-red-700 text-white hover:bg-red-800" : undefined}
+              className={
+                destructive ? "bg-danger text-danger-foreground hover:bg-danger/90" : undefined
+              }
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {

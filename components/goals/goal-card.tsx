@@ -83,7 +83,7 @@ export function GoalCard({
             ]
               .filter(Boolean)
               .join(" · ") || "No target date"}
-            {overdue && <span className="text-red-700 dark:text-red-400"> · past target date</span>}
+            {overdue && <span className="text-danger"> · past target date</span>}
           </p>
         </div>
         {goal.why && (

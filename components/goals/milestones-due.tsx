@@ -37,7 +37,7 @@ function MilestoneDueRow({ milestone }: { milestone: MilestoneDue }) {
             if (!result.ok) toast.error(result.error);
           });
         }}
-        className="mt-1 size-4 accent-[var(--accent)]"
+        className="mt-1 size-4 accent-accent"
       />
       <div className="min-w-0 flex-1">
         <Link

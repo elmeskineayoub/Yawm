@@ -32,7 +32,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
           Inbox
         </Link>
       </nav>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight break-words">{idea.data.title}</h1>
+      <h1 className="mb-6 page-title">{idea.data.title}</h1>
       <div className="space-y-6">
         <section
           aria-label="Idea details"

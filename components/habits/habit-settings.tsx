@@ -33,7 +33,7 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
   const [pending, startTransition] = useTransition();
   const err = (field: string) =>
     errors[field]?.length ? (
-      <p className="text-xs text-red-700 dark:text-red-400">{errors[field]!.join(" ")}</p>
+      <p className="text-xs text-danger">{errors[field]!.join(" ")}</p>
     ) : null;
 
   return (
@@ -278,7 +278,7 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
           aria-live="polite"
           className={cn(
             "text-sm",
-            status?.tone === "error" ? "text-red-700 dark:text-red-400" : "text-muted-foreground",
+            status?.tone === "error" ? "text-danger" : "text-muted-foreground",
           )}
         >
           {status?.text}

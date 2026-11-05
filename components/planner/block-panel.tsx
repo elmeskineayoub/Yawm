@@ -47,7 +47,7 @@ export function BlockPanel({ draft, onClose, ...rest }: BlockPanelProps) {
   return (
     <Dialog.Root open={draft !== null} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
         <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-border bg-background p-5 shadow-xl">
           {draft && (
             <BlockForm
@@ -262,9 +262,7 @@ function BlockForm({
           <p
             className={cn(
               "text-xs",
-              syncState === "error"
-                ? "text-amber-800 dark:text-amber-300"
-                : "text-muted-foreground",
+              syncState === "error" ? "text-warning" : "text-muted-foreground",
             )}
           >
             {SYNC_LABEL[syncState]}
@@ -274,7 +272,7 @@ function BlockForm({
         {overlaps.length > 0 && (
           <p
             role="status"
-            className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+            className="flex gap-2 rounded-md border border-warning/25 bg-warning-soft px-3 py-2 text-sm text-foreground"
           >
             <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" />
             <span>
@@ -299,7 +297,7 @@ function BlockForm({
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         )}
@@ -309,7 +307,7 @@ function BlockForm({
             {draft.id ? (
               <Button
                 variant="ghost"
-                className={cn(confirmDelete && "text-red-700 dark:text-red-400")}
+                className={cn(confirmDelete && "text-danger")}
                 disabled={pending}
                 onClick={() => (confirmDelete ? remove() : setConfirmDelete(true))}
               >

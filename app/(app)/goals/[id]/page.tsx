@@ -59,9 +59,7 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
             <span
               className={cn(
                 "text-sm",
-                isGoalOverdue(goal, ctx.today)
-                  ? "text-red-700 dark:text-red-400"
-                  : "text-muted-foreground",
+                isGoalOverdue(goal, ctx.today) ? "text-danger" : "text-muted-foreground",
               )}
             >
               Target {formatDate(goal.target_date)}

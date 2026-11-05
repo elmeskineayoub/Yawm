@@ -37,7 +37,7 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
                   className={cn(
                     itemClass,
                     active
-                      ? "bg-accent font-medium text-accent-foreground"
+                      ? "bg-accent-soft font-medium text-accent"
                       : "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
                   )}
                 >
