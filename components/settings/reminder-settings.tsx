@@ -8,6 +8,7 @@ import {
   type ReminderCategory,
   type ReminderPrefs,
 } from "@/features/reminders/logic";
+import { safeAction } from "@/lib/safe-action";
 
 const CATEGORIES: ReminderCategory[] = ["task", "habit", "time_block"];
 
@@ -19,7 +20,7 @@ export function ReminderSettings({ initial }: { initial: ReminderPrefs }) {
     const next = { ...prefs, [category]: !prefs[category] };
     setPrefs(next);
     startTransition(async () => {
-      const result = await setReminderPreferences(next);
+      const result = await safeAction(() => setReminderPreferences(next));
       if (!result.ok) {
         toast.error(result.error);
         setPrefs((p) => ({ ...p, [category]: !p[category] }));

@@ -201,6 +201,8 @@ affected e2e specs, and a production build. Accessible names used by e2e tests s
   days start one), older/newer links on entries, editor on `useAutosave`, serif writing surface.
 - **4.6** Reviews: three steps (Look back, Reflect, Decide); Decide carries unfinished tasks
   forward with Undo and shows next week's plan with a link to the Planner.
+- **4.7** Settings: section sub-navigation with scroll highlighting; unboxed sections; every
+  settings save handles lost connections.
 
 Habits (checklist first, creation in a sheet), Goals & Vision (grouped by area, next
 milestone), Inbox (short rows, one Convert menu, undo on archive), Notes (two-pane, autosave),

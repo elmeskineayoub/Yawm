@@ -17,6 +17,7 @@ import {
   type SnapshotMeta,
   type SnapshotReason,
 } from "@/lib/offline/retention";
+import { safeAction } from "@/lib/safe-action";
 
 const REASON_LABELS: Record<SnapshotReason, string> = {
   daily: "Daily",
@@ -102,7 +103,7 @@ export function SnapshotManager({
   const restore = async (id: number): Promise<string | null> => {
     const bundle = await getSnapshotBundle(id);
     if (!bundle) return "This snapshot could not be read.";
-    const result = await importWorkspace(bundle, "replace");
+    const result = await safeAction(() => importWorkspace(bundle, "replace"));
     if (!result.ok) return result.error;
     toast.success(`Restored ${result.data.inserted} records from the snapshot.`);
     router.refresh();

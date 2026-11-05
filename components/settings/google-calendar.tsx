@@ -13,6 +13,7 @@ import {
   syncGoogleCalendar,
 } from "@/features/google-calendar/actions";
 import type { GoogleConnectionState } from "@/features/google-calendar/types";
+import { safeAction } from "@/lib/safe-action";
 
 const OUTCOMES: Record<string, { tone: "success" | "error"; text: string }> = {
   connected: { tone: "success", text: "Google Calendar connected." },
@@ -156,7 +157,7 @@ function Connected({
   const save = () =>
     startSaving(async () => {
       setMessage(null);
-      const result = await saveGoogleCalendars({ target, show });
+      const result = await safeAction(() => saveGoogleCalendars({ target, show }));
       if (!result.ok) {
         setMessage({ tone: "error", text: result.error });
         return;
@@ -168,7 +169,7 @@ function Connected({
   const syncNow = () =>
     startSyncing(async () => {
       setMessage(null);
-      const result = await syncGoogleCalendar(true);
+      const result = await safeAction(() => syncGoogleCalendar(true));
       if (!result.ok) {
         setMessage({ tone: "error", text: result.error });
         return;
@@ -322,7 +323,7 @@ function Connected({
         }
         confirmLabel="Disconnect"
         onConfirm={async () => {
-          const result = await disconnectGoogleCalendar();
+          const result = await safeAction(() => disconnectGoogleCalendar());
           if (!result.ok) return result.error;
           toast.success(
             result.data.revoked

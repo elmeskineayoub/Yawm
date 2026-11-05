@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { importWorkspace } from "@/features/backups/actions";
 import { summarizeImport, type ImportMode, type ImportSummary } from "@/features/backups/import";
 import { createSnapshot } from "@/lib/offline/snapshots";
+import { safeAction } from "@/lib/safe-action";
 
 /** Upload a JSON backup, preview what it contains, choose merge or replace, then restore it. */
 export function ImportRestore({ workspaceId }: { workspaceId: string }) {
@@ -45,7 +46,7 @@ export function ImportRestore({ workspaceId }: { workspaceId: string }) {
         // A failed local snapshot must not block the restore itself.
       }
     }
-    const result = await importWorkspace(bundle, mode);
+    const result = await safeAction(() => importWorkspace(bundle, mode));
     if (!result.ok) return result.error;
     toast.success(
       `Imported ${result.data.inserted} record${result.data.inserted === 1 ? "" : "s"}.`,

@@ -13,7 +13,9 @@ import {
   setAreaArchived,
   updateArea,
 } from "@/features/areas/actions";
+import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 type Area = {
   id: string;
@@ -29,14 +31,14 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
   const [error, setError] = useState<string | null>(null);
   const archived = Boolean(area.archived_at);
 
-  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, success?: string) =>
+  const run = (fn: () => Promise<ActionResult<unknown>>, success?: string) =>
     startTransition(async () => {
-      const result = await fn();
+      const result = await safeAction(() => fn());
       if (result.ok) {
         setError(null);
         if (success) toast.success(success);
       } else {
-        setError(result.error ?? "Something went wrong.");
+        setError(result.error);
       }
     });
 
@@ -120,7 +122,7 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
           }
           confirmLabel="Delete"
           onConfirm={async () => {
-            const result = await deleteArea(area.id);
+            const result = await safeAction(() => deleteArea(area.id));
             return result.ok ? null : result.error;
           }}
         />
@@ -158,7 +160,7 @@ export function AreasManager({ areas }: { areas: Area[] }) {
         className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-4"
         action={(formData) =>
           startTransition(async () => {
-            const result = await createArea(formData);
+            const result = await safeAction(() => createArea(formData));
             if (result.ok) {
               setError(null);
               formRef.current?.reset();

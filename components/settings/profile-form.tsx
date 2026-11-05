@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { InputField, SelectField } from "@/components/ui/field";
 import { SaveStatus } from "@/components/ui/save-status";
 import { updateProfile } from "@/features/profile/actions";
-import { idleSaveState } from "@/lib/action-result";
+import { idleSaveState, type SaveState } from "@/lib/action-result";
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -16,7 +16,20 @@ export function ProfileForm({
   email: string | null;
   profile: { display_name: string | null; timezone: string; week_start: number };
 }) {
-  const [state, action, pending] = useActionState(updateProfile, idleSaveState);
+  // A save that never reaches the server is reported in the form, not sent to the error page.
+  const [state, action, pending] = useActionState(
+    async (previous: SaveState, formData: FormData): Promise<SaveState> => {
+      try {
+        return await updateProfile(previous, formData);
+      } catch {
+        return {
+          status: "error",
+          message: "Couldn't reach the server, so this wasn't saved. Please try again.",
+        };
+      }
+    },
+    idleSaveState,
+  );
   const errors = state.status === "error" ? state.fieldErrors : undefined;
   const timezones = useMemo(() => {
     const zones = Intl.supportedValuesOf("timeZone");
