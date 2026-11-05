@@ -45,6 +45,10 @@ describe("rate_limit_hit", () => {
     expect((await hit("export", b, 1)).allowed).toBe(true);
   });
 
+  it("accepts the search bucket used by global search", async () => {
+    expect((await hit("search", randomUUID(), 5, 60)).allowed).toBe(true);
+  });
+
   it("rejects unknown buckets", async () => {
     const { error } = await alice.client.rpc("rate_limit_hit", {
       p_bucket: "arbitrary",

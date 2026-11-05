@@ -7,6 +7,7 @@ import type { Reminder } from "@/features/reminders/logic";
 import { loadReminders } from "@/features/reminders/queries";
 import { requireUser } from "@/lib/auth/session";
 import { SETUP_PATH } from "@/lib/auth/routes";
+import type { IsoDate } from "@/lib/dates";
 import { getSupabasePublicConfig } from "@/lib/env";
 import { isSidebarCollapsed, SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { getWorkspaceContext } from "@/lib/workspace-context";
@@ -20,17 +21,22 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // workspace lookup stays inside the guard too, so a failure surfaces in the page's error
   // boundary (which sits below this layout) instead of replacing the whole shell.
   const noReminders: Reminder[] = [];
-  const chrome: Promise<[Reminder[], number]> = getWorkspaceContext().then(
+  const chrome: Promise<[Reminder[], number, IsoDate | null]> = getWorkspaceContext().then(
     (ctx) =>
-      Promise.all([loadReminders(ctx).catch(() => noReminders), countInbox(ctx).catch(() => 0)]),
-    () => [noReminders, 0],
+      Promise.all([
+        loadReminders(ctx).catch(() => noReminders),
+        countInbox(ctx).catch(() => 0),
+        ctx.today,
+      ]),
+    () => [noReminders, 0, null],
   );
-  const [[reminders, inboxCount], cookieStore] = await Promise.all([chrome, cookies()]);
+  const [[reminders, inboxCount, today], cookieStore] = await Promise.all([chrome, cookies()]);
   return (
     <AppShell
       account={{ email: user.email }}
       reminders={reminders}
       inboxCount={inboxCount}
+      today={today}
       initialCollapsed={isSidebarCollapsed(cookieStore.get(SIDEBAR_COOKIE)?.value)}
     >
       {children}

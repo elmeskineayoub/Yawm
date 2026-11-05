@@ -26,7 +26,8 @@ function limiterActive(): boolean {
  * defence in depth.
  */
 
-export type RateBucket = "auth:signin" | "auth:signup" | "auth:reset" | "export" | "google:sync";
+export type RateBucket =
+  "auth:signin" | "auth:signup" | "auth:reset" | "export" | "google:sync" | "search";
 
 export type RateLimitResult = { allowed: boolean; retryAfter: number };
 

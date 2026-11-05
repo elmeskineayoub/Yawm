@@ -7,12 +7,14 @@ import { QuickCaptureButton, QuickCaptureProvider } from "@/components/shared/qu
 import { Sheet, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { Reminder } from "@/features/reminders/logic";
+import type { IsoDate } from "@/lib/dates";
 import { contentWidthFor, type ContentWidth } from "@/lib/navigation";
 import { SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { cn } from "@/lib/utils";
 import { AccountMenu } from "./account-menu";
 import { BrandLogo } from "./brand-logo";
 import { FocusChip } from "./focus-chip";
+import { GlobalSearchProvider, SearchButton } from "./global-search";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { NavigationProgress } from "./navigation-progress";
 import { OfflineBanner } from "./offline-banner";
@@ -36,12 +38,15 @@ export function AppShell({
   reminders = [],
   inboxCount = 0,
   initialCollapsed = false,
+  today = null,
 }: {
   children: ReactNode;
   account?: { email: string | null };
   reminders?: Reminder[];
   inboxCount?: number;
   initialCollapsed?: boolean;
+  /** The user's date in their timezone (for capture shortcuts); null if unavailable. */
+  today?: IsoDate | null;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(initialCollapsed);
@@ -124,6 +129,7 @@ export function AppShell({
         {account && (
           <div className="space-y-1 px-2 pt-2 pb-3">
             <QuickCaptureButton layout={layout} />
+            <SearchButton layout={layout} />
             {collapsed ? (
               <FocusChip collapsed />
             ) : (
@@ -167,7 +173,8 @@ export function AppShell({
         <header className="flex h-14 items-center gap-2 border-b border-border px-4 md:hidden">
           <BrandLogo />
           {account && (
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-1">
+              <SearchButton variant="icon" />
               <ReminderCenter reminders={reminders} />
             </div>
           )}
@@ -200,7 +207,13 @@ export function AppShell({
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
-      {account ? <QuickCaptureProvider>{content}</QuickCaptureProvider> : content}
+      {account ? (
+        <QuickCaptureProvider today={today}>
+          <GlobalSearchProvider>{content}</GlobalSearchProvider>
+        </QuickCaptureProvider>
+      ) : (
+        content
+      )}
     </>
   );
 }
