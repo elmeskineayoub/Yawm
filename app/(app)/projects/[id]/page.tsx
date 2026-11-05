@@ -1,62 +1,76 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/layout/page-header";
+import { CheckCircle2, Circle } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { PageHeader } from "@/components/layout/page-header";
 import { GoalSelect } from "@/components/goals/goal-links";
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { ProjectEditForm } from "@/components/projects/project-edit-form";
 import { QuickAddTask } from "@/components/tasks/quick-add-task";
 import { TaskList } from "@/components/tasks/task-row";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { Section } from "@/components/ui/section";
+import { loadProjectDetail } from "@/features/projects/detail";
 import { PROJECT_STATUS_LABELS } from "@/features/projects/schemas";
-import { compareTasks, isOpen, progressOf } from "@/features/tasks/logic";
-import { loadGoalOptions } from "@/features/goals/queries";
-import { enrichTasks, loadLookups, TASK_COLUMNS } from "@/features/tasks/queries";
+import { dateOfInstant, formatDate, relativeDateLabel } from "@/lib/dates";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Project" };
 
+/**
+ * A project is an outcome: what it is for (the goal and life area it serves), how far along it is
+ * (progress derived from its tasks), what is left to do, and what has been written about it.
+ */
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const ctx = await getWorkspaceContext();
-  const { supabase } = ctx;
-
-  const [project, taskRows, lookups, goals] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("*")
-      .eq("id", id)
-      .eq("workspace_id", ctx.workspace.id)
-      .maybeSingle(),
-    supabase
-      .from("tasks")
-      .select(TASK_COLUMNS)
-      .eq("project_id", id)
-      .eq("workspace_id", ctx.workspace.id)
-      .limit(1000),
-    loadLookups(ctx),
-    loadGoalOptions(ctx),
-  ]);
-  if (project.error || taskRows.error) throw new Error("Could not load the project.");
-  if (!project.data) notFound();
-
-  const tasks = await enrichTasks(ctx, taskRows.data, lookups);
-  const open = tasks.filter((t) => isOpen(t.status)).sort(compareTasks("due"));
-  const finished = tasks
-    .filter((t) => !isOpen(t.status))
-    .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
-  const progress = progressOf(tasks);
+  const detail = await loadProjectDetail(ctx, id);
+  if (!detail) notFound();
+  const { project, open, finished, progress, goal, milestones, notes, lookups } = detail;
+  const area = lookups.areas.find((a) => a.id === project.area_id) ?? null;
+  const overdue =
+    project.due_date !== null && project.due_date < ctx.today && project.status !== "completed";
 
   return (
     <>
       <PageHeader
-        title={project.data.name}
+        title={project.name}
         breadcrumb={[{ label: "Projects", href: "/projects" }]}
         meta={
           <>
-            {PROJECT_STATUS_LABELS[project.data.status]}
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <Badge tone={project.status === "active" ? "success" : "neutral"}>
+                {PROJECT_STATUS_LABELS[project.status]}
+              </Badge>
+              {project.due_date && (
+                <Badge tone={overdue ? "danger" : "neutral"}>
+                  Due {relativeDateLabel(project.due_date, ctx.today)}
+                </Badge>
+              )}
+              {/* The chain this project belongs to: life area, then goal. */}
+              {area && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="size-2 rounded-full ring-1 ring-foreground/20 ring-inset"
+                    style={{ backgroundColor: area.color }}
+                  />
+                  {area.name}
+                </span>
+              )}
+              {goal && (
+                <span>
+                  {area ? "› " : ""}Goal:{" "}
+                  <Link href={`/goals/${goal.id}`} className="text-accent hover:underline">
+                    {goal.title}
+                  </Link>
+                </span>
+              )}
+            </span>
             <div className="mt-3 max-w-md">
               <ProgressBar progress={progress} label="Project progress" />
             </div>
@@ -64,56 +78,145 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section aria-labelledby="project-tasks" className="space-y-3">
-          <h2 id="project-tasks" className="text-sm font-semibold">
-            Tasks
-          </h2>
-          <QuickAddTask projectId={project.data.id} placeholder="Add a task to this project" />
-          {open.length === 0 ? (
-            <EmptyState title="No open tasks">Add the next step above.</EmptyState>
-          ) : (
-            <TaskList tasks={open} today={ctx.today} label="Open tasks" showProject={false} />
-          )}
-          {finished.length > 0 && (
-            <details>
-              <summary className="cursor-pointer text-sm text-muted-foreground">
-                {finished.length} finished
-              </summary>
-              <TaskList
-                tasks={finished}
-                today={ctx.today}
-                label="Finished tasks"
-                showProject={false}
-              />
-            </details>
-          )}
-        </section>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-10">
+          <Section title="Tasks" count={open.length || undefined}>
+            <div className="mb-2">
+              <QuickAddTask projectId={project.id} placeholder="Add a task to this project" />
+            </div>
+            {open.length === 0 ? (
+              <EmptyState title={finished.length ? "Every task is done" : "No tasks yet"}>
+                {finished.length
+                  ? "Add the next step above, or mark the project completed."
+                  : "What is the first concrete step? Add it above."}
+              </EmptyState>
+            ) : (
+              <TaskList tasks={open} today={ctx.today} label="Open tasks" showProject={false} />
+            )}
+            {finished.length > 0 && (
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                  {finished.length} finished
+                </summary>
+                <TaskList
+                  tasks={finished}
+                  today={ctx.today}
+                  label="Finished tasks"
+                  showProject={false}
+                />
+              </details>
+            )}
+          </Section>
 
-        <div className="space-y-6">
-          <section
-            aria-label="Project details"
-            className="rounded-lg border border-border bg-surface p-5"
+          {goal && (
+            <Section
+              title="Toward a goal"
+              divider
+              actions={
+                <Link href={`/goals/${goal.id}`} className="text-accent hover:underline">
+                  Open goal
+                </Link>
+              }
+            >
+              <p className="font-serif text-lg">{goal.title}</p>
+              {goal.why && (
+                <p className="mt-1 max-w-prose text-sm text-muted-foreground">{goal.why}</p>
+              )}
+              {milestones.length > 0 && (
+                <ol aria-label="Goal milestones" className="mt-4 space-y-1.5">
+                  {milestones.map((m) => (
+                    <li key={m.id} className="flex items-start gap-2 text-sm">
+                      {m.completed_at ? (
+                        <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-accent" />
+                      ) : (
+                        <Circle
+                          aria-hidden
+                          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        />
+                      )}
+                      <span
+                        className={
+                          m.completed_at ? "text-muted-foreground line-through" : undefined
+                        }
+                      >
+                        <span className="sr-only">{m.completed_at ? "Done: " : "Open: "}</span>
+                        {m.title}
+                      </span>
+                      {m.due_date && !m.completed_at && (
+                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                          {relativeDateLabel(m.due_date, ctx.today)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Section>
+          )}
+
+          <Section
+            title="Linked notes"
+            count={notes.length || undefined}
+            divider
+            actions={
+              <Link href="/notes" className="text-accent hover:underline">
+                All notes
+              </Link>
+            }
           >
-            <ProjectEditForm project={project.data} areas={lookups.areas} />
-          </section>
-          <section
-            aria-label="Project goal"
-            className="rounded-lg border border-border bg-surface p-5"
-          >
+            {notes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No notes linked yet. Open a note and choose this project under &ldquo;Linked
+                to&rdquo;.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {notes.map((n) => (
+                  <li key={n.id} className="py-2.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <Link
+                        href={`/notes/${n.id}`}
+                        className="min-w-0 truncate text-sm font-medium hover:underline"
+                      >
+                        {n.title}
+                      </Link>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {formatDate(dateOfInstant(n.updated_at, ctx.timezone), "short")}
+                      </span>
+                    </div>
+                    {n.body && (
+                      <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                        {n.body.replace(/\s+/g, " ").slice(0, 280)}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </div>
+
+        <aside aria-label="Project details" className="min-w-0 space-y-8">
+          <Section title="Details" variant="label">
+            <ProjectEditForm project={project} areas={lookups.areas} />
+          </Section>
+          {/* The picker carries its own "Goal" label; no section heading on top of it. */}
+          <div className="border-t border-border pt-6">
             <GoalSelect
               kind="project"
-              targetId={project.data.id}
-              goalId={project.data.goal_id}
-              goals={goals}
+              targetId={project.id}
+              goalId={project.goal_id}
+              goals={detail.goalOptions}
             />
-          </section>
-          <DeleteProjectButton
-            projectId={project.data.id}
-            name={project.data.name}
-            taskCount={tasks.length}
-          />
-        </div>
+          </div>
+          <div className="border-t border-border pt-6">
+            <DeleteProjectButton
+              projectId={project.id}
+              name={project.name}
+              taskCount={open.length + finished.length}
+            />
+          </div>
+        </aside>
       </div>
     </>
   );

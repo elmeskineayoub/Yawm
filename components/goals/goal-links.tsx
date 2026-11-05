@@ -7,6 +7,7 @@ import { LinkPopover } from "@/components/planner/link-popover";
 import { controlClass } from "@/components/ui/field";
 import { linkToGoal } from "@/features/goals/actions";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 /** "Link existing" for a goal: searches projects and open tasks. */
 export function GoalLinkPicker({ goalId, linkedIds }: { goalId: string; linkedIds: string[] }) {
@@ -37,7 +38,7 @@ export function UnlinkFromGoal({
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          const result = await linkToGoal(kind, targetId, null);
+          const result = await safeAction(() => linkToGoal(kind, targetId, null));
           if (result.ok) toast.success(`Unlinked “${label}”. It still exists.`);
           else toast.error(result.error);
         })
@@ -85,7 +86,7 @@ export function GoalSelect({
           setValue(next);
           startTransition(async () => {
             setStatus("Saving…");
-            const result = await linkToGoal(kind, targetId, next || null);
+            const result = await safeAction(() => linkToGoal(kind, targetId, next || null));
             if (result.ok) setStatus("Saved");
             else {
               setValue(previous);

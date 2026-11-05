@@ -1,6 +1,6 @@
 # Yawm UX Redesign — Audit and Plan
 
-**Status:** Stage 1 (audit) and Stage 2 (foundation) complete, 2026-11-05. Stage 3.1–3.5 (task panel and rows, Today, Dashboard, Planner, Tasks) complete; 3.6 (Projects) next. Carry-over: wrap the remaining server-action calls on not-yet-redesigned screens in safeAction (lib/safe-action.ts) as each is redesigned.
+**Status:** Stages 1–3 complete (audit, foundation, core experience: task panel and rows, Today, Dashboard, Planner, Tasks, Projects), 2026-11-05. Stage 4 (Habits, Goals & Vision, Inbox, Notes, Journal, Reviews) next. Carry-over: wrap the remaining server-action calls on not-yet-redesigned screens in safeAction (lib/safe-action.ts) as each is redesigned.
 **Scope:** UI/UX only. The backend, schema, RLS, and data access stay as they are unless a step
 below says otherwise. `REQUIREMENTS.md` remains the product source of truth; where this document
 and the requirements disagree, the requirements win.

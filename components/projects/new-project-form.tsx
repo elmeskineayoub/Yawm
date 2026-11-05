@@ -8,6 +8,7 @@ import { InputField, SelectField } from "@/components/ui/field";
 import { createProject } from "@/features/projects/actions";
 import { PROJECT_STATUS_LABELS, PROJECT_STATUSES } from "@/features/projects/schemas";
 import type { FieldErrors } from "@/lib/action-result";
+import { safeAction } from "@/lib/safe-action";
 
 export function NewProjectForm({ areas }: { areas: { id: string; name: string }[] }) {
   const router = useRouter();
@@ -20,10 +21,10 @@ export function NewProjectForm({ areas }: { areas: { id: string; name: string }[
     <form
       ref={formRef}
       noValidate
-      className="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-end"
+      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-end"
       action={(formData) =>
         startTransition(async () => {
-          const result = await createProject(formData);
+          const result = await safeAction(() => createProject(formData));
           if (result.ok) {
             formRef.current?.reset();
             setErrors(undefined);

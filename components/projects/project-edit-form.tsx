@@ -7,7 +7,7 @@ import { SaveStatus } from "@/components/ui/save-status";
 import { updateProject } from "@/features/projects/actions";
 import type { ProjectRow } from "@/features/projects/queries";
 import { PROJECT_STATUS_LABELS, PROJECT_STATUSES } from "@/features/projects/schemas";
-import { idleSaveState } from "@/lib/action-result";
+import { idleSaveState, type SaveState } from "@/lib/action-result";
 
 export function ProjectEditForm({
   project,
@@ -16,8 +16,19 @@ export function ProjectEditForm({
   project: ProjectRow;
   areas: { id: string; name: string; archived_at: string | null }[];
 }) {
+  // A save that never reaches the server must not escape to the error page (React 19 sends a
+  // rejected form action there); report it in the form like any other failed save.
   const [state, action, pending] = useActionState(
-    updateProject.bind(null, project.id),
+    async (previous: SaveState, formData: FormData): Promise<SaveState> => {
+      try {
+        return await updateProject(project.id, previous, formData);
+      } catch {
+        return {
+          status: "error",
+          message: "Couldn't reach the server, so this wasn't saved. Please try again.",
+        };
+      }
+    },
     idleSaveState,
   );
   const errors = state.status === "error" ? state.fieldErrors : undefined;
