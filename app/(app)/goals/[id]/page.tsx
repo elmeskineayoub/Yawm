@@ -11,8 +11,10 @@ import {
 } from "@/components/goals/goal-editors";
 import { GoalLinkPicker, UnlinkFromGoal } from "@/components/goals/goal-links";
 import { MilestoneList } from "@/components/goals/milestone-list";
+import { PageHeader } from "@/components/layout/page-header";
 import { TaskCheckbox } from "@/components/tasks/task-checkbox";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { Section } from "@/components/ui/section";
 import { isGoalOverdue } from "@/features/goals/logic";
 import { loadGoalDetail } from "@/features/goals/queries";
 import { loadLookups } from "@/features/tasks/queries";
@@ -37,39 +39,41 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
   const linkedIds = [...projects.map((p) => p.id), ...tasks.map((t) => t.id)];
   const empty = progress.milestones.total === 0 && !progress.measure && progress.work.total === 0;
 
+  const area = lookups.areas.find((a) => a.id === goal.area_id) ?? null;
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <p className="text-sm">
-          <Link href="/goals" className="text-muted-foreground hover:underline">
-            ← Goals
-          </Link>
-        </p>
-        <GoalTextField
-          goalId={goal.id}
-          field="title"
-          value={goal.title}
-          label="Goal"
-          placeholder="Name the goal"
-          maxLength={200}
-        />
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-2">
-          <GoalStatusSelect goalId={goal.id} status={goal.status} />
-          {goal.target_date && (
-            <span
-              className={cn(
-                "text-sm",
-                isGoalOverdue(goal, ctx.today) ? "text-danger" : "text-muted-foreground",
-              )}
-            >
-              Target {formatDate(goal.target_date)}
-            </span>
-          )}
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title={goal.title}
+        breadcrumb={[
+          {
+            label: "Goals & Vision",
+            href: goal.status === "archived" ? "/goals?status=archived" : "/goals",
+          },
+        ]}
+        meta={
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <GoalStatusSelect goalId={goal.id} status={goal.status} />
+            {area && (
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className="size-2 rounded-full ring-1 ring-foreground/20 ring-inset"
+                  style={{ backgroundColor: area.color }}
+                />
+                {area.name}
+              </span>
+            )}
+            {goal.target_date && (
+              <span className={cn(isGoalOverdue(goal, ctx.today) && "text-danger")}>
+                Target {formatDate(goal.target_date)}
+              </span>
+            )}
+          </span>
+        }
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-8">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-10">
           <GoalTextField
             goalId={goal.id}
             field="why"
@@ -80,20 +84,22 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
             maxLength={2000}
           />
 
-          <section aria-labelledby="goal-milestones">
-            <h2 id="goal-milestones" className="mb-1 text-sm font-semibold">
-              Milestones
-            </h2>
+          <Section
+            title="Milestones"
+            count={
+              progress.milestones.total
+                ? `${progress.milestones.done}/${progress.milestones.total}`
+                : undefined
+            }
+          >
             <MilestoneList goalId={goal.id} milestones={milestones} />
-          </section>
+          </Section>
 
-          <section aria-labelledby="goal-work">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <h2 id="goal-work" className="text-sm font-semibold">
-                Projects and tasks
-              </h2>
-              <GoalLinkPicker goalId={goal.id} linkedIds={linkedIds} />
-            </div>
+          <Section
+            title="Projects and tasks"
+            divider
+            actions={<GoalLinkPicker goalId={goal.id} linkedIds={linkedIds} />}
+          >
             {projects.length === 0 && tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Link the projects and tasks that move this goal forward. Their progress counts here.
@@ -136,20 +142,20 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
                 ))}
               </ul>
             )}
-          </section>
+          </Section>
 
-          <section aria-labelledby="goal-vision">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <h2 id="goal-vision" className="text-sm font-semibold">
-                Vision
-              </h2>
+          <Section
+            title="Vision"
+            divider
+            actions={
               <Link
                 href={`/goals/vision?goal=${goal.id}`}
                 className="text-sm text-accent hover:underline"
               >
                 {cards.length ? "Open on the board" : "Add to the vision board"}
               </Link>
-            </div>
+            }
+          >
             {cards.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No vision cards for this goal yet: a picture or a few words that keep it vivid.
@@ -177,7 +183,7 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
                 ))}
               </ul>
             )}
-          </section>
+          </Section>
 
           <GoalTextField
             goalId={goal.id}
@@ -190,11 +196,8 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
           />
         </div>
 
-        <aside aria-label="Goal progress and details" className="space-y-6">
-          <section aria-labelledby="goal-progress" className="space-y-2">
-            <h2 id="goal-progress" className="text-sm font-semibold">
-              Progress
-            </h2>
+        <aside aria-label="Goal progress and details" className="min-w-0 space-y-8">
+          <Section title="Progress" variant="label">
             {empty ? (
               <p className="text-sm text-muted-foreground">
                 Nothing to measure yet: add milestones, a measurable target, or linked work.
@@ -203,26 +206,34 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
               <GoalMeters goal={{ title: goal.title, progress }} />
             )}
             {progress.measure && (
-              <GoalCurrentValue
-                goalId={goal.id}
-                current={goal.current_value}
-                target={progress.measure.target}
-                unit={goal.unit}
-              />
+              <div className="mt-3">
+                <GoalCurrentValue
+                  goalId={goal.id}
+                  current={goal.current_value}
+                  target={progress.measure.target}
+                  unit={goal.unit}
+                />
+              </div>
             )}
-          </section>
-          <section
-            aria-labelledby="goal-details"
-            className="rounded-lg border border-border bg-surface p-4"
-          >
-            <h2 id="goal-details" className="mb-3 text-sm font-semibold">
-              Details
-            </h2>
-            <GoalDetailsForm goal={goal} areas={lookups.areas} />
-          </section>
-          <DeleteGoalButton goalId={goal.id} title={goal.title} />
+          </Section>
+          <Section title="Details" variant="label" divider>
+            <div className="space-y-4">
+              <GoalTextField
+                goalId={goal.id}
+                field="title"
+                value={goal.title}
+                label="Name"
+                placeholder="Name the goal"
+                maxLength={200}
+              />
+              <GoalDetailsForm goal={goal} areas={lookups.areas} />
+            </div>
+          </Section>
+          <div className="border-t border-border pt-6">
+            <DeleteGoalButton goalId={goal.id} title={goal.title} />
+          </div>
         </aside>
       </div>
-    </div>
+    </>
   );
 }

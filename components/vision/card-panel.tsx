@@ -17,6 +17,7 @@ import { IMAGE_TYPES } from "@/features/vision/logic";
 import type { VisionCard } from "@/features/vision/queries";
 import { cn } from "@/lib/utils";
 import { useImageUpload } from "./use-image-upload";
+import { safeAction } from "@/lib/safe-action";
 
 export type Option = { id: string; name: string };
 
@@ -75,13 +76,15 @@ function CardForm({
           e.preventDefault();
           const form = new FormData(e.currentTarget);
           startTransition(async () => {
-            const result = await updateCard(card.id, {
-              title: form.get("title") as string,
-              body: form.get("body") as string,
-              image_alt: form.get("image_alt") as string,
-              area_id: form.get("area_id") as string,
-              goal_id: form.get("goal_id") as string,
-            });
+            const result = await safeAction(() =>
+              updateCard(card.id, {
+                title: form.get("title") as string,
+                body: form.get("body") as string,
+                image_alt: form.get("image_alt") as string,
+                area_id: form.get("area_id") as string,
+                goal_id: form.get("goal_id") as string,
+              }),
+            );
             if (!result.ok) return setError(result.error);
             finish("Card saved");
           });
@@ -112,7 +115,7 @@ function CardForm({
                 disabled={busy}
                 onClick={() =>
                   startTransition(async () => {
-                    const result = await removeCardImage(card.id);
+                    const result = await safeAction(() => removeCardImage(card.id));
                     if (!result.ok) return setError(result.error);
                     finish("Image removed");
                   })
@@ -222,7 +225,9 @@ function CardForm({
               disabled={busy}
               onClick={() =>
                 startTransition(async () => {
-                  const result = await setCardArchived(card.id, card.archived_at === null);
+                  const result = await safeAction(() =>
+                    setCardArchived(card.id, card.archived_at === null),
+                  );
                   if (!result.ok) return setError(result.error);
                   finish(card.archived_at ? "Card restored" : "Card archived");
                 })
@@ -237,7 +242,7 @@ function CardForm({
               onClick={() =>
                 confirmDelete
                   ? startTransition(async () => {
-                      const result = await deleteCard(card.id);
+                      const result = await safeAction(() => deleteCard(card.id));
                       if (!result.ok) return setError(result.error);
                       finish("Card deleted");
                     })

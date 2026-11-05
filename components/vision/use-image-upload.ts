@@ -4,6 +4,7 @@ import { useState } from "react";
 import { attachCardImage, uploadTarget } from "@/features/vision/actions";
 import { imagePath, imageProblem, VISION_BUCKET } from "@/features/vision/logic";
 import { createClient } from "@/lib/supabase/browser";
+import { safeAction } from "@/lib/safe-action";
 
 /**
  * Uploads an image for a card straight to the private bucket with the user's own session (the
@@ -18,13 +19,13 @@ export function useImageUpload() {
     if (problem) return problem;
     setUploading(true);
     try {
-      const target = await uploadTarget();
+      const target = await safeAction(() => uploadTarget());
       if (!target.ok) return target.error;
       const path = imagePath(target.data.workspaceId, cardId, crypto.randomUUID(), file.type);
       const bucket = createClient().storage.from(VISION_BUCKET);
       const { error } = await bucket.upload(path, file, { contentType: file.type });
       if (error) return "The image couldn't be uploaded. Check your connection and try again.";
-      const attached = await attachCardImage(cardId, path, alt);
+      const attached = await safeAction(() => attachCardImage(cardId, path, alt));
       if (!attached.ok) {
         await bucket.remove([path]);
         return attached.error;

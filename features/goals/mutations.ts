@@ -35,12 +35,15 @@ export async function createGoalInWorkspace(
   db: Db,
   workspaceId: string,
   title: string,
+  /** Optional starting details from the "New goal" form; the area must be in this workspace. */
+  extra: Pick<Tables["goals"]["Insert"], "why" | "area_id" | "target_date"> = {},
 ): Promise<ActionResult<{ id: string }>> {
   const { data, error } = await db
     .from("goals")
     .insert({
       workspace_id: workspaceId,
       title,
+      ...extra,
       sort_order: await nextGoalOrder(db, workspaceId),
     })
     .select("id")

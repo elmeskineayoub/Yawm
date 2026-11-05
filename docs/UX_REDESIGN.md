@@ -190,6 +190,9 @@ affected e2e specs, and a production build. Accessible names used by e2e tests s
 
 - **4.1** Habits: today's checklist first with a progress line; not-due habits folded; one
   `HabitForm` for the New habit sheet and the habit page; unboxed stats; lost-connection handling.
+- **4.2** Goals & Vision: goals grouped by area as compact rows with the next milestone and one
+  progress bar; New goal sheet (name, why, area, target date); sectioned goal page; vision filter
+  chips match Tasks; lost-connection handling on every goal and vision save.
 
 Habits (checklist first, creation in a sheet), Goals & Vision (grouped by area, next
 milestone), Inbox (short rows, one Convert menu, undo on archive), Notes (two-pane, autosave),

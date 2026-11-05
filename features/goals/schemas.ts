@@ -41,4 +41,12 @@ export const goalDetailsSchema = z
     g.target_value === null ? { ...g, current_value: null, unit: null } : g,
   );
 
+/** The "New goal" form: a name, plus optional why, area, and target date. */
+export const newGoalSchema = z.object({
+  title: goalTitleSchema,
+  why: optionalText(2000),
+  area_id: optionalUuid,
+  target_date: optionalDate,
+});
+
 export const milestoneTitleSchema = requiredText(200, "Name the milestone.");

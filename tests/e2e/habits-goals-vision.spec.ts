@@ -142,8 +142,11 @@ test("goals: milestones, linked work, year outcomes, and ideas", async ({ page }
     await expectToast(page, "Project created");
 
     await page.goto("/goals");
-    await page.getByLabel("Add a goal").fill("Run a half marathon");
-    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("button", { name: "New goal" }).first().click();
+    const sheet = page.getByRole("dialog", { name: "New goal" });
+    await sheet.getByLabel("Name").fill("Run a half marathon");
+    await sheet.getByRole("button", { name: "Create goal" }).click();
+    await expect(sheet).toBeHidden();
     await page.getByRole("link", { name: /Run a half marathon/ }).click();
     for (const m of ["Run 5k", "Run 10k", "Race day"]) {
       await page.getByLabel("Add a milestone").fill(m);
@@ -212,9 +215,10 @@ test("vision board: private images, editing, and reordering", async ({ page }) =
   test.setTimeout(120_000);
   await signUpAndConfirm(page);
   await page.goto("/goals");
-  await page.getByLabel("Add a goal").fill("Live by the sea");
-  await page.getByRole("button", { name: "Add", exact: true }).click();
-  await expectToast(page, "Goal added");
+  await page.getByRole("button", { name: "New goal" }).first().click();
+  await page.getByRole("dialog", { name: "New goal" }).getByLabel("Name").fill("Live by the sea");
+  await page.getByRole("button", { name: "Create goal" }).click();
+  await expectToast(page, "“Live by the sea” added");
   await page.getByRole("link", { name: "Vision board" }).click();
   const board = page.getByRole("list", { name: "Vision board" });
 

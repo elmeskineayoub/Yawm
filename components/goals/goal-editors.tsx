@@ -18,6 +18,7 @@ import { GOAL_STATUSES, type GoalStatus } from "@/features/goals/logic";
 import type { Goal } from "@/features/goals/queries";
 import type { FieldErrors } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 type Area = { id: string; name: string; archived_at: string | null };
 
@@ -46,7 +47,7 @@ export function GoalTextField({
       maxLength={maxLength}
       {...(multiline ? { multiline } : {})}
       onSave={async (next) => {
-        const result = await saveGoalText(goalId, field, next);
+        const result = await safeAction(() => saveGoalText(goalId, field, next));
         return result.ok ? null : result.error;
       }}
     />
@@ -72,7 +73,7 @@ export function GoalStatusSelect({ goalId, status }: { goalId: string; status: G
           const previous = value;
           setValue(next);
           startTransition(async () => {
-            const result = await setGoalStatus(goalId, next);
+            const result = await safeAction(() => setGoalStatus(goalId, next));
             if (!result.ok) {
               setValue(previous);
               toast.error(result.error);
@@ -119,7 +120,7 @@ export function GoalCurrentValue({
         }
         startTransition(async () => {
           setStatus("Saving…");
-          const result = await setGoalCurrent(goalId, value);
+          const result = await safeAction(() => setGoalCurrent(goalId, value));
           setStatus(result.ok ? "Saved" : result.error);
         });
       }}
@@ -171,7 +172,7 @@ export function GoalDetailsForm({ goal, areas }: { goal: Goal; areas: Area[] }) 
         const form = new FormData(e.currentTarget);
         startTransition(async () => {
           setStatus(null);
-          const result = await saveGoalDetails(goal.id, Object.fromEntries(form));
+          const result = await safeAction(() => saveGoalDetails(goal.id, Object.fromEntries(form)));
           if (!result.ok) {
             setErrors(result.fieldErrors ?? {});
             setStatus({ tone: "error", text: result.error });
@@ -310,7 +311,7 @@ export function DeleteGoalButton({ goalId, title }: { goalId: string; title: str
       }
       confirmLabel="Delete goal"
       onConfirm={async () => {
-        const result = await deleteGoal(goalId);
+        const result = await safeAction(() => deleteGoal(goalId));
         if (!result.ok) return result.error;
         toast.success("Goal deleted");
         router.push("/goals");

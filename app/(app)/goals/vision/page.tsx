@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GoalsTabs } from "@/components/goals/goals-tabs";
+import { buttonClass } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { VisionBoard } from "@/components/vision/vision-board";
 import { loadGoalOptions } from "@/features/goals/queries";
@@ -46,10 +47,10 @@ export default async function VisionPage({
       href={href({ area: target, goal })}
       aria-current={area === target ? "page" : undefined}
       className={cn(
-        "rounded-full border px-3 py-1 text-xs",
+        "inline-flex h-8 items-center rounded-full border px-3 text-[0.8125rem] transition-colors duration-150",
         area === target
-          ? "border-accent bg-accent text-accent-foreground"
-          : "border-border text-muted-foreground hover:text-foreground",
+          ? "border-accent/40 bg-accent-soft text-accent"
+          : "border-border text-muted-foreground hover:border-input-border hover:text-foreground",
       )}
     >
       {label}
@@ -59,10 +60,25 @@ export default async function VisionPage({
   return (
     <>
       <PageHeader
-        title="Goals & Vision"
-        description="Pictures and words that remind you where you're heading."
+        title={archived ? "Archived cards" : "Goals & Vision"}
+        description={
+          archived
+            ? "Restore a card from its panel."
+            : "Pictures and words that remind you where you're heading."
+        }
+        {...(archived ? { breadcrumb: [{ label: "Vision board", href: "/goals/vision" }] } : {})}
+        actions={
+          archived ? undefined : (
+            <Link
+              href={href({ archived: true })}
+              className={buttonClass({ variant: "ghost", size: "sm" })}
+            >
+              Archived cards
+            </Link>
+          )
+        }
       />
-      <GoalsTabs current="vision" />
+      {!archived && <GoalsTabs current="vision" />}
       <div className="space-y-4">
         {!archived && (
           <nav aria-label="Filter by life area" className="flex flex-wrap gap-1.5">
@@ -79,13 +95,6 @@ export default async function VisionPage({
             </Link>
           </p>
         )}
-        {archived && (
-          <p className="text-sm">
-            <Link href="/goals/vision" className="text-accent hover:underline">
-              ← Back to the board
-            </Link>
-          </p>
-        )}
         <VisionBoard
           cards={cards}
           areas={areas.map((a) => ({ id: a.id, name: a.name }))}
@@ -95,13 +104,6 @@ export default async function VisionPage({
             goal_id: goal ?? null,
           }}
         />
-        {!archived && (
-          <p className="text-sm">
-            <Link href={href({ archived: true })} className="text-muted-foreground hover:underline">
-              Archived cards
-            </Link>
-          </p>
-        )}
       </div>
     </>
   );

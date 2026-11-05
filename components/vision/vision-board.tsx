@@ -11,6 +11,7 @@ import type { VisionCard } from "@/features/vision/queries";
 import { cn } from "@/lib/utils";
 import { CardPanel, type Option } from "./card-panel";
 import { useImageUpload } from "./use-image-upload";
+import { safeAction } from "@/lib/safe-action";
 
 /** The board: add a text or image card inline, reorder by drag or with the arrow buttons. */
 export function VisionBoard({
@@ -36,7 +37,7 @@ export function VisionBoard({
 
   const addText = () =>
     startTransition(async () => {
-      const result = await createCard({ title: text, ...defaults });
+      const result = await safeAction(() => createCard({ title: text, ...defaults }));
       if (!result.ok) return void toast.error(result.error);
       setText("");
       toast.success("Card added");
@@ -45,7 +46,9 @@ export function VisionBoard({
   const addImage = (file: File) =>
     startTransition(async () => {
       const name = file.name.replace(/\.[^.]+$/, "").slice(0, 120) || "Image";
-      const created = await createCard({ title: text.trim() || name, ...defaults });
+      const created = await safeAction(() =>
+        createCard({ title: text.trim() || name, ...defaults }),
+      );
       if (!created.ok) return void toast.error(created.error);
       const problem = await upload(created.data.id, file, text.trim() || name);
       setText("");
@@ -56,7 +59,7 @@ export function VisionBoard({
 
   const move = (cardId: string, beforeId: string | null) =>
     startTransition(async () => {
-      const result = await moveCard(cardId, beforeId);
+      const result = await safeAction(() => moveCard(cardId, beforeId));
       if (!result.ok) toast.error(result.error);
     });
 

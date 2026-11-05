@@ -7,6 +7,7 @@ import { setMilestoneDone } from "@/features/goals/actions";
 import type { MilestoneDue } from "@/features/goals/queries";
 import { formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 /** Milestones with a due date in the period, each linked to its goal. */
 export function MilestonesDue({ milestones }: { milestones: MilestoneDue[] }) {
@@ -33,7 +34,7 @@ function MilestoneDueRow({ milestone }: { milestone: MilestoneDue }) {
           const next = e.target.checked;
           startTransition(async () => {
             setDone(next);
-            const result = await setMilestoneDone(milestone.id, next);
+            const result = await safeAction(() => setMilestoneDone(milestone.id, next));
             if (!result.ok) toast.error(result.error);
           });
         }}

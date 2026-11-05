@@ -15,6 +15,7 @@ import {
 import type { Milestone } from "@/features/goals/queries";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 /** Milestones edited in place: tick, rename, date, reorder (buttons work by keyboard), delete. */
 export function MilestoneList({ goalId, milestones }: { goalId: string; milestones: Milestone[] }) {
@@ -25,7 +26,7 @@ export function MilestoneList({ goalId, milestones }: { goalId: string; mileston
 
   const run = (work: () => Promise<ActionResult>, after?: () => void) =>
     startTransition(async () => {
-      const result = await work();
+      const result = await safeAction(() => work());
       if (!result.ok) toast.error(result.error);
       else after?.();
     });
@@ -57,7 +58,7 @@ export function MilestoneList({ goalId, milestones }: { goalId: string; mileston
           if (!title.trim()) return;
           run(
             async () => {
-              const result = await addMilestone(goalId, title);
+              const result = await safeAction(() => addMilestone(goalId, title));
               setError(result.ok ? null : result.error);
               return result;
             },
@@ -115,7 +116,7 @@ function MilestoneRow({
           const next = e.target.checked;
           startTransition(async () => {
             setDone(next);
-            const result = await setMilestoneDone(milestone.id, next);
+            const result = await safeAction(() => setMilestoneDone(milestone.id, next));
             if (!result.ok) toast.error(result.error);
           });
         }}

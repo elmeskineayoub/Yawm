@@ -20,8 +20,8 @@ import {
   goalDetailsSchema,
   goalStatusSchema,
   goalTextSchemas,
-  goalTitleSchema,
   milestoneTitleSchema,
+  newGoalSchema,
 } from "./schemas";
 
 // Goal text is private: never log it.
@@ -34,11 +34,18 @@ function done<T>(result: ActionResult<T>): ActionResult<T> {
   return result;
 }
 
-export async function createGoal(title: string): Promise<ActionResult<{ id: string }>> {
-  const parsed = goalTitleSchema.safeParse(title);
-  if (!parsed.success) return fail(parsed.error.issues[0]!.message);
+/** Creates a goal from a name, or from the "New goal" form (name plus why, area, target date). */
+export async function createGoal(input: unknown): Promise<ActionResult<{ id: string }>> {
+  const parsed = newGoalSchema.safeParse(typeof input === "string" ? { title: input } : input);
+  if (!parsed.success) {
+    const errors = fieldErrorsOf(parsed.error);
+    return fail(errors.title?.[0] ?? "Check the highlighted fields.", errors);
+  }
+  const { title, ...extra } = parsed.data;
   const { supabase, workspace } = await getWorkspaceContext();
-  return done(await createGoalInWorkspace(supabase, workspace.id, parsed.data));
+  const result = await createGoalInWorkspace(supabase, workspace.id, title, extra);
+  if (!result.ok && extra.area_id) return fail("That life area is no longer available.");
+  return done(result);
 }
 
 /** Inline edit of the title, "why it matters", or description. */

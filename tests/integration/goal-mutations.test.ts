@@ -68,6 +68,40 @@ const ctx = () =>
     today: "2026-10-12",
   }) as WorkspaceContext;
 
+describe("creating a goal with details", () => {
+  it("saves why, area, and target date from the New goal form", async () => {
+    const area = (
+      await alice.client.from("areas").select("id").eq("workspace_id", ws).limit(1).single()
+    ).data!.id;
+    const result = await createGoalInWorkspace(alice.client, ws, "Learn Spanish", {
+      why: "Talk with my neighbours.",
+      area_id: area,
+      target_date: "2027-06-30",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const { data } = await alice.client
+      .from("goals")
+      .select("title, why, area_id, target_date")
+      .eq("id", result.data.id)
+      .single();
+    expect(data).toEqual({
+      title: "Learn Spanish",
+      why: "Talk with my neighbours.",
+      area_id: area,
+      target_date: "2027-06-30",
+    });
+  });
+
+  it("rejects a life area from another workspace", async () => {
+    const bobArea = (
+      await bob.client.from("areas").select("id").eq("workspace_id", bobWs).limit(1).single()
+    ).data!.id;
+    const result = await createGoalInWorkspace(alice.client, ws, "Sneaky", { area_id: bobArea });
+    expect(result.ok).toBe(false);
+  });
+});
+
 describe("milestones", () => {
   it("are added in order and can be moved up and down", async () => {
     const g = await goal();
