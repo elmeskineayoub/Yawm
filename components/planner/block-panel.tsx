@@ -1,11 +1,12 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useId, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
+import { Sheet, SheetHeader } from "@/components/ui/sheet";
 import { createBlock, deleteBlock, updateBlock } from "@/features/calendar/actions";
 import { overlapsWith } from "@/features/calendar/logic";
 import type { CalendarBlock, SchedulableTask } from "@/features/calendar/queries";
@@ -45,21 +46,16 @@ const SYNC_LABEL: Record<BlockSyncState, string> = {
 /** Create or edit a time block. Also the keyboard-accessible alternative to drag and drop. */
 export function BlockPanel({ draft, onClose, ...rest }: BlockPanelProps) {
   return (
-    <Dialog.Root open={draft !== null} onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
-        <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-border bg-background p-5 shadow-xl">
-          {draft && (
-            <BlockForm
-              key={draft.id ?? `${draft.starts_at}-${draft.task_id}`}
-              draft={draft}
-              onClose={onClose}
-              {...rest}
-            />
-          )}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Sheet open={draft !== null} onOpenChange={(open) => !open && onClose()}>
+      {draft && (
+        <BlockForm
+          key={draft.id ?? `${draft.starts_at}-${draft.task_id}`}
+          draft={draft}
+          onClose={onClose}
+          {...rest}
+        />
+      )}
+    </Sheet>
   );
 }
 
@@ -149,28 +145,17 @@ function BlockForm({
 
   return (
     <>
-      <div className="flex items-start justify-between gap-2">
-        <Dialog.Title className="text-base font-semibold">
-          {readOnly ? "Calendar event" : draft.id ? "Edit time block" : "New time block"}
-        </Dialog.Title>
-        <Dialog.Close asChild>
-          <button
-            type="button"
-            aria-label="Close"
-            className="rounded p-1 text-muted-foreground hover:bg-surface-muted"
-          >
-            <X aria-hidden className="size-4" />
-          </button>
-        </Dialog.Close>
-      </div>
-      <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-        {readOnly
-          ? "Imported from another calendar. Read-only here."
-          : "Scheduled time to work. It doesn't change any task's deadline."}
-      </Dialog.Description>
+      <SheetHeader
+        title={readOnly ? "Calendar event" : draft.id ? "Edit time block" : "New time block"}
+        description={
+          readOnly
+            ? "Imported from another calendar. Read-only here."
+            : "Scheduled time to work. It doesn't change any task's deadline."
+        }
+      />
 
       <form
-        className="mt-5 space-y-4"
+        className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           save();

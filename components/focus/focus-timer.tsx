@@ -305,7 +305,7 @@ function SettingsForm({
           </div>
         ))}
       </div>
-      <Button type="submit" variant="secondary" className="py-1.5">
+      <Button type="submit" variant="secondary">
         Save durations
       </Button>
     </form>

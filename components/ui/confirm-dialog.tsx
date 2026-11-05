@@ -2,7 +2,9 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState, useTransition, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import { dialogClass, overlayClass } from "./surfaces";
 
 type ConfirmDialogProps = {
   trigger: ReactNode;
@@ -38,8 +40,8 @@ export function ConfirmDialog({
     >
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background p-6 shadow-lg">
+        <Dialog.Overlay className={overlayClass} />
+        <Dialog.Content className={cn(dialogClass, "max-w-md")}>
           <Dialog.Title className="text-base font-semibold">{title}</Dialog.Title>
           <Dialog.Description asChild>
             <div className="mt-2 text-sm text-muted-foreground">{description}</div>
@@ -54,9 +56,7 @@ export function ConfirmDialog({
               <Button variant="secondary">Cancel</Button>
             </Dialog.Close>
             <Button
-              className={
-                destructive ? "bg-danger text-danger-foreground hover:bg-danger/90" : undefined
-              }
+              variant={destructive ? "danger" : "primary"}
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {

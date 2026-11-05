@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
-import { TextField } from "@/components/ui/text-field";
+import { InputField } from "@/components/ui/field";
 import { requestPasswordReset } from "@/features/auth/actions";
 import { initialFormState } from "@/features/auth/form-state";
 
@@ -16,7 +16,7 @@ export function ForgotPasswordForm() {
   return (
     <form action={action} className="space-y-4" noValidate>
       <FormMessage state={state} />
-      <TextField
+      <InputField
         label="Email"
         name="email"
         type="email"

@@ -21,7 +21,7 @@ export function NoteActions({ note, afterDelete }: NoteActionsProps) {
     <div className="flex flex-wrap items-center gap-1.5">
       <Button
         variant="secondary"
-        className="px-2 py-1 text-xs"
+        size="xs"
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
@@ -35,11 +35,7 @@ export function NoteActions({ note, afterDelete }: NoteActionsProps) {
       </Button>
       <ConfirmDialog
         trigger={
-          <Button
-            variant="ghost"
-            className="px-2 py-1 text-xs"
-            aria-label={`Delete “${note.title}”`}
-          >
+          <Button variant="ghost" size="xs" aria-label={`Delete “${note.title}”`}>
             Delete
           </Button>
         }

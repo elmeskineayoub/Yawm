@@ -9,6 +9,7 @@ import type { DayStatus, HabitLog } from "@/features/habits/logic";
 import type { LogEntry } from "@/features/habits/schemas";
 import { formatDate, type IsoDate } from "@/lib/dates";
 import { controlClass } from "@/components/ui/field";
+import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
 import { statusClass } from "./habit-row";
 
@@ -166,10 +167,7 @@ function DayCell({
         />
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content
-          sideOffset={4}
-          className="z-50 w-56 space-y-2 rounded-md border border-border bg-background p-3 text-sm shadow-lg"
-        >
+        <Popover.Content sideOffset={4} className={cn(popoverClass, "w-56 space-y-2 p-3 text-sm")}>
           <p className="font-medium">{formatDate(cell.date)}</p>
           {kind === "measurable" ? (
             <form
@@ -199,7 +197,8 @@ function DayCell({
               <Button
                 type="submit"
                 variant="secondary"
-                className="ml-auto px-2 py-1 text-xs"
+                size="xs"
+                className="ml-auto"
                 disabled={pending}
               >
                 Save
@@ -207,7 +206,8 @@ function DayCell({
             </form>
           ) : (
             <Button
-              className="w-full py-1"
+              size="sm"
+              className="w-full"
               disabled={pending}
               onClick={() => save({ type: "value", value: 1 })}
             >
@@ -217,7 +217,8 @@ function DayCell({
           <div className="flex gap-1">
             <Button
               variant="secondary"
-              className="flex-1 px-2 py-1 text-xs"
+              size="xs"
+              className="flex-1"
               disabled={pending}
               onClick={() => save({ type: "rest" })}
             >
@@ -225,7 +226,8 @@ function DayCell({
             </Button>
             <Button
               variant="ghost"
-              className="flex-1 px-2 py-1 text-xs"
+              size="xs"
+              className="flex-1"
               disabled={pending || !cell.log}
               onClick={() => save({ type: "clear" })}
             >

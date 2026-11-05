@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -97,19 +98,11 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
-        <Link href="/notes" className="hover:underline">
-          Notes
-        </Link>
-      </nav>
-      <h1 className="mb-6 page-title">
-        {note.title}
-        {note.archived_at && (
-          <span className="ml-2 align-middle text-xs font-normal text-muted-foreground">
-            Archived
-          </span>
-        )}
-      </h1>
+      <PageHeader
+        title={note.title}
+        breadcrumb={[{ label: "Notes", href: "/notes" }]}
+        meta={note.archived_at ? "Archived" : undefined}
+      />
       <div className="space-y-6">
         <section
           aria-label="Note details"

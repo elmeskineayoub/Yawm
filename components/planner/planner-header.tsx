@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { PlanPeriod } from "@/lib/dates";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
 
 const VIEWS: { value: PlanPeriod; label: string; key: string }[] = [
@@ -71,28 +72,17 @@ export function PlannerHeader({
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <nav
-          aria-label="Planner view"
-          className="flex rounded-md border border-border p-0.5 text-sm"
-        >
-          {VIEWS.map((v) => (
-            <Link
-              key={v.value}
-              href={viewHrefs[v.value]}
-              aria-current={v.value === view ? "page" : undefined}
-              aria-keyshortcuts={v.key}
-              title={`${v.label} (${v.key})`}
-              className={cn(
-                "rounded px-3 py-1",
-                v.value === view
-                  ? "bg-accent font-medium text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {v.label}
-            </Link>
-          ))}
-        </nav>
+        <SegmentedControl
+          label="Planner view"
+          value={view}
+          items={VIEWS.map((v) => ({
+            value: v.value,
+            label: v.label,
+            href: viewHrefs[v.value],
+            keyShortcut: v.key,
+            title: `${v.label} (${v.key})`,
+          }))}
+        />
         <div className="flex items-center gap-1">
           <Link
             href={prevHref}

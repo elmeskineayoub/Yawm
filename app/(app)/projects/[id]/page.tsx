@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PageHeader } from "@/components/layout/page-header";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
@@ -51,18 +51,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
-        <Link href="/projects" className="hover:underline">
-          Projects
-        </Link>
-      </nav>
-      <h1 className="page-title">{project.data.name}</h1>
-      <p className="mt-1 mb-4 text-sm text-muted-foreground">
-        {PROJECT_STATUS_LABELS[project.data.status]}
-      </p>
-      <div className="mb-6 max-w-md">
-        <ProgressBar progress={progress} label="Project progress" />
-      </div>
+      <PageHeader
+        title={project.data.name}
+        breadcrumb={[{ label: "Projects", href: "/projects" }]}
+        meta={
+          <>
+            {PROJECT_STATUS_LABELS[project.data.status]}
+            <div className="mt-3 max-w-md">
+              <ProgressBar progress={progress} label="Project progress" />
+            </div>
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section aria-labelledby="project-tasks" className="space-y-3">

@@ -11,6 +11,7 @@ import type {
 } from "@/features/google-calendar/types";
 import type { IsoDate } from "@/lib/dates";
 import { localToInstant } from "@/lib/dates/zoned";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
 import { BlockPanel, type BlockDraft } from "./block-panel";
 import { ExternalEventPanel } from "./external-event-panel";
@@ -106,26 +107,16 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-label="Calendar" className="order-2 min-w-0 lg:order-1">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div
-            role="group"
-            aria-label="Calendar display"
-            className="flex rounded-md border border-border p-0.5 text-xs"
-          >
-            {(["grid", "agenda"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={mode === m}
-                onClick={() => setChosenMode(m)}
-                className={cn(
-                  "rounded px-2.5 py-1",
-                  mode === m ? "bg-surface-muted font-medium" : "text-muted-foreground",
-                )}
-              >
-                {m === "grid" ? (view === "month" ? "Month grid" : "Timeline") : "Agenda"}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            label="Calendar display"
+            size="sm"
+            value={mode}
+            onChange={setChosenMode}
+            items={(["grid", "agenda"] as const).map((m) => ({
+              value: m,
+              label: m === "grid" ? (view === "month" ? "Month grid" : "Timeline") : "Agenda",
+            }))}
+          />
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <GoogleSyncStatus
               state={props.google.state}

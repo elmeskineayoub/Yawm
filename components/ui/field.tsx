@@ -16,6 +16,8 @@ export const controlClass =
   "control block w-full rounded-md border border-input-border bg-surface px-3 py-2 text-sm text-foreground shadow-[inset_0_1px_0_rgb(0_0_0/0.02)] transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground hover:border-muted-foreground focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/20 focus-visible:outline-none aria-invalid:border-danger aria-invalid:focus-visible:ring-danger/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted-foreground";
 
 type FieldShellProps = {
+  /** Use a caller-supplied id (e.g. for an external label); otherwise one is generated. */
+  id?: string | undefined;
   label: string;
   hideLabel?: boolean | undefined;
   errors?: string[] | undefined;
@@ -30,6 +32,7 @@ type FieldShellProps = {
 
 /** Label, hint, and error wiring shared by every form control. */
 export function FieldShell({
+  id: idProp,
   label,
   hideLabel,
   errors,
@@ -37,7 +40,8 @@ export function FieldShell({
   className,
   children,
 }: FieldShellProps) {
-  const id = useId();
+  const generatedId = useId();
+  const id = idProp ?? generatedId;
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
   const hasError = Boolean(errors?.length);
@@ -82,10 +86,11 @@ export function InputField({
   errors,
   hint,
   className,
+  id,
   ...props
 }: Common & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <FieldShell {...{ label, hideLabel, errors, hint, className }}>
+    <FieldShell {...{ id, label, hideLabel, errors, hint, className }}>
       {(aria) => <input {...aria} className={controlClass} {...props} />}
     </FieldShell>
   );
@@ -97,10 +102,11 @@ export function TextAreaField({
   errors,
   hint,
   className,
+  id,
   ...props
 }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <FieldShell {...{ label, hideLabel, errors, hint, className }}>
+    <FieldShell {...{ id, label, hideLabel, errors, hint, className }}>
       {(aria) => <textarea {...aria} className={cn(controlClass, "min-h-24")} {...props} />}
     </FieldShell>
   );
@@ -115,10 +121,11 @@ export function SelectField({
   hint,
   className,
   options,
+  id,
   ...props
 }: Common & SelectHTMLAttributes<HTMLSelectElement> & { options: readonly Option[] }) {
   return (
-    <FieldShell {...{ label, hideLabel, errors, hint, className }}>
+    <FieldShell {...{ id, label, hideLabel, errors, hint, className }}>
       {(aria) => (
         <select {...aria} className={controlClass} {...props}>
           {options.map((option) => (

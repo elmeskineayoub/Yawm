@@ -1,12 +1,12 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
+import { Sheet, SheetHeader } from "@/components/ui/sheet";
 import {
   deleteCard,
   removeCardImage,
@@ -33,16 +33,9 @@ export function CardPanel({
   onClose: () => void;
 }) {
   return (
-    <Dialog.Root open={card !== null} onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
-        <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-border bg-background p-5 shadow-xl">
-          {card && (
-            <CardForm key={card.id} card={card} areas={areas} goals={goals} onClose={onClose} />
-          )}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Sheet open={card !== null} onOpenChange={(open) => !open && onClose()}>
+      {card && <CardForm key={card.id} card={card} areas={areas} goals={goals} onClose={onClose} />}
+    </Sheet>
   );
 }
 
@@ -74,24 +67,10 @@ function CardForm({
 
   return (
     <>
-      <div className="flex items-start justify-between gap-2">
-        <Dialog.Title className="text-base font-semibold">Edit card</Dialog.Title>
-        <Dialog.Close asChild>
-          <button
-            type="button"
-            aria-label="Close"
-            className="rounded p-1 text-muted-foreground hover:bg-surface-muted"
-          >
-            <X aria-hidden className="size-4" />
-          </button>
-        </Dialog.Close>
-      </div>
-      <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-        Images are private to your workspace.
-      </Dialog.Description>
+      <SheetHeader title="Edit card" description="Images are private to your workspace." />
 
       <form
-        className="mt-5 space-y-4"
+        className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           const form = new FormData(e.currentTarget);
@@ -120,7 +99,7 @@ function CardForm({
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
-              className="px-3 py-1 text-xs"
+              size="xs"
               disabled={busy}
               onClick={() => fileRef.current?.click()}
             >
@@ -129,7 +108,7 @@ function CardForm({
             {card.image_path && (
               <Button
                 variant="ghost"
-                className="px-3 py-1 text-xs"
+                size="xs"
                 disabled={busy}
                 onClick={() =>
                   startTransition(async () => {

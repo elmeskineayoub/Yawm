@@ -68,12 +68,12 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
           aria-invalid={error ? true : undefined}
           className={cn(controlClass, "w-auto min-w-0 flex-1 basis-32")}
         />
-        <Button type="submit" variant="secondary" className="px-3 py-1.5" disabled={pending}>
+        <Button type="submit" variant="secondary" size="sm" disabled={pending}>
           Save
         </Button>
         <Button
           variant="ghost"
-          className="px-2 py-1.5"
+          size="sm"
           disabled={pending || isFirst}
           aria-label={`Move ${area.name} up`}
           onClick={() => run(() => moveArea(area.id, "up"))}
@@ -82,7 +82,7 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
         </Button>
         <Button
           variant="ghost"
-          className="px-2 py-1.5"
+          size="sm"
           disabled={pending || isLast}
           aria-label={`Move ${area.name} down`}
           onClick={() => run(() => moveArea(area.id, "down"))}
@@ -91,7 +91,7 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
         </Button>
         <Button
           variant="ghost"
-          className="px-2 py-1.5 text-xs"
+          size="sm"
           disabled={pending}
           onClick={() =>
             run(
@@ -104,11 +104,7 @@ function AreaRow({ area, isFirst, isLast }: { area: Area; isFirst: boolean; isLa
         </Button>
         <ConfirmDialog
           trigger={
-            <Button
-              variant="ghost"
-              className="px-2 py-1.5 text-xs"
-              aria-label={`Delete ${area.name}`}
-            >
+            <Button variant="ghost" size="sm" aria-label={`Delete ${area.name}`}>
               Delete
             </Button>
           }

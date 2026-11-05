@@ -6,6 +6,7 @@ import { IdeaActions } from "@/components/inbox/idea-actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LinkTabs } from "@/components/ui/link-tabs";
 import { controlClass } from "@/components/ui/field";
 import { loadIdeas } from "@/features/inbox/queries";
 import { IDEA_STATUS_LABELS, ideaStatus, type IdeaStatus } from "@/features/inbox/schemas";
@@ -68,23 +69,15 @@ export default async function InboxPage({
       <div className="space-y-4">
         <CaptureIdeaForm />
 
-        <nav aria-label="Idea status" className="flex flex-wrap gap-1 border-b border-border">
-          {TABS.map((tab) => (
-            <Link
-              key={tab}
-              href={inboxHref(tab)}
-              aria-current={status === tab ? "page" : undefined}
-              className={cn(
-                "-mb-px border-b-2 px-3 py-2 text-sm",
-                status === tab
-                  ? "border-accent font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {tab === "all" ? "All" : IDEA_STATUS_LABELS[tab]}
-            </Link>
-          ))}
-        </nav>
+        <LinkTabs
+          label="Idea status"
+          current={status}
+          tabs={TABS.map((tab) => ({
+            key: tab,
+            href: inboxHref(tab),
+            label: tab === "all" ? "All" : IDEA_STATUS_LABELS[tab],
+          }))}
+        />
 
         <form method="get" role="search" aria-label="Search ideas" className="flex flex-wrap gap-2">
           {status !== "inbox" && <input type="hidden" name="status" value={status} />}
@@ -119,7 +112,7 @@ export default async function InboxPage({
               </select>
             </>
           )}
-          <Button type="submit" variant="secondary" className="py-1.5">
+          <Button type="submit" variant="secondary">
             Search
           </Button>
         </form>

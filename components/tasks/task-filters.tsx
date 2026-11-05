@@ -120,7 +120,7 @@ export function TaskFiltersForm({ filters, lookups }: { filters: TaskFilters; lo
           </select>
         </label>
       )}
-      <Button type="submit" variant="secondary" className="py-1.5">
+      <Button type="submit" variant="secondary">
         Apply
       </Button>
       {hasActiveFilters(filters) && (

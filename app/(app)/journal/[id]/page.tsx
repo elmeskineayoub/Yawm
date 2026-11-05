@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PageHeader } from "@/components/layout/page-header";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { JournalActions } from "@/components/journal/journal-actions";
@@ -22,15 +22,11 @@ export default async function JournalEntryPage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
-          <Link href="/journal" className="hover:underline">
-            Journal
-          </Link>
-        </nav>
-        <JournalActions entry={{ id: entry.id, label: heading }} afterDelete="/journal" />
-      </div>
-      <h1 className="mb-6 page-title">{heading}</h1>
+      <PageHeader
+        title={heading}
+        breadcrumb={[{ label: "Journal", href: "/journal" }]}
+        actions={<JournalActions entry={{ id: entry.id, label: heading }} afterDelete="/journal" />}
+      />
       <section
         aria-label="Journal entry"
         className="rounded-lg border border-border bg-surface p-5"

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
-import { TextField } from "@/components/ui/text-field";
+import { InputField } from "@/components/ui/field";
 import { signIn } from "@/features/auth/actions";
 import { initialFormState } from "@/features/auth/form-state";
 
@@ -16,7 +16,7 @@ export function LoginForm({ next }: { next?: string | undefined }) {
     <form action={action} className="space-y-4" noValidate>
       <FormMessage state={state} />
       {next && <input type="hidden" name="next" value={next} />}
-      <TextField
+      <InputField
         label="Email"
         name="email"
         type="email"
@@ -25,7 +25,7 @@ export function LoginForm({ next }: { next?: string | undefined }) {
         defaultValue={state.status === "error" ? state.email : undefined}
         errors={fieldErrors?.email}
       />
-      <TextField
+      <InputField
         label="Password"
         name="password"
         type="password"

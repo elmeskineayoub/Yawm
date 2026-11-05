@@ -16,7 +16,7 @@ export function JournalActions({
   return (
     <ConfirmDialog
       trigger={
-        <Button variant="ghost" className="px-2 py-1 text-xs" aria-label={`Delete ${entry.label}`}>
+        <Button variant="ghost" size="xs" aria-label={`Delete ${entry.label}`}>
           Delete
         </Button>
       }

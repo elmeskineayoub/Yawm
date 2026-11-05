@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PageHeader } from "@/components/layout/page-header";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { IdeaActions } from "@/components/inbox/idea-actions";
@@ -27,12 +27,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
-        <Link href="/inbox" className="hover:underline">
-          Inbox
-        </Link>
-      </nav>
-      <h1 className="mb-6 page-title">{idea.data.title}</h1>
+      <PageHeader title={idea.data.title} breadcrumb={[{ label: "Inbox", href: "/inbox" }]} />
       <div className="space-y-6">
         <section
           aria-label="Idea details"

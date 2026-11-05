@@ -39,7 +39,7 @@ export function DependencyEditor({
               </span>
               <Button
                 variant="ghost"
-                className="px-2 py-1 text-xs"
+                size="xs"
                 disabled={pending}
                 aria-label={`Remove dependency on “${dep.title}”`}
                 onClick={() =>

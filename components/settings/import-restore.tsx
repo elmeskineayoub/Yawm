@@ -122,13 +122,7 @@ export function ImportRestore({ workspaceId }: { workspaceId: string }) {
           <div className="mt-3">
             <ConfirmDialog
               trigger={
-                <Button
-                  className={
-                    mode === "replace"
-                      ? "bg-danger text-danger-foreground hover:bg-danger/90"
-                      : undefined
-                  }
-                >
+                <Button variant={mode === "replace" ? "danger" : "primary"}>
                   {mode === "replace" ? "Replace from backup" : "Merge backup"}
                 </Button>
               }

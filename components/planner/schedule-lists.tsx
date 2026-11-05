@@ -14,6 +14,7 @@ import type { SchedulableTask } from "@/features/calendar/queries";
 import { linkToPlan } from "@/features/planning/actions";
 import { moveTaskDeadline } from "@/features/tasks/actions";
 import { addDays, relativeDateLabel, type IsoDate } from "@/lib/dates";
+import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
 
 const TRAY_LIMIT = 12;
@@ -99,7 +100,7 @@ export function UnscheduledTray({
                 </span>
                 <Button
                   variant="ghost"
-                  className="px-2 py-1 text-xs"
+                  size="xs"
                   onClick={() => onSchedule(task)}
                   aria-label={`Schedule “${task.title}”`}
                 >
@@ -162,11 +163,7 @@ export function RescheduleList({
               )}
             </div>
             <div className="mt-1 flex flex-wrap gap-1">
-              <Button
-                variant="secondary"
-                className="px-2 py-1 text-xs"
-                onClick={() => onSchedule(task)}
-              >
+              <Button variant="secondary" size="xs" onClick={() => onSchedule(task)}>
                 Schedule…
               </Button>
               {task.due_date && <MoveDeadline task={task} today={today} />}
@@ -197,28 +194,20 @@ function MoveDeadline({ task, today }: { task: SchedulableTask; today: IsoDate }
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <Button variant="secondary" className="px-2 py-1 text-xs">
+        <Button variant="secondary" size="xs">
           Move deadline…
         </Button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content
-          sideOffset={6}
-          className="z-50 w-64 rounded-lg border border-border bg-background p-3 shadow-lg"
-        >
+        <Popover.Content sideOffset={6} className={cn(popoverClass, "w-64 p-3")}>
           <p className="text-sm font-medium">New deadline for “{task.title}”</p>
           <div className="mt-2 flex gap-1">
-            <Button
-              variant="secondary"
-              className="px-2 py-1 text-xs"
-              disabled={pending}
-              onClick={() => move(today)}
-            >
+            <Button variant="secondary" size="xs" disabled={pending} onClick={() => move(today)}>
               Today
             </Button>
             <Button
               variant="secondary"
-              className="px-2 py-1 text-xs"
+              size="xs"
               disabled={pending}
               onClick={() => move(addDays(today, 1))}
             >
@@ -226,7 +215,7 @@ function MoveDeadline({ task, today }: { task: SchedulableTask; today: IsoDate }
             </Button>
             <Button
               variant="secondary"
-              className="px-2 py-1 text-xs"
+              size="xs"
               disabled={pending}
               onClick={() => move(addDays(today, 7))}
             >
@@ -250,7 +239,7 @@ function MoveDeadline({ task, today }: { task: SchedulableTask; today: IsoDate }
               onChange={(e) => setDate(e.target.value)}
               className={cn(controlClass, "py-1")}
             />
-            <Button type="submit" className="px-2 py-1 text-xs" disabled={pending || !date}>
+            <Button type="submit" size="xs" disabled={pending || !date}>
               Set
             </Button>
           </form>
@@ -265,7 +254,7 @@ function PlanForToday({ taskId, today }: { taskId: string; today: IsoDate }) {
   return (
     <Button
       variant="ghost"
-      className="px-2 py-1 text-xs"
+      size="xs"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {

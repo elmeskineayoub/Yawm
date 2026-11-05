@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
-import { TextField } from "@/components/ui/text-field";
+import { InputField } from "@/components/ui/field";
 import { updatePassword } from "@/features/auth/actions";
 import { initialFormState } from "@/features/auth/form-state";
 
@@ -14,7 +14,7 @@ export function ResetPasswordForm() {
   return (
     <form action={action} className="space-y-4" noValidate>
       <FormMessage state={state} />
-      <TextField
+      <InputField
         label="New password"
         name="password"
         type="password"
@@ -24,7 +24,7 @@ export function ResetPasswordForm() {
         hint="At least 8 characters."
         errors={fieldErrors?.password}
       />
-      <TextField
+      <InputField
         label="Confirm new password"
         name="confirmPassword"
         type="password"

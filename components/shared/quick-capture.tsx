@@ -6,6 +6,7 @@ import { useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
+import { dialogClass, overlayClass } from "@/components/ui/surfaces";
 import { createIdea } from "@/features/inbox/actions";
 import { createTask } from "@/features/tasks/actions";
 import { cn } from "@/lib/utils";
@@ -58,8 +59,8 @@ export function QuickCapture({ collapsed = false }: { collapsed?: boolean }) {
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
-        <Dialog.Content className="fixed top-[15%] left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-lg border border-border bg-background p-5 shadow-lg">
+        <Dialog.Overlay className={overlayClass} />
+        <Dialog.Content className={cn(dialogClass, "top-[15%] max-w-lg translate-y-0 p-5")}>
           <Dialog.Title className="text-base font-semibold">Quick capture</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-muted-foreground">
             Get it out of your head. You can organise it later.

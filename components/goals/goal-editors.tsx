@@ -140,7 +140,7 @@ export function GoalCurrentValue({
         of {target}
         {unit ? ` ${unit}` : ""}
       </span>
-      <Button type="submit" variant="secondary" className="py-1" disabled={pending}>
+      <Button type="submit" variant="secondary" size="sm" disabled={pending}>
         Update
       </Button>
       <span role="status" aria-live="polite" className="text-sm text-muted-foreground">

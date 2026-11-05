@@ -153,16 +153,20 @@ body {
     letter-spacing: -0.01em;
     font-optical-sizing: auto;
   }
+
+  /*
+   * Default keyboard focus ring. In the base layer so components can replace it with a utility
+   * (form controls use a border + halo via focus-visible:outline-none; tabs use an inset offset).
+   */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 ::selection {
   background: var(--accent-soft);
   color: var(--foreground);
-}
-
-:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 
 /*
@@ -319,4 +323,16 @@ select.control {
 
 .planner-calendar .fc a {
   color: inherit;
+}
+
+/* Motion for floating layers (see components/ui/surfaces.ts). Reduced-motion users get none. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
 }

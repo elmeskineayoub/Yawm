@@ -23,7 +23,8 @@ export function JournalPromptCard({ prompt, today }: { prompt: string; today: st
       )}
       <div className="mt-3 flex items-center gap-3">
         <Button
-          className="px-3 py-1.5 text-sm"
+          size="sm"
+          className="text-sm"
           disabled={pending}
           onClick={() =>
             startTransition(async () => {

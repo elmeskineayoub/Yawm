@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { QuickAddTask } from "@/components/tasks/quick-add-task";
 import { TaskBoard } from "@/components/tasks/task-board";
 import { TaskFiltersForm } from "@/components/tasks/task-filters";
 import { TaskList } from "@/components/tasks/task-row";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   hasActiveFilters,
   parseTaskFilters,
@@ -19,7 +19,6 @@ import {
   TASK_STATUSES,
 } from "@/features/tasks/logic";
 import { loadFilteredTasks, loadLookups, type TaskView } from "@/features/tasks/queries";
-import { cn } from "@/lib/utils";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Tasks" };
@@ -74,24 +73,20 @@ export default async function TasksPage({
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="Tasks" />
-        <nav aria-label="View" className="flex rounded-md border border-border p-0.5 text-sm">
-          {(["list", "board"] as const).map((view) => (
-            <Link
-              key={view}
-              href={`/tasks${taskFiltersToSearch(filters, { view, group: "none", status: view === "board" ? "all" : "open" })}`}
-              aria-current={filters.view === view ? "page" : undefined}
-              className={cn(
-                "rounded px-3 py-1",
-                filters.view === view ? "bg-surface-muted font-medium" : "text-muted-foreground",
-              )}
-            >
-              {view === "list" ? "List" : "Board"}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <PageHeader
+        title="Tasks"
+        actions={
+          <SegmentedControl
+            label="View"
+            value={filters.view}
+            items={(["list", "board"] as const).map((view) => ({
+              value: view,
+              label: view === "list" ? "List" : "Board",
+              href: `/tasks${taskFiltersToSearch(filters, { view, group: "none", status: view === "board" ? "all" : "open" })}`,
+            }))}
+          />
+        }
+      />
 
       <div className="space-y-4">
         <QuickAddTask />

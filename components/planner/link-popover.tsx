@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/action-result";
 import { searchLinkable, type Linkable, type LinkableKind } from "@/features/planning/actions";
+import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
 
 const KIND_NAMES: Record<LinkableKind, string> = {
@@ -72,7 +73,7 @@ export function LinkPopover({
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <Button variant="ghost" className="px-2 py-1 text-xs">
+        <Button variant="ghost" size="xs">
           <Link2 aria-hidden className="size-3.5" />
           Link existing
         </Button>
@@ -81,7 +82,7 @@ export function LinkPopover({
         <Popover.Content
           align="end"
           sideOffset={6}
-          className="z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-background p-2 shadow-lg"
+          className={cn(popoverClass, "w-80 max-w-[calc(100vw-2rem)] p-2")}
         >
           <label htmlFor={`${id}-q`} className="sr-only">
             Search {names}

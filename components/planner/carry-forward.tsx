@@ -25,7 +25,7 @@ export function CarryForwardButton({
   return (
     <ConfirmDialog
       trigger={
-        <Button variant="ghost" className="px-2 py-1 text-xs">
+        <Button variant="ghost" size="xs">
           Carry {openCount} unfinished to {nextLabel}
           <ArrowRight aria-hidden className="size-3.5" />
         </Button>

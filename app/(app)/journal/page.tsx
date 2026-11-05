@@ -124,7 +124,7 @@ export default async function JournalPage({
               </select>
             </>
           )}
-          <Button type="submit" variant="secondary" className="py-1.5">
+          <Button type="submit" variant="secondary">
             Search
           </Button>
         </form>

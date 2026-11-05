@@ -3,7 +3,7 @@
 import { useActionState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
-import { TextField } from "@/components/ui/text-field";
+import { InputField } from "@/components/ui/field";
 import { signUp } from "@/features/auth/actions";
 import { initialFormState } from "@/features/auth/form-state";
 
@@ -21,14 +21,14 @@ export function SignUpForm() {
     <form action={action} className="space-y-4" noValidate>
       <FormMessage state={state} />
       <input type="hidden" name="timezone" value={timezone} />
-      <TextField
+      <InputField
         label="Name (optional)"
         name="displayName"
         autoComplete="name"
         maxLength={100}
         errors={fieldErrors?.displayName}
       />
-      <TextField
+      <InputField
         label="Email"
         name="email"
         type="email"
@@ -37,7 +37,7 @@ export function SignUpForm() {
         defaultValue={state.status === "error" ? state.email : undefined}
         errors={fieldErrors?.email}
       />
-      <TextField
+      <InputField
         label="Password"
         name="password"
         type="password"

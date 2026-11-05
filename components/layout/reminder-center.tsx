@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { dismissReminder } from "@/features/reminders/actions";
 import { REMINDER_CATEGORY_LABELS, type Reminder } from "@/features/reminders/logic";
+import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
 
 /**
@@ -80,7 +81,8 @@ export function ReminderCenter({
       {open && (
         <div
           className={cn(
-            "absolute z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-border bg-background shadow-lg",
+            popoverClass,
+            "absolute mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden",
             align === "left" ? "left-0" : "right-0",
           )}
         >

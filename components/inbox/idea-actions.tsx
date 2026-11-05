@@ -72,7 +72,7 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
       ) : (
         <Button
           variant="secondary"
-          className="px-2 py-1 text-xs"
+          size="xs"
           disabled={pending}
           onClick={() => convert("task")}
           aria-label={`Convert “${idea.title}” to a task`}
@@ -90,7 +90,7 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
       ) : (
         <Button
           variant="secondary"
-          className="px-2 py-1 text-xs"
+          size="xs"
           disabled={pending}
           onClick={() => convert("project")}
           aria-label={`Convert “${idea.title}” to a project`}
@@ -108,7 +108,7 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
       ) : (
         <Button
           variant="secondary"
-          className="px-2 py-1 text-xs"
+          size="xs"
           disabled={pending}
           onClick={() => convert("goal")}
           aria-label={`Convert “${idea.title}” to a goal`}
@@ -118,11 +118,7 @@ export function IdeaActions({ idea, afterDelete }: IdeaActionsProps) {
       )}
       <ConfirmDialog
         trigger={
-          <Button
-            variant="ghost"
-            className="px-2 py-1 text-xs"
-            aria-label={`Delete “${idea.title}”`}
-          >
+          <Button variant="ghost" size="xs" aria-label={`Delete “${idea.title}”`}>
             Delete
           </Button>
         }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -111,37 +112,32 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
-        <Link href="/tasks" className="hover:underline">
-          Tasks
-        </Link>
-        {parent.data && (
+      <PageHeader
+        title={task.title}
+        breadcrumb={[
+          { label: "Tasks", href: "/tasks" },
+          ...(parent.data ? [{ label: parent.data.title, href: `/tasks/${parent.data.id}` }] : []),
+        ]}
+        meta={
           <>
-            {" / "}
-            <Link href={`/tasks/${parent.data.id}`} className="hover:underline">
-              {parent.data.title}
-            </Link>
+            {STATUS_LABELS[task.status]}
+            {task.completed_at &&
+              ` · completed ${new Intl.DateTimeFormat("en-US", {
+                dateStyle: "medium",
+                timeZone: ctx.timezone,
+              }).format(new Date(task.completed_at))}`}
+            {recurrence && ` · ${recurrence}`}
+            {task.recurs_from_task_id && (
+              <>
+                {" · "}
+                <Link href={`/tasks/${task.recurs_from_task_id}`} className="hover:underline">
+                  previous occurrence
+                </Link>
+              </>
+            )}
           </>
-        )}
-      </nav>
-      <h1 className="mb-1 page-title">{task.title}</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        {STATUS_LABELS[task.status]}
-        {task.completed_at &&
-          ` · completed ${new Intl.DateTimeFormat("en-US", {
-            dateStyle: "medium",
-            timeZone: ctx.timezone,
-          }).format(new Date(task.completed_at))}`}
-        {recurrence && ` · ${recurrence}`}
-        {task.recurs_from_task_id && (
-          <>
-            {" · "}
-            <Link href={`/tasks/${task.recurs_from_task_id}`} className="hover:underline">
-              previous occurrence
-            </Link>
-          </>
-        )}
-      </p>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section

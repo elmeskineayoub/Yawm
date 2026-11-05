@@ -120,7 +120,7 @@ export function SnapshotManager({
         <p className="text-sm font-medium">Browser-local snapshots</p>
         <Button
           variant="secondary"
-          className="py-1.5"
+
           disabled={busy}
           onClick={() => void take("manual")}
         >
@@ -153,16 +153,12 @@ export function SnapshotManager({
                 </span>
               </span>
               <span className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  className="px-2 py-1 text-xs"
-                  onClick={() => void download(s)}
-                >
+                <Button variant="ghost" size="xs" onClick={() => void download(s)}>
                   Download
                 </Button>
                 <ConfirmDialog
                   trigger={
-                    <Button variant="ghost" className="px-2 py-1 text-xs">
+                    <Button variant="ghost" size="xs">
                       Restore
                     </Button>
                   }
@@ -178,7 +174,7 @@ export function SnapshotManager({
                 />
                 <Button
                   variant="ghost"
-                  className="px-2 py-1 text-xs"
+                  size="xs"
                   aria-label="Delete snapshot"
                   onClick={() => void remove(s.id)}
                 >

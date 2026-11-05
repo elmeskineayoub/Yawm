@@ -47,7 +47,7 @@ export function FocusHistory({
             </div>
             <Button
               variant="ghost"
-              className="px-2 py-1 text-xs"
+              size="xs"
               disabled={pending}
               aria-label="Delete session"
               onClick={() =>

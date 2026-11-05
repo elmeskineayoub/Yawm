@@ -120,7 +120,7 @@ export default async function NotesPage({
               </select>
             </>
           )}
-          <Button type="submit" variant="secondary" className="py-1.5">
+          <Button type="submit" variant="secondary">
             Search
           </Button>
         </form>
