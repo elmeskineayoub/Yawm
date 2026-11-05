@@ -16,6 +16,7 @@ import {
 import { linkedId, type PlanItemView } from "@/features/planning/queries";
 import { cn } from "@/lib/utils";
 import { LinkPopover } from "./link-popover";
+import { safeAction } from "@/lib/safe-action";
 
 type PriorityListProps = {
   period: string;
@@ -50,7 +51,7 @@ export function PriorityList({
 
   const add = () =>
     startTransition(async () => {
-      const result = await addPriority(period, start, kind, title);
+      const result = await safeAction(() => addPriority(period, start, kind, title));
       if (result.ok) {
         setTitle("");
         setError(null);
@@ -60,7 +61,7 @@ export function PriorityList({
 
   const remove = (itemId: string, label: string) =>
     startTransition(async () => {
-      const result = await unlinkFromPlan(itemId);
+      const result = await safeAction(() => unlinkFromPlan(itemId));
       if (result.ok) toast.success(`Removed “${label}” from this plan. It still exists.`);
       else toast.error(result.error);
     });
@@ -203,7 +204,9 @@ function OutcomeItem({
           disabled={pending}
           onChange={(e) =>
             startTransition(async () => {
-              const result = await setMilestoneDone(item.milestone.id, e.target.checked);
+              const result = await safeAction(() =>
+                setMilestoneDone(item.milestone.id, e.target.checked),
+              );
               if (!result.ok) toast.error(result.error);
             })
           }

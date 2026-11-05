@@ -14,6 +14,7 @@ import type { BlockSyncState, ExternalEvent } from "@/features/google-calendar/t
 import { addDays } from "@/lib/dates";
 import { formatTimeRange, instantToLocal, localToInstant } from "@/lib/dates/zoned";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 export type BlockDraft = {
   id?: string;
@@ -114,7 +115,10 @@ function BlockForm({
         ...span,
         task_id: taskId || null,
       };
-      const result = draft.id ? await updateBlock(draft.id, input) : await createBlock(input);
+      const blockId = draft.id;
+      const result = blockId
+        ? await safeAction(() => updateBlock(blockId, input))
+        : await safeAction(() => createBlock(input));
       if (!result.ok) {
         setError(
           result.fieldErrors?.title?.[0] ?? result.fieldErrors?.ends_at?.[0] ?? result.error,
@@ -132,8 +136,9 @@ function BlockForm({
 
   const remove = () =>
     startTransition(async () => {
-      if (!draft.id) return;
-      const result = await deleteBlock(draft.id);
+      const blockId = draft.id;
+      if (!blockId) return;
+      const result = await safeAction(() => deleteBlock(blockId));
       if (!result.ok) {
         setError(result.error);
         return;

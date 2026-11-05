@@ -10,6 +10,7 @@ import type { ActionResult } from "@/lib/action-result";
 import { searchLinkable, type Linkable, type LinkableKind } from "@/features/planning/actions";
 import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 const KIND_NAMES: Record<LinkableKind, string> = {
   task: "tasks",
@@ -50,7 +51,9 @@ export function LinkPopover({
     const request = ++requestRef.current;
     const timer = setTimeout(async () => {
       setLoading(true);
-      const result = await searchLinkable(query, kindsKey.split(",") as LinkableKind[]);
+      const result = await safeAction(() =>
+        searchLinkable(query, kindsKey.split(",") as LinkableKind[]),
+      );
       if (request !== requestRef.current) return;
       setLoading(false);
       const linked = new Set(linkedKey.split(","));
@@ -62,7 +65,7 @@ export function LinkPopover({
 
   const choose = (item: Linkable) =>
     startTransition(async () => {
-      const result = await onLink(item);
+      const result = await safeAction(() => onLink(item));
       if (result.ok) {
         toast.success(`Linked “${item.title}”`);
         setOpen(false);

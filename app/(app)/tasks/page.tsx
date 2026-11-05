@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { QuickAddTask } from "@/components/tasks/quick-add-task";
 import { TaskBoard } from "@/components/tasks/task-board";
-import { TaskFiltersForm } from "@/components/tasks/task-filters";
+import { TaskFilterChips } from "@/components/tasks/filter-chips";
+import { currentTaskView, TaskViews } from "@/components/tasks/task-views";
 import { TaskList } from "@/components/tasks/task-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -71,6 +72,27 @@ export default async function TasksPage({
   const { tasks, total, truncated } = await loadFilteredTasks(ctx, filters, lookups);
   const groups = groupTasks(tasks, filters.group).filter((g) => g.tasks.length > 0);
 
+  // Empty states that match the view the user is looking at.
+  const view = currentTaskView(filters);
+  const narrowed = Boolean(
+    filters.q || filters.priority || filters.projectId || filters.areaId || filters.tagId,
+  );
+  const [emptyTitle, emptyHint] = narrowed
+    ? ["No tasks match these filters", "Try clearing a filter."]
+    : view === "today"
+      ? ["Nothing due today", "Pick something from Next 7 days, or enjoy the space."]
+      : view === "week"
+        ? ["Nothing due in the next 7 days", "Deadlines you add will show up here."]
+        : view === "overdue"
+          ? ["Nothing overdue", "You're caught up."]
+          : view === "nodate"
+            ? ["Every open task has a due date", ""]
+            : view === "done"
+              ? ["Nothing completed yet", "Finished tasks collect here."]
+              : hasActiveFilters(filters)
+                ? ["No tasks match these filters", "Try clearing a filter."]
+                : ["No open tasks", "Add a task above, or capture an idea in the Inbox first."];
+
   return (
     <>
       <PageHeader
@@ -90,7 +112,13 @@ export default async function TasksPage({
 
       <div className="space-y-4">
         <QuickAddTask />
-        <TaskFiltersForm filters={filters} lookups={lookups} />
+        {filters.view === "list" && <TaskViews filters={filters} />}
+        <TaskFilterChips
+          filters={filters}
+          projects={lookups.projects.filter((p) => p.status !== "archived")}
+          areas={lookups.areas.filter((a) => !a.archived_at)}
+          tags={lookups.tags}
+        />
 
         {truncated && (
           <p role="status" className="text-sm text-muted-foreground">
@@ -100,13 +128,7 @@ export default async function TasksPage({
         )}
 
         {tasks.length === 0 ? (
-          <EmptyState
-            title={hasActiveFilters(filters) ? "No tasks match these filters" : "No open tasks"}
-          >
-            {hasActiveFilters(filters)
-              ? "Try clearing a filter."
-              : "Add a task above, or capture an idea in the Inbox first."}
-          </EmptyState>
+          <EmptyState title={emptyTitle}>{emptyHint}</EmptyState>
         ) : filters.view === "board" ? (
           <TaskBoard tasks={tasks} today={ctx.today} />
         ) : (

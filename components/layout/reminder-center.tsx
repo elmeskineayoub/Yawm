@@ -8,6 +8,7 @@ import { dismissReminder } from "@/features/reminders/actions";
 import { REMINDER_CATEGORY_LABELS, type Reminder } from "@/features/reminders/logic";
 import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 /**
  * The in-app reminder centre: a bell that lists reminders derived from due tasks, habits, and
@@ -49,7 +50,7 @@ export function ReminderCenter({
   const dismiss = (key: string) => {
     setHidden((h) => new Set(h).add(key));
     startTransition(async () => {
-      const result = await dismissReminder(key);
+      const result = await safeAction(() => dismissReminder(key));
       if (!result.ok) {
         toast.error(result.error);
         setHidden((h) => {

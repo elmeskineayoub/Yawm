@@ -16,6 +16,7 @@ import { moveTaskDeadline } from "@/features/tasks/actions";
 import { addDays, relativeDateLabel, type IsoDate } from "@/lib/dates";
 import { popoverClass } from "@/components/ui/surfaces";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 const TRAY_LIMIT = 12;
 
@@ -197,7 +198,7 @@ function MoveDeadline({ task, today }: { task: SchedulableTask; today: IsoDate }
 
   const move = (next: IsoDate) =>
     startTransition(async () => {
-      const result = await moveTaskDeadline(task.id, next);
+      const result = await safeAction(() => moveTaskDeadline(task.id, next));
       if (result.ok) {
         toast.success(`Deadline moved to ${relativeDateLabel(next, today)}`);
         setOpen(false);
@@ -271,7 +272,7 @@ function PlanForToday({ taskId, today }: { taskId: string; today: IsoDate }) {
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          const result = await linkToPlan("day", today, "task", taskId);
+          const result = await safeAction(() => linkToPlan("day", today, "task", taskId));
           if (result.ok) toast.success("Added to today's priorities");
           else toast.error(result.error);
         })

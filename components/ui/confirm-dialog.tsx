@@ -60,7 +60,13 @@ export function ConfirmDialog({
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {
-                  const message = await onConfirm();
+                  let message: string | null;
+                  try {
+                    message = await onConfirm();
+                  } catch {
+                    message =
+                      "Couldn't reach the server, so nothing was changed. Please try again.";
+                  }
                   if (message) setError(message);
                   else setOpen(false);
                 })

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { setTaskStatus } from "@/features/tasks/actions";
 import type { TaskPriority, TaskStatus } from "@/features/tasks/logic";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 // Priority shows as the ring colour (urgent and high also keep a text badge in the row, so
 // priority is never conveyed by colour alone).
@@ -43,7 +44,7 @@ export function TaskCheckbox({
       const completing = !optimisticDone;
       const previous = status;
       setOptimisticDone(completing);
-      const result = await setTaskStatus(taskId, completing ? "done" : "todo");
+      const result = await safeAction(() => setTaskStatus(taskId, completing ? "done" : "todo"));
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -57,7 +58,9 @@ export function TaskCheckbox({
         action: {
           label: "Undo",
           onClick: async () => {
-            const undo = await setTaskStatus(taskId, previous === "done" ? "todo" : previous);
+            const undo = await safeAction(() =>
+              setTaskStatus(taskId, previous === "done" ? "todo" : previous),
+            );
             if (!undo.ok) toast.error(undo.error);
           },
         },

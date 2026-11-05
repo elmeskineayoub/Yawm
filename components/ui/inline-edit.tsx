@@ -58,7 +58,12 @@ export function InlineEdit({
     }
     setStatus("saving");
     startTransition(async () => {
-      const failure = await onSave(next);
+      let failure: string | null;
+      try {
+        failure = await onSave(next);
+      } catch {
+        failure = "Couldn't reach the server, so this wasn't saved. Please try again.";
+      }
       if (failure === null) {
         setSaved(next);
         setDraft(next);

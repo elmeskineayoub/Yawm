@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createEntry } from "@/features/journal/actions";
+import { safeAction } from "@/lib/safe-action";
 
 /** Surfaces today's reflection prompt and starts a journal entry seeded with it. */
 export function JournalPromptCard({ prompt, today }: { prompt: string; today: string }) {
@@ -28,7 +29,7 @@ export function JournalPromptCard({ prompt, today }: { prompt: string; today: st
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
-              const result = await createEntry({ entry_date: today, prompt });
+              const result = await safeAction(() => createEntry({ entry_date: today, prompt }));
               if (result.ok) router.push(`/journal/${result.data.id}`);
               else {
                 setError(result.error);

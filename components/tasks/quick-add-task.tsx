@@ -8,6 +8,7 @@ import { controlClass } from "@/components/ui/field";
 import { createTask } from "@/features/tasks/actions";
 import { PRIORITY_LABELS, TASK_PRIORITIES } from "@/features/tasks/logic";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 type QuickAddTaskProps = {
   projectId?: string;
@@ -37,7 +38,7 @@ export function QuickAddTask({
       ref={formRef}
       action={(formData) =>
         startTransition(async () => {
-          const result = await createTask(formData);
+          const result = await safeAction(() => createTask(formData));
           if (result.ok) {
             setError(null);
             formRef.current?.reset();

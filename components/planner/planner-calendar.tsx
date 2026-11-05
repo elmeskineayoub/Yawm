@@ -135,7 +135,13 @@ export default function PlannerCalendar({
   ) => {
     onSaving("saving");
     startTransition(async () => {
-      const result = await work();
+      // A request that never reached the server must not escape the transition (React would show
+      // the error page); treat it as a failed save so the change is undone and the user is told.
+      const result = await work().catch(() => ({
+        ok: false as const,
+        error: "Couldn't reach the server, so this wasn't saved. Your change was undone.",
+        data: undefined,
+      }));
       if (result.ok) {
         onSaving("saved");
         onChanged();

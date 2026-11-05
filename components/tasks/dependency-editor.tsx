@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { addDependency, removeDependency } from "@/features/tasks/actions";
 import { STATUS_LABELS, type TaskStatus } from "@/features/tasks/logic";
+import { safeAction } from "@/lib/safe-action";
 
 type DepTask = { id: string; title: string; status: TaskStatus };
 
@@ -45,7 +46,7 @@ export function DependencyEditor({
                 aria-label={`Remove dependency on “${dep.title}”`}
                 onClick={() =>
                   startTransition(async () => {
-                    const result = await removeDependency(taskId, dep.id);
+                    const result = await safeAction(() => removeDependency(taskId, dep.id));
                     if (!result.ok) toast.error(result.error);
                   })
                 }
@@ -61,7 +62,7 @@ export function DependencyEditor({
           className="flex flex-col gap-2"
           action={() =>
             startTransition(async () => {
-              const result = await addDependency(taskId, selected);
+              const result = await safeAction(() => addDependency(taskId, selected));
               if (result.ok) setSelected("");
               else toast.error(result.error);
             })

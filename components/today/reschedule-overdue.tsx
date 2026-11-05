@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { moveTaskDeadlines } from "@/features/tasks/actions";
 import type { IsoDate } from "@/lib/dates";
+import { safeAction } from "@/lib/safe-action";
 
 /**
  * The explicit carry-forward step for overdue work: move every overdue deadline to today in one
@@ -24,7 +25,9 @@ export function RescheduleOverdue({
   const move = () =>
     startTransition(async () => {
       const originals = tasks.map((t) => ({ id: t.id, due: t.due_date }));
-      const result = await moveTaskDeadlines(tasks.map((t) => ({ id: t.id, due: today })));
+      const result = await safeAction(() =>
+        moveTaskDeadlines(tasks.map((t) => ({ id: t.id, due: today }))),
+      );
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -36,7 +39,7 @@ export function RescheduleOverdue({
           action: {
             label: "Undo",
             onClick: async () => {
-              const undo = await moveTaskDeadlines(originals);
+              const undo = await safeAction(() => moveTaskDeadlines(originals));
               if (!undo.ok) toast.error(undo.error);
             },
           },

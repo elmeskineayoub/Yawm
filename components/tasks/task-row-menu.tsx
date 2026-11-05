@@ -15,6 +15,7 @@ import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from "@/compo
 import { moveTaskDeadline } from "@/features/tasks/actions";
 import { addDays, formatDate, type IsoDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 /**
  * Row actions for a task: open it, or move its deadline in one step. Moving a deadline is always
@@ -38,7 +39,7 @@ export function TaskRowMenu({
 
   const move = (next: IsoDate | null) =>
     startTransition(async () => {
-      const result = await moveTaskDeadline(taskId, next);
+      const result = await safeAction(() => moveTaskDeadline(taskId, next));
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -47,7 +48,7 @@ export function TaskRowMenu({
         action: {
           label: "Undo",
           onClick: async () => {
-            const undo = await moveTaskDeadline(taskId, dueDate);
+            const undo = await safeAction(() => moveTaskDeadline(taskId, dueDate));
             if (!undo.ok) toast.error(undo.error);
           },
         },

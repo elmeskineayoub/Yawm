@@ -17,6 +17,7 @@ import type { LogEntry } from "@/features/habits/schemas";
 import { formatDate, type IsoDate } from "@/lib/dates";
 import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
 
 const STATUS_LABEL: Record<DayStatus, string> = {
   done: "done",
@@ -48,7 +49,7 @@ function useHabitLog(habitId: string, date: IsoDate, initial: HabitLog | null) {
   const save = (entry: LogEntry) =>
     startTransition(async () => {
       setLog(entryToLog(date, entry));
-      const result = await logHabit(habitId, date, entry);
+      const result = await safeAction(() => logHabit(habitId, date, entry));
       if (!result.ok) toast.error(result.error);
     });
   return { log, save, pending };
