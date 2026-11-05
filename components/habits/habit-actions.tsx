@@ -7,16 +7,17 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InlineEdit } from "@/components/ui/inline-edit";
 import { deleteHabit, renameHabit, setHabitArchived } from "@/features/habits/actions";
+import { safeAction } from "@/lib/safe-action";
 
 export function HabitTitle({ habitId, title }: { habitId: string; title: string }) {
   return (
     <InlineEdit
       value={title}
-      label="Habit"
+      label="Name"
       placeholder="Name the habit"
       maxLength={200}
       onSave={async (value) => {
-        const result = await renameHabit(habitId, value);
+        const result = await safeAction(() => renameHabit(habitId, value));
         return result.ok ? null : result.error;
       }}
     />
@@ -41,7 +42,7 @@ export function HabitArchiveDelete({
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            const result = await setHabitArchived(habitId, !archived);
+            const result = await safeAction(() => setHabitArchived(habitId, !archived));
             if (!result.ok) toast.error(result.error);
             else toast.success(archived ? "Habit restored" : "Habit archived");
           })
@@ -60,7 +61,7 @@ export function HabitArchiveDelete({
         }
         confirmLabel="Delete habit"
         onConfirm={async () => {
-          const result = await deleteHabit(habitId);
+          const result = await safeAction(() => deleteHabit(habitId));
           if (!result.ok) return result.error;
           toast.success("Habit deleted");
           router.push("/habits");

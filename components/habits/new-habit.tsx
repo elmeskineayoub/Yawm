@@ -1,65 +1,79 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useId, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { controlClass } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetHeader } from "@/components/ui/sheet";
 import { createHabit } from "@/features/habits/actions";
-import { cn } from "@/lib/utils";
+import { safeAction } from "@/lib/safe-action";
+import { HabitForm, newHabitDefaults } from "./habit-form";
 
-/** Add a habit by name. It starts as a daily yes/no habit; the details page changes the rest. */
-export function NewHabit() {
-  const id = useId();
-  const [title, setTitle] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+type Area = { id: string; name: string; archived_at: string | null };
 
+/**
+ * "New habit" opens a side sheet with the whole form, so the schedule, target, and area are set
+ * when the habit is created instead of on a second page. The list stays visible behind it.
+ */
+export function NewHabit({
+  areas,
+  today,
+  variant = "primary",
+}: {
+  areas: Area[];
+  today: string;
+  variant?: "primary" | "outline";
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  // A fresh form each time the sheet opens.
+  const [formKey, setFormKey] = useState(0);
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        startTransition(async () => {
-          const result = await createHabit(title);
-          if (!result.ok) {
-            setError(result.fieldErrors?.title?.[0] ?? result.error);
-            return;
-          }
-          setError(null);
-          setTitle("");
-          toast.success("Habit added", {
-            description: "Every day by default. Open it to change the schedule or add a target.",
-          });
-        });
-      }}
-      className="space-y-1"
-    >
-      <div className="flex gap-2">
-        <label htmlFor={`${id}-title`} className="sr-only">
-          Add a habit
-        </label>
-        <input
-          id={`${id}-title`}
-          value={title}
-          maxLength={200}
-          placeholder="Add a habit, e.g. Read 20 pages"
-          aria-invalid={error ? true : undefined}
-          onChange={(e) => setTitle(e.target.value)}
-          className={cn(controlClass, "min-w-0 flex-1")}
+    <>
+      <Button
+        variant={variant}
+        size="sm"
+        onClick={() => {
+          setFormKey((k) => k + 1);
+          setOpen(true);
+        }}
+      >
+        <Plus aria-hidden className="size-4" />
+        New habit
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetHeader
+          title="New habit"
+          description="Anything you want to do regularly. Rest days never count against a streak."
         />
-        <button
-          type="submit"
-          disabled={pending || !title.trim()}
-          className="inline-flex items-center gap-1 rounded-md border border-border px-3 text-sm hover:bg-surface-muted disabled:opacity-50"
-        >
-          <Plus aria-hidden className="size-4" />
-          {pending ? "Adding…" : "Add"}
-        </button>
-      </div>
-      {error && (
-        <p role="alert" className="text-xs text-danger">
-          {error}
-        </p>
-      )}
-    </form>
+        <HabitForm
+          key={formKey}
+          habit={newHabitDefaults(today)}
+          areas={areas}
+          withTitle
+          submitLabel="Create habit"
+          onSubmit={async (input) => {
+            const result = await safeAction(() => createHabit(input));
+            if (result.ok) {
+              setOpen(false);
+              toast.success(`“${String(input.title).trim()}” added`);
+              router.refresh();
+            }
+            return result;
+          }}
+          footer={
+            <Button
+              type="button"
+              variant="ghost"
+              className="ml-auto"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+          }
+        />
+      </Sheet>
+    </>
   );
 }

@@ -33,8 +33,11 @@ async function useUtc(page: Page) {
 }
 
 async function addHabit(page: Page, title: string) {
-  await page.getByLabel("Add a habit").fill(title);
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "New habit" }).first().click();
+  const sheet = page.getByRole("dialog", { name: "New habit" });
+  await sheet.getByLabel("Name").fill(title);
+  await sheet.getByRole("button", { name: "Create habit" }).click();
+  await expect(sheet).toBeHidden();
   await expect(page.getByRole("link", { name: title })).toBeVisible();
 }
 
@@ -59,7 +62,7 @@ test("habits: track, rest, correct history, and see them in the Planner", async 
     await expect(walk).toContainText("1-day streak");
     await page.reload();
     await expect(walk).toContainText("1-day streak");
-    await expect(page.getByRole("heading", { name: /Today/ })).toContainText("1/2");
+    await expect(page.getByRole("heading", { name: /^Today/ })).toContainText("1/2");
   });
 
   await test.step("a rest day is excused, not a miss", async () => {

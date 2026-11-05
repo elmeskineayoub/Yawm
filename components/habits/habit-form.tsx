@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition } from "react";
+import { useId, useState, useTransition, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { updateHabit } from "@/features/habits/actions";
 import type { Habit } from "@/features/habits/queries";
-import type { FieldErrors } from "@/lib/action-result";
+import type { ActionResult, FieldErrors } from "@/lib/action-result";
+import { safeAction } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = [
@@ -21,10 +22,62 @@ const WEEKDAYS = [
 
 type Area = { id: string; name: string; archived_at: string | null };
 
-/** Schedule, target, area, and dates in one short form; "Saved" only after the server confirms. */
-export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] }) {
+export type HabitDefaults = Pick<
+  Habit,
+  | "title"
+  | "description"
+  | "area_id"
+  | "kind"
+  | "target_value"
+  | "unit"
+  | "frequency"
+  | "weekdays"
+  | "times_per_week"
+  | "starts_on"
+  | "ends_on"
+>;
+
+/** A new habit: every day, from today. */
+export function newHabitDefaults(today: string): HabitDefaults {
+  return {
+    title: "",
+    description: null,
+    area_id: null,
+    kind: "boolean",
+    target_value: null,
+    unit: null,
+    frequency: "daily",
+    weekdays: [1, 2, 3, 4, 5, 6, 7],
+    times_per_week: null,
+    starts_on: today,
+    ends_on: null,
+  };
+}
+
+/**
+ * Name (when creating), what to track, schedule, area, dates, and notes: one short form shared by
+ * the "New habit" sheet and the habit's own page. Reports success only after the server confirms.
+ */
+export function HabitForm({
+  habit,
+  areas,
+  withTitle = false,
+  submitLabel,
+  onSubmit,
+  onSaved,
+  footer,
+}: {
+  habit: HabitDefaults;
+  areas: Area[];
+  /** Show the name field (creation). Existing habits are renamed from their title. */
+  withTitle?: boolean;
+  submitLabel: string;
+  onSubmit: (input: Record<string, unknown>) => Promise<ActionResult<unknown>>;
+  /** Called after the server confirmed the save. Return a status message, or nothing. */
+  onSaved?: () => string | void;
+  footer?: ReactNode;
+}) {
   const id = useId();
-  const router = useRouter();
   const [kind, setKind] = useState(habit.kind);
   const [frequency, setFrequency] = useState(habit.frequency);
   const [weekdays, setWeekdays] = useState<number[]>(habit.weekdays);
@@ -38,15 +91,15 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
 
   return (
     <form
-      aria-label="Habit settings"
+      aria-label={withTitle ? "New habit" : "Habit settings"}
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         const form = new FormData(e.currentTarget);
         startTransition(async () => {
           setStatus(null);
-          const result = await updateHabit(habit.id, {
-            title: habit.title,
+          const result = await onSubmit({
+            title: withTitle ? form.get("title") : habit.title,
             description: form.get("description"),
             area_id: form.get("area_id"),
             kind,
@@ -64,14 +117,32 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
             return;
           }
           setErrors({});
-          setStatus({ tone: "ok", text: "Saved" });
-          router.refresh();
+          setStatus({ tone: "ok", text: onSaved?.() ?? "Saved" });
         });
       }}
     >
+      {withTitle && (
+        <div className="space-y-1">
+          <label htmlFor={`${id}-title`} className="block text-sm font-medium">
+            Name
+          </label>
+          <input
+            id={`${id}-title`}
+            name="title"
+            required
+            maxLength={200}
+            autoFocus
+            placeholder="e.g. Read 20 pages"
+            defaultValue={habit.title}
+            aria-invalid={errors.title?.length ? true : undefined}
+            className={controlClass}
+          />
+          {err("title")}
+        </div>
+      )}
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Track</legend>
-        <div role="radiogroup" className="flex rounded-md border border-border p-0.5 text-sm">
+        <div role="radiogroup" className="flex gap-0.5 rounded-md bg-surface-muted p-0.5 text-sm">
           {(
             [
               ["boolean", "Done / not done"],
@@ -85,8 +156,10 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
               aria-checked={kind === value}
               onClick={() => setKind(value)}
               className={cn(
-                "flex-1 rounded px-3 py-1",
-                kind === value ? "bg-surface-muted font-medium" : "text-muted-foreground",
+                "flex-1 rounded-[5px] px-3 py-1 font-medium transition-colors",
+                kind === value
+                  ? "bg-surface text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.08)] ring-1 ring-border"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {label}
@@ -129,7 +202,7 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Schedule</legend>
-        <div role="radiogroup" className="flex rounded-md border border-border p-0.5 text-sm">
+        <div role="radiogroup" className="flex gap-0.5 rounded-md bg-surface-muted p-0.5 text-sm">
           {(
             [
               ["daily", "On certain days"],
@@ -143,8 +216,10 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
               aria-checked={frequency === value}
               onClick={() => setFrequency(value)}
               className={cn(
-                "flex-1 rounded px-3 py-1",
-                frequency === value ? "bg-surface-muted font-medium" : "text-muted-foreground",
+                "flex-1 rounded-[5px] px-3 py-1 font-medium transition-colors",
+                frequency === value
+                  ? "bg-surface text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.08)] ring-1 ring-border"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {label}
@@ -271,7 +346,7 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save habit"}
+          {pending ? "Saving…" : submitLabel}
         </Button>
         <span
           role="status"
@@ -283,7 +358,22 @@ export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] })
         >
           {status?.text}
         </span>
+        {footer}
       </div>
     </form>
+  );
+}
+
+/** The settings form on a habit's own page. */
+export function HabitSettings({ habit, areas }: { habit: Habit; areas: Area[] }) {
+  const router = useRouter();
+  return (
+    <HabitForm
+      habit={habit}
+      areas={areas}
+      submitLabel="Save habit"
+      onSubmit={(input) => safeAction(() => updateHabit(habit.id, input))}
+      onSaved={() => router.refresh()}
+    />
   );
 }

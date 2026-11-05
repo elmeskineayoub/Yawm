@@ -188,6 +188,9 @@ affected e2e specs, and a production build. Accessible names used by e2e tests s
 
 ### Stage 4 — Personal development
 
+- **4.1** Habits: today's checklist first with a progress line; not-due habits folded; one
+  `HabitForm` for the New habit sheet and the habit page; unboxed stats; lost-connection handling.
+
 Habits (checklist first, creation in a sheet), Goals & Vision (grouped by area, next
 milestone), Inbox (short rows, one Convert menu, undo on archive), Notes (two-pane, autosave),
 Journal (date navigator), Reviews ("Decide" step: carry forward, next week's priorities),

@@ -21,11 +21,29 @@ function done<T>(result: ActionResult<T>): ActionResult<T> {
   return result;
 }
 
-/** Quick add from a name; everything else starts at sensible defaults (every day, from today). */
-export async function createHabit(title: string): Promise<ActionResult<{ id: string }>> {
+/**
+ * Creates a habit from the "New habit" form. A bare name (string) still works: every day, from
+ * today. Fields left empty fall back to the same defaults.
+ */
+export async function createHabit(input: unknown): Promise<ActionResult<{ id: string }>> {
   const ctx = await getWorkspaceContext();
-  const parsed = habitSchema.safeParse({ title, starts_on: ctx.today });
-  if (!parsed.success) return fail("Name the habit.", fieldErrorsOf(parsed.error));
+  const fields: Record<string, unknown> =
+    typeof input === "string"
+      ? { title: input }
+      : input && typeof input === "object"
+        ? { ...(input as Record<string, unknown>) }
+        : {};
+  if (!fields.starts_on) fields.starts_on = ctx.today;
+  const parsed = habitSchema.safeParse(fields);
+  if (!parsed.success) {
+    const errors = fieldErrorsOf(parsed.error);
+    return fail(
+      Object.keys(errors).length === 1 && errors.title
+        ? "Name the habit."
+        : "Check the highlighted fields.",
+      errors,
+    );
+  }
   return done(await createHabitInWorkspace(ctx.supabase, ctx.workspace.id, parsed.data));
 }
 

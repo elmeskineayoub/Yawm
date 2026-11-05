@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HabitArchiveDelete, HabitTitle } from "@/components/habits/habit-actions";
 import { HabitHistory, type HistoryCell } from "@/components/habits/habit-history";
 import { HabitList } from "@/components/habits/habit-row";
-import { HabitSettings } from "@/components/habits/habit-settings";
+import { HabitSettings } from "@/components/habits/habit-form";
+import { PageHeader } from "@/components/layout/page-header";
+import { Section } from "@/components/ui/section";
 import {
   dayStatus,
   describeSchedule,
@@ -21,19 +22,22 @@ export const metadata: Metadata = { title: "Habit" };
 const WEEKS = 12;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function Rate({ label, rate }: { label: string; rate: CompletionRate }) {
+function Stat({ value, label, detail }: { value: string; label: string; detail?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-3">
-      <p className="text-xl font-semibold tabular-nums">
-        {rate.rate === null ? "—" : `${Math.round(rate.rate * 100)}%`}
-      </p>
+    <div>
+      <p className="font-serif text-2xl tabular-nums">{value}</p>
       <p className="text-xs text-muted-foreground">
         {label}
-        {rate.due > 0 && ` · ${rate.done} of ${rate.due}`}
+        {detail && ` · ${detail}`}
       </p>
     </div>
   );
 }
+
+const ratePercent = (rate: CompletionRate) =>
+  rate.rate === null ? "—" : `${Math.round(rate.rate * 100)}%`;
+const rateDetail = (rate: CompletionRate) =>
+  rate.due > 0 ? `${rate.done} of ${rate.due}` : undefined;
 
 export default async function HabitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -61,96 +65,98 @@ export default async function HabitPage({ params }: { params: Promise<{ id: stri
   );
   const area = lookups.areas.find((a) => a.id === habit.area_id);
 
+  const unit = detail.streaks.unit;
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="mb-2 text-sm">
-          <Link href="/habits" className="text-muted-foreground hover:underline">
-            ← Habits
-          </Link>
-        </p>
-        <HabitTitle habitId={habit.id} title={habit.title} />
-        <p className="mt-1 px-2 text-sm text-muted-foreground">
-          {describeSchedule(habit)}
-          {habit.kind === "measurable" &&
-            ` · target ${habit.target_value}${habit.unit ? ` ${habit.unit}` : ""}`}
-          {area && ` · ${area.name}`}
-          {habit.archived_at && " · Archived"}
-        </p>
-      </div>
-
-      {!habit.archived_at && (
-        <section aria-labelledby="habit-today">
-          <h2 id="habit-today" className="mb-1 text-sm font-semibold">
-            Today
-          </h2>
-          <HabitList
-            summaries={[detail]}
-            date={ctx.today}
-            today={ctx.today}
-            label="Today"
-            showStrip={false}
-          />
-        </section>
-      )}
-
-      <section aria-labelledby="habit-stats">
-        <h2 id="habit-stats" className="mb-2 text-sm font-semibold">
-          Progress
-        </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <div className="rounded-lg border border-border bg-surface p-3">
-            <p className="text-xl font-semibold tabular-nums">{detail.streaks.current}</p>
-            <p className="text-xs text-muted-foreground">Current streak ({detail.streaks.unit}s)</p>
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-3">
-            <p className="text-xl font-semibold tabular-nums">{detail.streaks.longest}</p>
-            <p className="text-xs text-muted-foreground">Longest streak ({detail.streaks.unit}s)</p>
-          </div>
-          <Rate label="This week" rate={detail.rates.week} />
-          <Rate label="This month" rate={detail.rates.month} />
-          <Rate label="Last 30 days" rate={detail.rates.last30} />
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {streakText(detail.streaks)}. Rates count only days the habit was due; rest days and today
-          (until done) are left out.
-        </p>
-      </section>
-
-      <section aria-labelledby="habit-history">
-        <h2 id="habit-history" className="mb-2 text-sm font-semibold">
-          Last {WEEKS} weeks
-        </h2>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Select a day to correct it. Streaks recalculate from the edited history.
-        </p>
-        <HabitHistory
-          habitId={habit.id}
-          title={habit.title}
-          kind={habit.kind}
-          target={habit.target_value}
-          unit={habit.unit}
-          weeks={weeks}
-          weekdayLabels={weekdayLabels}
-          today={ctx.today}
-        />
-      </section>
-
-      <section
-        aria-labelledby="habit-settings"
-        className="rounded-lg border border-border bg-surface p-5"
-      >
-        <h2 id="habit-settings" className="mb-3 text-sm font-semibold">
-          Settings
-        </h2>
-        <HabitSettings habit={habit} areas={lookups.areas} />
-      </section>
-
-      <HabitArchiveDelete
-        habitId={habit.id}
+    <>
+      <PageHeader
         title={habit.title}
-        archived={habit.archived_at !== null}
+        breadcrumb={[
+          { label: "Habits", href: habit.archived_at ? "/habits?archived=1" : "/habits" },
+        ]}
+        meta={
+          <>
+            {describeSchedule(habit)}
+            {habit.kind === "measurable" &&
+              ` · target ${habit.target_value}${habit.unit ? ` ${habit.unit}` : ""}`}
+            {area && ` · ${area.name}`}
+            {habit.archived_at && " · Archived"}
+          </>
+        }
       />
-    </div>
+      <div className="max-w-3xl space-y-10">
+        {!habit.archived_at && (
+          <Section title="Today">
+            <HabitList
+              summaries={[detail]}
+              date={ctx.today}
+              today={ctx.today}
+              label="Today"
+              showStrip={false}
+            />
+          </Section>
+        )}
+
+        <Section
+          title="Progress"
+          description={`${streakText(detail.streaks)}. Rates count only days the habit was due; rest days and today (until done) are left out.`}
+        >
+          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-5">
+            <Stat value={String(detail.streaks.current)} label={`Current streak (${unit}s)`} />
+            <Stat value={String(detail.streaks.longest)} label={`Longest streak (${unit}s)`} />
+            <Stat
+              value={ratePercent(detail.rates.week)}
+              label="This week"
+              {...(rateDetail(detail.rates.week) ? { detail: rateDetail(detail.rates.week)! } : {})}
+            />
+            <Stat
+              value={ratePercent(detail.rates.month)}
+              label="This month"
+              {...(rateDetail(detail.rates.month)
+                ? { detail: rateDetail(detail.rates.month)! }
+                : {})}
+            />
+            <Stat
+              value={ratePercent(detail.rates.last30)}
+              label="Last 30 days"
+              {...(rateDetail(detail.rates.last30)
+                ? { detail: rateDetail(detail.rates.last30)! }
+                : {})}
+            />
+          </div>
+        </Section>
+
+        <Section
+          title={`Last ${WEEKS} weeks`}
+          divider
+          description="Select a day to correct it. Streaks recalculate from the edited history."
+        >
+          <HabitHistory
+            habitId={habit.id}
+            title={habit.title}
+            kind={habit.kind}
+            target={habit.target_value}
+            unit={habit.unit}
+            weeks={weeks}
+            weekdayLabels={weekdayLabels}
+            today={ctx.today}
+          />
+        </Section>
+
+        <Section title="Settings" divider>
+          <div className="space-y-5">
+            <HabitTitle habitId={habit.id} title={habit.title} />
+            <HabitSettings habit={habit} areas={lookups.areas} />
+          </div>
+        </Section>
+
+        <div className="border-t border-border pt-6">
+          <HabitArchiveDelete
+            habitId={habit.id}
+            title={habit.title}
+            archived={habit.archived_at !== null}
+          />
+        </div>
+      </div>
+    </>
   );
 }

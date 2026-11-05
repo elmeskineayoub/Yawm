@@ -10,6 +10,7 @@ import type { LogEntry } from "@/features/habits/schemas";
 import { formatDate, type IsoDate } from "@/lib/dates";
 import { controlClass } from "@/components/ui/field";
 import { popoverClass } from "@/components/ui/surfaces";
+import { safeAction } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 import { statusClass } from "./habit-row";
 
@@ -133,7 +134,7 @@ function DayCell({
 
   const save = (entry: LogEntry) =>
     startTransition(async () => {
-      const result = await logHabit(habitId, cell.date, entry);
+      const result = await safeAction(() => logHabit(habitId, cell.date, entry));
       if (!result.ok) toast.error(result.error);
       else setOpen(false);
     });
