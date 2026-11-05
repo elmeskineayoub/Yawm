@@ -89,10 +89,10 @@ export type ContentWidth = "wide" | "standard" | "reading";
 
 /**
  * How wide the main column may grow. The Planner needs the whole screen for its calendar; detail
- * pages for text (notes, journal entries, ideas) keep a comfortable reading measure.
+ * pages (tasks, notes, journal entries, ideas) keep a comfortable reading measure.
  */
 export function contentWidthFor(pathname: string): ContentWidth {
   if (isActivePath(pathname, "/planner")) return "wide";
-  if (/^\/(notes|journal|inbox)\/[^/]+$/.test(pathname)) return "reading";
+  if (/^\/(notes|journal|inbox|tasks)\/[^/]+$/.test(pathname)) return "reading";
   return "standard";
 }

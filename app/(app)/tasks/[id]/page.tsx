@@ -1,288 +1,47 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { z } from "zod";
-import { DeleteTaskButton } from "@/components/tasks/delete-task-button";
-import { DependencyEditor } from "@/components/tasks/dependency-editor";
-import { QuickAddTask } from "@/components/tasks/quick-add-task";
-import { GoalSelect } from "@/components/goals/goal-links";
-import { TaskEditForm } from "@/components/tasks/task-edit-form";
-import { TaskList } from "@/components/tasks/task-row";
-import { describeRecurrence, STATUS_LABELS } from "@/features/tasks/logic";
-import { loadGoalOptions } from "@/features/goals/queries";
-import { enrichTasks, loadLookups, TASK_COLUMNS } from "@/features/tasks/queries";
-import { addDays, dateOfInstant, formatDate, formatPeriod, type PlanPeriod } from "@/lib/dates";
-import { formatTimeRange, instantToLocal, zonedDayRange } from "@/lib/dates/zoned";
+import { TaskDetailView } from "@/components/tasks/task-detail";
+import { loadTaskDetail } from "@/features/tasks/detail";
 import { getWorkspaceContext } from "@/lib/workspace-context";
-import { plannerHref } from "@/features/planning/view";
 
 export const metadata: Metadata = { title: "Task" };
 
+/** The full task page: direct links and refreshes. In-app clicks open the side panel instead. */
 export default async function TaskPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
 
   const ctx = await getWorkspaceContext();
-  const { supabase } = ctx;
-  const { data: task, error } = await supabase
-    .from("tasks")
-    .select(`${TASK_COLUMNS}, recurs_from_task_id`)
-    .eq("id", id)
-    .eq("workspace_id", ctx.workspace.id)
-    .maybeSingle();
-  if (error) throw new Error("Could not load the task.");
-  if (!task) notFound();
-
-  const [
-    lookups,
-    subtaskRows,
-    tagRows,
-    dependsOnRows,
-    blocksRows,
-    planRows,
-    candidateRows,
-    parent,
-    goalLink,
-    goals,
-  ] = await Promise.all([
-    loadLookups(ctx),
-    supabase.from("tasks").select(TASK_COLUMNS).eq("parent_task_id", id).order("created_at"),
-    supabase.from("task_tags").select("tag_id").eq("task_id", id),
-    supabase.from("task_dependencies").select("depends_on_task_id").eq("task_id", id),
-    supabase.from("task_dependencies").select("task_id").eq("depends_on_task_id", id),
-    supabase.from("plan_items").select("plan_id").eq("task_id", id),
-    supabase
-      .from("tasks")
-      .select("id, title, status")
-      .eq("workspace_id", ctx.workspace.id)
-      .neq("id", id)
-      .in("status", ["todo", "in_progress", "done"])
-      .order("created_at", { ascending: false })
-      .limit(300),
-    task.parent_task_id
-      ? supabase.from("tasks").select("id, title").eq("id", task.parent_task_id).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    supabase.from("tasks").select("goal_id").eq("id", id).maybeSingle(),
-    loadGoalOptions(ctx),
-  ]);
-  if (subtaskRows.error || tagRows.error || dependsOnRows.error || blocksRows.error) {
-    throw new Error("Could not load the task details.");
-  }
-
-  const relatedIds = [
-    ...(dependsOnRows.data ?? []).map((d) => d.depends_on_task_id),
-    ...(blocksRows.data ?? []).map((d) => d.task_id),
-  ];
-  const [related, plans] = await Promise.all([
-    relatedIds.length
-      ? supabase.from("tasks").select("id, title, status").in("id", relatedIds)
-      : Promise.resolve({ data: [], error: null }),
-    planRows.data?.length
-      ? supabase
-          .from("plans")
-          .select("id, period, period_start")
-          .in(
-            "id",
-            planRows.data.map((p) => p.plan_id),
-          )
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  const { data: scheduledBlocks } = await supabase
-    .from("time_blocks")
-    .select("id, title, starts_at, ends_at")
-    .eq("workspace_id", ctx.workspace.id)
-    .eq("task_id", id)
-    .gte("ends_at", zonedDayRange(addDays(ctx.today, -7), ctx.timezone).start)
-    .order("starts_at")
-    .limit(20);
-
-  const relatedById = new Map((related.data ?? []).map((t) => [t.id, t]));
-  const dependsOn = (dependsOnRows.data ?? [])
-    .map((d) => relatedById.get(d.depends_on_task_id))
-    .filter((t) => t !== undefined);
-  const blocks = (blocksRows.data ?? [])
-    .map((d) => relatedById.get(d.task_id))
-    .filter((t) => t !== undefined);
-
-  const subtasks = await enrichTasks(ctx, subtaskRows.data, lookups);
-  const tagIds = new Set((tagRows.data ?? []).map((t) => t.tag_id));
-  const tagNames = lookups.tags.filter((t) => tagIds.has(t.id)).map((t) => t.name);
-  const recurrence = describeRecurrence(task);
+  const detail = await loadTaskDetail(ctx, id);
+  if (!detail) notFound();
 
   return (
-    <>
-      <PageHeader
-        title={task.title}
-        breadcrumb={[
-          { label: "Tasks", href: "/tasks" },
-          ...(parent.data ? [{ label: parent.data.title, href: `/tasks/${parent.data.id}` }] : []),
-        ]}
-        meta={
-          <>
-            {STATUS_LABELS[task.status]}
-            {task.completed_at &&
-              ` · completed ${new Intl.DateTimeFormat("en-US", {
-                dateStyle: "medium",
-                timeZone: ctx.timezone,
-              }).format(new Date(task.completed_at))}`}
-            {recurrence && ` · ${recurrence}`}
-            {task.recurs_from_task_id && (
-              <>
-                {" · "}
-                <Link href={`/tasks/${task.recurs_from_task_id}`} className="hover:underline">
-                  previous occurrence
-                </Link>
-              </>
-            )}
-          </>
-        }
-      />
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <section
-          aria-label="Task details"
-          className="rounded-lg border border-border bg-surface p-5"
-        >
-          <TaskEditForm task={task} tagNames={tagNames} lookups={lookups} />
-        </section>
-
-        <div className="space-y-6">
-          <section
-            aria-label="Task goal"
-            className="rounded-lg border border-border bg-surface p-5"
-          >
-            <GoalSelect
-              kind="task"
-              targetId={task.id}
-              goalId={goalLink.data?.goal_id ?? null}
-              goals={goals}
-            />
-          </section>
-          {!task.parent_task_id && (
-            <section
-              aria-labelledby="subtasks-heading"
-              className="rounded-lg border border-border bg-surface p-5"
-            >
-              <h2 id="subtasks-heading" className="mb-2 text-sm font-semibold">
-                Subtasks
-              </h2>
-              {subtasks.length > 0 && (
-                <TaskList tasks={subtasks} today={ctx.today} label="Subtasks" showProject={false} />
-              )}
-              <div className="mt-2">
-                <QuickAddTask parentTaskId={task.id} placeholder="Add a subtask" compact />
-              </div>
-            </section>
+    <article aria-label={detail.task.title}>
+      <nav aria-label="Breadcrumb" className="mb-3">
+        <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+          <li>
+            <Link href="/tasks" className="hover:text-foreground hover:underline">
+              Tasks
+            </Link>
+          </li>
+          {detail.parent && (
+            <li className="flex min-w-0 items-center gap-1">
+              <ChevronRight aria-hidden className="size-3.5 shrink-0" />
+              <Link
+                href={`/tasks/${detail.parent.id}`}
+                className="truncate hover:text-foreground hover:underline"
+              >
+                {detail.parent.title}
+              </Link>
+            </li>
           )}
-
-          <section
-            aria-labelledby="deps-heading"
-            className="rounded-lg border border-border bg-surface p-5"
-          >
-            <h2 id="deps-heading" className="mb-2 text-sm font-semibold">
-              Waiting on
-            </h2>
-            <DependencyEditor
-              taskId={task.id}
-              dependsOn={dependsOn}
-              candidates={(candidateRows.data ?? []).filter((c) => c.status !== "done")}
-            />
-            {blocks.length > 0 && (
-              <>
-                <h3 className="mt-4 mb-1 text-sm font-semibold">Blocks</h3>
-                <ul className="space-y-1 text-sm">
-                  {blocks.map((b) => (
-                    <li key={b.id}>
-                      <Link href={`/tasks/${b.id}`} className="break-words hover:underline">
-                        {b.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </section>
-
-          <section
-            aria-labelledby="scheduled-heading"
-            className="rounded-lg border border-border bg-surface p-5"
-          >
-            <h2 id="scheduled-heading" className="mb-1 text-sm font-semibold">
-              Scheduled time
-            </h2>
-            <p className="mb-2 text-xs text-muted-foreground">
-              Time set aside to work on it. Separate from the deadline.
-            </p>
-            {(scheduledBlocks ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                None yet.{" "}
-                <Link href={plannerHref("day", ctx.today)} className="text-accent hover:underline">
-                  Schedule it in the Planner
-                </Link>
-                .
-              </p>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {(scheduledBlocks ?? []).map((b) => {
-                  const local = instantToLocal(b.starts_at, ctx.timezone);
-                  return (
-                    <li key={b.id}>
-                      <Link href={plannerHref("day", local.date)} className="hover:underline">
-                        {formatDate(local.date, "short")} ·{" "}
-                        {formatTimeRange(b.starts_at, b.ends_at, ctx.timezone)}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
-          <section
-            aria-labelledby="plans-heading"
-            className="rounded-lg border border-border bg-surface p-5"
-          >
-            <h2 id="plans-heading" className="mb-2 text-sm font-semibold">
-              In plans
-            </h2>
-            {(plans.data ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Not linked to a plan. Add it from the{" "}
-                <Link href="/planner" className="text-accent hover:underline">
-                  Planner
-                </Link>
-                .
-              </p>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {(plans.data ?? []).map((p) => (
-                  <li key={p.id}>
-                    <Link
-                      href={plannerHref(p.period as PlanPeriod, p.period_start)}
-                      className="hover:underline"
-                    >
-                      {formatPeriod(p.period as PlanPeriod, p.period_start)}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="rounded-lg border border-border bg-surface p-5 text-sm text-muted-foreground">
-            <p>Created {formatDate(dateOfInstant(task.created_at, ctx.timezone))}</p>
-            <div className="mt-3">
-              <DeleteTaskButton
-                taskId={task.id}
-                title={task.title}
-                subtaskCount={subtasks.length}
-                redirectTo={task.parent_task_id ? `/tasks/${task.parent_task_id}` : "/tasks"}
-              />
-            </div>
-          </section>
-        </div>
-      </div>
-    </>
+        </ol>
+      </nav>
+      <h1 className="sr-only">{detail.task.title}</h1>
+      <TaskDetailView detail={detail} today={ctx.today} timezone={ctx.timezone} variant="page" />
+    </article>
   );
 }

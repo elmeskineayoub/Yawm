@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { fail, ok, toSaveState, type ActionResult, type SaveState } from "@/lib/action-result";
+import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { isIsoDate } from "@/lib/dates";
 import { fieldErrorsOf, formObject, parseTagNames } from "@/lib/form";
 import { getWorkspaceContext } from "@/lib/workspace-context";
@@ -12,10 +12,12 @@ import {
   deleteTaskInWorkspace,
   removeDependencyInWorkspace,
   setTaskDueDateInWorkspace,
+  patchTaskInWorkspace,
   setTaskStatusInWorkspace,
-  updateTaskInWorkspace,
+  setTaskTagsInWorkspace,
 } from "./mutations";
-import { quickTaskSchema, taskEditSchema, taskStatus } from "./schemas";
+import { mergeTaskPatch, PATCH_SOURCE_COLUMNS } from "./patch";
+import { quickTaskSchema, taskStatus } from "./schemas";
 
 // Never log task titles or descriptions: they are private content.
 
@@ -51,49 +53,42 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
   return ok({ id: data.id });
 }
 
-export async function updateTask(
-  taskId: string,
-  _prev: SaveState,
-  formData: FormData,
-): Promise<SaveState> {
-  if (!uuid.safeParse(taskId).success) return { status: "error", message: "Unknown task." };
-  const parsed = taskEditSchema.safeParse({
-    ...formObject(formData, [
-      "title",
-      "description",
-      "status",
-      "priority",
-      "due_date",
-      "due_time",
-      "estimate_minutes",
-      "project_id",
-      "area_id",
-      "recurrence_frequency",
-      "recurrence_interval",
-      "recurrence_until",
-    ]),
-    recurrence_weekdays: formData.getAll("recurrence_weekdays"),
-  });
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Check the highlighted fields.",
-      fieldErrors: fieldErrorsOf(parsed.error),
-    };
-  }
+/**
+ * Saves a partial change from the task detail (each field autosaves on its own). The change is
+ * merged into the stored row and validated with every cross-field rule (see patch.ts).
+ */
+export async function updateTaskFields(taskId: string, patch: unknown): Promise<ActionResult> {
+  if (!uuid.safeParse(taskId).success) return fail("Unknown task.");
 
   const { supabase, workspace } = await getWorkspaceContext();
-  const result = await updateTaskInWorkspace(
-    supabase,
-    workspace.id,
-    taskId,
-    parsed.data,
-    parseTagNames(formData.get("tags")),
-  );
-  if (!result.ok) return { status: "error", message: result.error };
+  const { data: row, error } = await supabase
+    .from("tasks")
+    .select(PATCH_SOURCE_COLUMNS)
+    .eq("id", taskId)
+    .eq("workspace_id", workspace.id)
+    .maybeSingle();
+  if (error) return fail("Could not save. Please try again.");
+  if (!row) return fail("This task no longer exists.");
 
+  const merged = mergeTaskPatch(row, patch);
+  if (!merged.ok) return fail(merged.error, merged.fieldErrors);
+
+  const result = await patchTaskInWorkspace(supabase, workspace.id, taskId, merged.data);
+  if (!result.ok) return result;
   refresh();
-  return toSaveState(ok());
+  return ok();
+}
+
+/** Replaces a task's tags from a comma-separated list. */
+export async function setTaskTags(taskId: string, tags: string): Promise<ActionResult> {
+  if (!uuid.safeParse(taskId).success || typeof tags !== "string" || tags.length > 2000) {
+    return fail("Invalid request.");
+  }
+  const { supabase, workspace } = await getWorkspaceContext();
+  const result = await setTaskTagsInWorkspace(supabase, workspace.id, taskId, parseTagNames(tags));
+  if (!result.ok) return result;
+  refresh();
+  return ok();
 }
 
 export async function setTaskStatus(taskId: string, status: string): Promise<ActionResult> {

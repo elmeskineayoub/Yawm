@@ -14,12 +14,12 @@ import { friendlyTaskError, type TaskStatus } from "./logic";
 
 const NOT_FOUND = "This task no longer exists.";
 
-export async function updateTaskInWorkspace(
+/** Writes task columns (not tags) for a task in the active workspace. */
+export async function patchTaskInWorkspace(
   db: Db,
   workspaceId: string,
   taskId: string,
   fields: Tables["tasks"]["Update"],
-  tagNames: string[],
 ): Promise<ActionResult> {
   const { data, error } = await db
     .from("tasks")
@@ -29,7 +29,44 @@ export async function updateTaskInWorkspace(
     .select("id");
   if (error) return fail(friendlyTaskError(error.message));
   if (!data.length) return fail(NOT_FOUND);
+  return ok();
+}
 
+/** Replaces a task's tags. Confirms the task is in the active workspace before touching tags. */
+export async function setTaskTagsInWorkspace(
+  db: Db,
+  workspaceId: string,
+  taskId: string,
+  tagNames: string[],
+): Promise<ActionResult> {
+  const { data, error } = await db
+    .from("tasks")
+    .select("id")
+    .eq("id", taskId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle();
+  if (error) return fail("Could not update the tags. Please try again.");
+  if (!data) return fail(NOT_FOUND);
+  const tags = await db.rpc("set_task_tags", { target_task_id: taskId, tag_names: tagNames });
+  if (tags.error) {
+    return fail(
+      tags.error.message.includes("TOO_MANY_TAGS")
+        ? "Use at most 20 tags."
+        : "The tags could not be updated.",
+    );
+  }
+  return ok();
+}
+
+export async function updateTaskInWorkspace(
+  db: Db,
+  workspaceId: string,
+  taskId: string,
+  fields: Tables["tasks"]["Update"],
+  tagNames: string[],
+): Promise<ActionResult> {
+  const saved = await patchTaskInWorkspace(db, workspaceId, taskId, fields);
+  if (!saved.ok) return saved;
   // Only reached for a task confirmed to be in the active workspace.
   const tags = await db.rpc("set_task_tags", { target_task_id: taskId, tag_names: tagNames });
   if (tags.error) {

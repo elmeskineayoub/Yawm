@@ -14,7 +14,8 @@ export function DeleteTaskButton({
   taskId: string;
   title: string;
   subtaskCount: number;
-  redirectTo: string;
+  /** Where to go once deleted; "back" closes the side panel and returns to the page under it. */
+  redirectTo: string | "back";
 }) {
   const router = useRouter();
   return (
@@ -39,7 +40,8 @@ export function DeleteTaskButton({
       onConfirm={async () => {
         const result = await deleteTask(taskId);
         if (!result.ok) return result.error;
-        router.push(redirectTo);
+        if (redirectTo === "back") router.back();
+        else router.push(redirectTo);
         return null;
       }}
     />

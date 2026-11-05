@@ -11,9 +11,10 @@ describe("contentWidthFor", () => {
     expect(contentWidthFor("/notes/7c1a")).toBe("reading");
     expect(contentWidthFor("/journal/7c1a")).toBe("reading");
     expect(contentWidthFor("/inbox/7c1a")).toBe("reading");
+    expect(contentWidthFor("/tasks/7c1a")).toBe("reading");
   });
   it("uses the standard width for lists and everything else", () => {
-    for (const path of ["/dashboard", "/notes", "/journal", "/inbox", "/tasks/7c1a", "/settings"]) {
+    for (const path of ["/dashboard", "/notes", "/journal", "/inbox", "/tasks", "/settings"]) {
       expect(contentWidthFor(path)).toBe("standard");
     }
   });

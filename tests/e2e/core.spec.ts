@@ -42,17 +42,28 @@ test("capture an idea, plan it, and get it done", async ({ page }) => {
     );
   });
 
-  await test.step("edit a task: due today, priority, tags, weekly recurrence", async () => {
+  await test.step("edit a task in the side panel: due today, priority, tags, weekly", async () => {
+    // Clicking a task opens it in a side panel over the current page; the URL is the task's.
     await page.getByRole("link", { name: "Write first issue" }).click();
     await expect(page).toHaveURL(/\/tasks\/[0-9a-f-]+$/);
+    const panel = page.getByRole("dialog", { name: "Write first issue" });
+    // Each field saves on its own; wait for the server-confirmed "Saved" after each change.
+    const saved = panel.getByRole("status").filter({ hasText: "Saved" });
     const today = await page.evaluate(() => new Intl.DateTimeFormat("en-CA").format(new Date()));
-    await page.getByLabel("Due date").fill(today);
-    await page.getByLabel("Priority").selectOption("high");
-    await page.getByLabel("Tags").fill("writing, deep work");
-    await page.getByLabel("Frequency").selectOption("weekly");
-    await page.getByRole("button", { name: "Save changes" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+    await panel.getByLabel("Due date", { exact: true }).fill(today);
+    await expect(saved).toBeVisible();
+    await panel.getByLabel("Priority").selectOption("high");
+    await expect(saved).toBeVisible();
+    await panel.getByLabel("Tags").fill("writing, deep work");
+    await panel.getByLabel("Tags").press("Enter");
+    await expect(saved).toBeVisible();
+    await panel.getByLabel("Frequency").selectOption("weekly");
+    await expect(saved).toBeVisible();
+
+    // A refresh shows the full task page (no panel), with every change persisted.
     await page.reload();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByLabel("Priority")).toHaveValue("high");
     await expect(page.getByLabel("Tags")).toHaveValue("deep work, writing");
     await expect(page.getByText(/Every week/)).toBeVisible();
   });

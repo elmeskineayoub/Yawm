@@ -12,7 +12,14 @@ import { getSupabasePublicConfig } from "@/lib/env";
 import { isSidebarCollapsed, SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
-export default async function AppLayout({ children }: { children: ReactNode }) {
+export default async function AppLayout({
+  children,
+  panel,
+}: {
+  children: ReactNode;
+  /** Side panel slot: a task opened from within the app (app/(app)/@panel). */
+  panel: ReactNode;
+}) {
   // The proxy already redirects; this keeps the guarantee if the proxy is bypassed.
   if (!getSupabasePublicConfig().configured) redirect(SETUP_PATH);
 
@@ -40,6 +47,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       initialCollapsed={isSidebarCollapsed(cookieStore.get(SIDEBAR_COOKIE)?.value)}
     >
       {children}
+      {panel}
     </AppShell>
   );
 }

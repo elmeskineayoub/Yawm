@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
@@ -19,6 +19,7 @@ export function DependencyEditor({
   dependsOn: DepTask[];
   candidates: DepTask[];
 }) {
+  const selectId = useId();
   const [selected, setSelected] = useState("");
   const [pending, startTransition] = useTransition();
   const available = candidates.filter((c) => !dependsOn.some((d) => d.id === c.id));
@@ -66,11 +67,11 @@ export function DependencyEditor({
             })
           }
         >
-          <label htmlFor="depends-on" className="sr-only">
+          <label htmlFor={selectId} className="sr-only">
             Task this one waits on
           </label>
           <select
-            id="depends-on"
+            id={selectId}
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
             className={controlClass}
