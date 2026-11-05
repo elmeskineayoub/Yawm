@@ -4,6 +4,7 @@ import { addDays, dateOfInstant, periodStart, type IsoDate } from "@/lib/dates";
 import { zonedRange } from "@/lib/dates/zoned";
 import type { WorkspaceContext } from "@/lib/workspace-context";
 import { bucketByDay, completionRate, type DayCount } from "./logic";
+import { parseDashboardPrefs, type DashboardSection } from "./sections";
 
 export type DashboardInsights = {
   /** Tasks completed per day over the last 7 days (oldest first), in the user's timezone. */
@@ -75,4 +76,21 @@ export async function loadDashboardInsights(ctx: WorkspaceContext): Promise<Dash
     weekTaskRate: completionRate(weekCompleted, weekOpenDue),
     habits: aggregateHabitRates(habitRates),
   };
+}
+
+/**
+ * Which sections the user hid. Loaded on its own so that, if the column is missing (migration
+ * 20261106090000 not applied yet), the Dashboard still renders every section and customizing is
+ * reported as unavailable instead of breaking the page.
+ */
+export async function loadDashboardPrefs(
+  ctx: WorkspaceContext,
+): Promise<{ hidden: Set<DashboardSection>; available: boolean }> {
+  const { data, error } = await ctx.supabase
+    .from("profiles")
+    .select("dashboard_prefs")
+    .eq("id", ctx.user.id)
+    .maybeSingle();
+  if (error) return { hidden: new Set(), available: false };
+  return { hidden: parseDashboardPrefs(data?.dashboard_prefs), available: true };
 }

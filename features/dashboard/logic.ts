@@ -42,3 +42,32 @@ export function dailyPrompt(today: IsoDate, prompts: readonly string[] = JOURNAL
   const index = ((daysBetween("1970-01-01", today) % n) + n) % n;
   return prompts[index]!;
 }
+
+/**
+ * One plain sentence across the whole workspace for the Dashboard, computed from the user's data
+ * (no AI). Today's details live on the Today page; this is the wider view.
+ */
+export function summarizeOverview({
+  overdue,
+  completedThisWeek,
+  activeProjects,
+  activeGoals,
+  inbox,
+}: {
+  overdue: number;
+  completedThisWeek: number;
+  activeProjects: number;
+  activeGoals: number;
+  inbox: number;
+}): string {
+  const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+  const parts = [
+    overdue > 0 ? `${overdue} overdue` : "nothing overdue",
+    `${completedThisWeek} done this week`,
+    plural(activeProjects, "active project"),
+    plural(activeGoals, "active goal"),
+    inbox > 0 ? `${plural(inbox, "idea")} to sort` : "inbox clear",
+  ];
+  const sentence = parts.join(", ");
+  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
+}

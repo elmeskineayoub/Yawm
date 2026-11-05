@@ -2,353 +2,373 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { CustomizeDashboard } from "@/components/dashboard/customize-dashboard";
 import { JournalPromptCard } from "@/components/dashboard/journal-prompt-card";
 import { TrendBars } from "@/components/dashboard/trend-bars";
-import { HabitList } from "@/components/habits/habit-row";
-import { ScheduledList } from "@/components/planner/scheduled-list";
 import { TaskList } from "@/components/tasks/task-row";
+import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { dailyPrompt } from "@/features/dashboard/logic";
-import { loadDashboardInsights } from "@/features/dashboard/queries";
+import { Section } from "@/components/ui/section";
+import { dailyPrompt, summarizeOverview } from "@/features/dashboard/logic";
+import { loadDashboardInsights, loadDashboardPrefs } from "@/features/dashboard/queries";
+import { DASHBOARD_SECTIONS, type DashboardSection } from "@/features/dashboard/sections";
 import { formatDuration } from "@/features/focus/logic";
 import { loadFocusSummary } from "@/features/focus/queries";
-import { ratePercent } from "@/features/reviews/logic";
+import { loadGoalSummaries, loadMilestonesDue } from "@/features/goals/queries";
 import { isDone } from "@/features/habits/logic";
 import { loadHabitsForDay } from "@/features/habits/queries";
 import { countInbox } from "@/features/inbox/queries";
-import { loadProjectSummaries } from "@/features/projects/queries";
-import { loadLookups } from "@/features/tasks/queries";
-import { planItemLink } from "@/features/planning/queries";
 import { plannerHref } from "@/features/planning/view";
+import { loadProjectSummaries } from "@/features/projects/queries";
+import { ratePercent } from "@/features/reviews/logic";
+import { loadLookups } from "@/features/tasks/queries";
 import { loadToday } from "@/features/tasks/today";
-import { formatDate, formatPeriod, periodStart } from "@/lib/dates";
-import { cn } from "@/lib/utils";
+import { addDays, formatDate, periodStart, relativeDateLabel } from "@/lib/dates";
+import { instantToLocal } from "@/lib/dates/zoned";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-function Tile({
-  href,
-  label,
-  value,
-  tone,
-}: {
-  href: string;
-  label: string;
-  value: number;
-  tone?: "danger";
-}) {
-  return (
-    <Link
-      href={href}
-      className="rounded-lg border border-border bg-surface p-4 hover:bg-surface-muted"
-    >
-      <p
-        className={cn(
-          "text-2xl font-semibold tabular-nums",
-          tone === "danger" && value > 0 && "text-danger",
-        )}
-      >
-        {value}
-      </p>
-      <p className="text-sm text-muted-foreground">{label}</p>
-    </Link>
-  );
-}
+/** How many overdue tasks the Dashboard lists before pointing to Today. */
+const ATTENTION_TASKS = 5;
 
-function Card({
-  title,
-  action,
-  children,
-}: {
-  title: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  const id = `card-${title.toLowerCase().replace(/[^a-z]+/g, "-")}`;
-  return (
-    <section aria-labelledby={id} className="rounded-lg border border-border bg-surface p-5">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 id={id} className="min-w-0 text-sm font-semibold">
-          {title}
-        </h2>
-        {action && <div className="shrink-0 whitespace-nowrap">{action}</div>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
+/**
+ * The Dashboard answers "what is happening across my life, and what deserves attention?". It is
+ * the wide view: Today is where the day's work happens, so the Dashboard summarises today rather
+ * than repeating its lists. Sections can be hidden (Customize).
+ */
 export default async function DashboardPage() {
   const ctx = await getWorkspaceContext();
+  const prefs = await loadDashboardPrefs(ctx);
+  const show = (key: DashboardSection) => !prefs.hidden.has(key);
   const lookups = await loadLookups(ctx);
   const weekStartDate = periodStart("week", ctx.today, ctx.weekStart);
-  // One parallel batch (incl. the week plan) rather than a trailing serial query — one fewer
-  // round-trip, which matters most when the database is a round-trip away.
-  const [today, inboxCount, projects, habits, focus, insights, weekPlanResult] = await Promise.all([
-    loadToday(ctx, lookups),
-    countInbox(ctx),
-    loadProjectSummaries(ctx, { statuses: ["active"] }),
-    loadHabitsForDay(ctx, ctx.today),
-    loadFocusSummary(ctx),
-    loadDashboardInsights(ctx),
-    ctx.supabase
-      .from("plans")
-      .select("theme")
-      .eq("workspace_id", ctx.workspace.id)
-      .eq("period", "week")
-      .eq("period_start", weekStartDate)
-      .maybeSingle(),
-  ]);
-  const weekPlan = weekPlanResult.data;
-  const habitWeekPercent = ratePercent(insights.habits.rate);
-  const habitsDone = habits.filter((h) => isDone(h.habit, h.log ?? undefined)).length;
+  const none = Promise.resolve(null);
 
-  const attention = [...today.overdue, ...today.dueToday];
+  // One parallel batch; sections that are hidden skip their queries.
+  const [today, inbox, projects, goals, habits, focus, insights, milestones, weekPlan] =
+    await Promise.all([
+      loadToday(ctx, lookups),
+      countInbox(ctx),
+      loadProjectSummaries(ctx, { statuses: ["active"] }),
+      loadGoalSummaries(ctx, { statuses: ["active"] }),
+      show("today") ? loadHabitsForDay(ctx, ctx.today) : none,
+      show("today") || show("week") ? loadFocusSummary(ctx) : none,
+      show("week") ? loadDashboardInsights(ctx) : none,
+      show("attention")
+        ? loadMilestonesDue(ctx, { from: ctx.today, to: addDays(ctx.today, 8) })
+        : none,
+      show("week")
+        ? ctx.supabase
+            .from("plans")
+            .select("theme")
+            .eq("workspace_id", ctx.workspace.id)
+            .eq("period", "week")
+            .eq("period_start", weekStartDate)
+            .maybeSingle()
+        : none,
+    ]);
 
-  return (
-    <>
-      <PageHeader title="Dashboard" description={formatDate(ctx.today)} />
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Tile
-            href="/tasks?due=overdue"
-            label="Overdue"
-            value={today.overdue.length}
-            tone="danger"
-          />
-          <Tile href="/today" label="Due today" value={today.dueToday.length} />
-          <Tile href="/inbox" label="Ideas in inbox" value={inboxCount} />
-          <Tile href="/projects" label="Active projects" value={projects.length} />
-        </div>
+  const summary = summarizeOverview({
+    overdue: today.overdue.length,
+    completedThisWeek: today.completedThisWeek,
+    activeProjects: projects.length,
+    activeGoals: goals.length,
+    inbox,
+  });
+  const openMilestones = (milestones ?? []).filter((m) => !m.completed_at);
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card
-            title="Completed last 7 days"
-            action={
-              <Link href="/reviews" className="text-sm text-accent hover:underline">
-                Weekly review
-              </Link>
-            }
-          >
-            <TrendBars days={insights.trend} />
-            <p className="mt-3 text-sm text-muted-foreground">
-              {insights.trendTotal} task{insights.trendTotal === 1 ? "" : "s"} completed in the last
-              7 days.
+  const sections: Record<DashboardSection, () => ReactNode> = {
+    attention: () => {
+      const nothing = today.overdue.length === 0 && openMilestones.length === 0 && inbox === 0;
+      return (
+        <Section key="attention" title="Needs attention">
+          {nothing ? (
+            <p className="text-sm text-muted-foreground">
+              Nothing overdue, no milestones due this week, and the inbox is clear.
             </p>
-          </Card>
+          ) : (
+            <div className="space-y-5">
+              {today.overdue.length > 0 && (
+                <div>
+                  <TaskList
+                    tasks={today.overdue.slice(0, ATTENTION_TASKS)}
+                    today={ctx.today}
+                    label="Overdue"
+                  />
+                  {today.overdue.length > ATTENTION_TASKS && (
+                    <p className="mt-1 text-sm">
+                      <Link href="/today" className="text-accent hover:underline">
+                        {today.overdue.length - ATTENTION_TASKS} more overdue in Today
+                      </Link>
+                    </p>
+                  )}
+                </div>
+              )}
+              {openMilestones.length > 0 && (
+                <div>
+                  <h3 className="label-caps mb-1.5">Milestones due this week</h3>
+                  <ul className="space-y-1.5 text-sm">
+                    {openMilestones.map((m) => (
+                      <li key={m.id} className="flex flex-wrap items-baseline gap-x-2">
+                        <Link href={`/goals/${m.goal_id}`} className="hover:underline">
+                          {m.title}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          {m.goal_title} · {relativeDateLabel(m.due_date!, ctx.today)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {inbox > 0 && (
+                <p className="text-sm">
+                  {inbox} idea{inbox === 1 ? "" : "s"} waiting in the Inbox.{" "}
+                  <Link href="/inbox" className="text-accent hover:underline">
+                    Sort them
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+        </Section>
+      );
+    },
 
-          <Card title="This week's progress">
-            <dl className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">Tasks due this week done</dt>
-                <dd className="tabular-nums">
-                  {insights.weekTaskRate === null ? "—" : `${insights.weekTaskRate}%`}
+    today: () => {
+      const habitsDone = (habits ?? []).filter((h) => isDone(h.habit, h.log ?? undefined)).length;
+      const next = today.scheduled.find((b) => Date.parse(b.ends_at) > Date.now());
+      const stats: { label: string; value: ReactNode; href: string }[] = [
+        { label: "Due today", value: today.dueToday.length, href: "/today" },
+        {
+          label: "Scheduled",
+          value: next ? (
+            <>
+              {today.scheduled.length}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                · next {instantToLocal(next.starts_at, ctx.timezone).time}
+              </span>
+            </>
+          ) : (
+            today.scheduled.length
+          ),
+          href: plannerHref("day", ctx.today),
+        },
+        {
+          label: "Habits",
+          value: habits && habits.length > 0 ? `${habitsDone}/${habits.length}` : "—",
+          href: "/habits",
+        },
+        { label: "Focus", value: formatDuration(focus?.todaySeconds ?? 0), href: "/focus" },
+      ];
+      return (
+        <Section
+          key="today"
+          title="Today at a glance"
+          divider
+          actions={
+            <Link href="/today" className="text-accent hover:underline">
+              Open Today
+            </Link>
+          }
+        >
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label}>
+                <dt className="label-caps">{s.label}</dt>
+                <dd className="mt-0.5 text-lg font-semibold tabular-nums">
+                  <Link href={s.href} className="hover:underline">
+                    {s.value}
+                  </Link>
                 </dd>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">Habits (scheduled days)</dt>
-                <dd className="tabular-nums">
-                  {habitWeekPercent === null ? "—" : `${habitWeekPercent}%`}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">Focus time</dt>
-                <dd className="tabular-nums">{formatDuration(focus.weekSeconds)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">Completed this week</dt>
-                <dd className="tabular-nums">{today.completedThisWeek}</dd>
-              </div>
-            </dl>
-          </Card>
+            ))}
+          </dl>
+        </Section>
+      );
+    },
 
-          <Card title="Reflect">
-            <JournalPromptCard prompt={dailyPrompt(ctx.today)} today={ctx.today} />
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card
-            title="Today's priorities"
-            action={
-              <Link
-                href={plannerHref("day", ctx.today)}
-                className="text-sm text-accent hover:underline"
-              >
-                Plan the day
-              </Link>
-            }
-          >
-            {today.priorities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No priorities chosen for today.</p>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {today.priorities.map((item) => (
-                  <li key={item.id}>
-                    {item.kind === "task" ? (
-                      <Link
-                        href={`/tasks/${item.task.id}`}
-                        className={cn(
-                          "hover:underline",
-                          item.task.status === "done" && "text-muted-foreground line-through",
-                        )}
-                      >
-                        {item.task.title}
-                      </Link>
-                    ) : (
-                      <Link href={planItemLink(item).href} className="hover:underline">
-                        {planItemLink(item).title} ({planItemLink(item).label})
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card
-            title="Scheduled today"
-            action={
-              <Link
-                href={plannerHref("day", ctx.today)}
-                className="text-sm text-accent hover:underline"
-              >
-                Timeline
-              </Link>
-            }
-          >
-            <ScheduledList
-              blocks={today.scheduled}
-              timezone={ctx.timezone}
-              dayHref={plannerHref("day", ctx.today)}
-            />
-          </Card>
-
-          <Card
-            title="Today's habits"
-            action={
-              <Link href="/habits" className="text-sm text-accent hover:underline">
-                {habits.length ? `${habitsDone} of ${habits.length} done` : "Habits"}
-              </Link>
-            }
-          >
-            {habits.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No habits due today.</p>
-            ) : (
-              <HabitList
-                summaries={habits}
-                date={ctx.today}
-                today={ctx.today}
-                label="Today's habits"
-                showStrip={false}
-              />
-            )}
-          </Card>
-
-          <Card
-            title="This week"
-            action={
-              <Link
-                href={plannerHref("week", ctx.today)}
-                className="text-sm text-accent hover:underline"
-              >
+    week: () => {
+      const habitRate = insights ? ratePercent(insights.habits.rate) : null;
+      const theme = weekPlan?.data?.theme ?? null;
+      return (
+        <Section
+          key="week"
+          title="This week"
+          divider
+          actions={
+            <>
+              <Link href={plannerHref("week", ctx.today)} className="text-accent hover:underline">
                 Weekly plan
               </Link>
-            }
-          >
-            <p className="text-sm">
-              {weekPlan?.theme ? (
-                <>
-                  Theme: <span className="font-medium">{weekPlan.theme}</span>
-                </>
+              <Link href="/reviews" className="text-accent hover:underline">
+                Review
+              </Link>
+            </>
+          }
+        >
+          <p className="font-serif text-lg">
+            {theme ? (
+              theme
+            ) : (
+              <span className="text-muted-foreground">No theme set for this week.</span>
+            )}
+          </p>
+          <div className="mt-4 grid gap-6 sm:grid-cols-[minmax(0,1fr)_14rem]">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div>
+                <dt className="text-muted-foreground">Due this week, done</dt>
+                <dd className="font-semibold tabular-nums">
+                  {insights?.weekTaskRate == null ? "—" : `${insights.weekTaskRate}%`}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Habits (scheduled days)</dt>
+                <dd className="font-semibold tabular-nums">
+                  {habitRate === null ? "—" : `${habitRate}%`}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Completed</dt>
+                <dd className="font-semibold tabular-nums">{today.completedThisWeek}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Focus</dt>
+                <dd className="font-semibold tabular-nums">
+                  {formatDuration(focus?.weekSeconds ?? 0)}
+                </dd>
+              </div>
+            </dl>
+            {insights && (
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">
+                  Completed per day, last 7 days ({insights.trendTotal})
+                </p>
+                <TrendBars days={insights.trend} />
+              </div>
+            )}
+          </div>
+        </Section>
+      );
+    },
+
+    progress: () => (
+      <Section key="progress" title="Projects & goals" divider>
+        {projects.length === 0 && goals.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No active projects or goals.{" "}
+            <Link href="/projects" className="text-accent hover:underline">
+              Start a project
+            </Link>{" "}
+            or{" "}
+            <Link href="/goals" className="text-accent hover:underline">
+              set a goal
+            </Link>
+            .
+          </p>
+        ) : (
+          <div className="grid gap-8 md:grid-cols-2">
+            <div>
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h3 className="label-caps">Projects</h3>
+                <Link href="/projects" className="text-xs text-accent hover:underline">
+                  All projects
+                </Link>
+              </div>
+              {projects.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No active projects.</p>
               ) : (
-                <span className="text-muted-foreground">No weekly theme set.</span>
+                <ul className="space-y-3">
+                  {projects.slice(0, 6).map((p) => (
+                    <li key={p.id}>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <Link
+                          href={`/projects/${p.id}`}
+                          className="min-w-0 truncate text-sm hover:underline"
+                        >
+                          {p.name}
+                        </Link>
+                        {p.due_date && (
+                          <Badge tone={p.due_date < ctx.today ? "danger" : "neutral"}>
+                            {relativeDateLabel(p.due_date, ctx.today)}
+                          </Badge>
+                        )}
+                      </div>
+                      <ProgressBar progress={p.progress} label={`${p.name} progress`} />
+                    </li>
+                  ))}
+                </ul>
               )}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {today.completedThisWeek} task{today.completedThisWeek === 1 ? "" : "s"} completed
-              since {formatPeriod("week", today.weekStartDate).replace("Week of ", "")}.
-            </p>
-          </Card>
-
-          <Card
-            title="Needs attention"
-            action={
-              <Link href="/today" className="text-sm text-accent hover:underline">
-                Open Today
-              </Link>
-            }
-          >
-            {attention.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing overdue or due today.</p>
-            ) : (
-              <TaskList tasks={attention.slice(0, 8)} today={ctx.today} label="Needs attention" />
-            )}
-          </Card>
-
-          <Card
-            title="Focus"
-            action={
-              <Link href="/focus" className="text-sm text-accent hover:underline">
-                Start focus
-              </Link>
-            }
-          >
-            <p className="text-sm">
-              <span className="font-medium tabular-nums">{formatDuration(focus.todaySeconds)}</span>{" "}
-              focused today
-              {focus.todayCount > 0 && (
-                <span className="text-muted-foreground">
-                  {" "}
-                  · {focus.todayCount} session{focus.todayCount === 1 ? "" : "s"}
-                </span>
+            </div>
+            <div>
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h3 className="label-caps">Goals</h3>
+                <Link href="/goals" className="text-xs text-accent hover:underline">
+                  All goals
+                </Link>
+              </div>
+              {goals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No active goals.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {goals.slice(0, 6).map((g) => (
+                    <li key={g.id}>
+                      <Link
+                        href={`/goals/${g.id}`}
+                        className="block truncate text-sm hover:underline"
+                      >
+                        {g.title}
+                      </Link>
+                      <ProgressBar
+                        progress={
+                          g.progress.milestones.total > 0 ? g.progress.milestones : g.progress.work
+                        }
+                        label={`${g.title} progress`}
+                      />
+                      {g.next && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Next: {g.next.title}
+                          {g.next.due_date
+                            ? ` · ${relativeDateLabel(g.next.due_date, ctx.today)}`
+                            : ""}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               )}
-            </p>
-            {focus.recent[0] && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Last: {formatDuration(focus.recent[0].duration_seconds)}
-                {focus.recent[0].task ? ` · ${focus.recent[0].task.title}` : ""}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-muted-foreground">
-              {formatDuration(focus.weekSeconds)} this week.
-            </p>
-          </Card>
+            </div>
+          </div>
+        )}
+      </Section>
+    ),
 
-          <Card title="Upcoming (next 7 days)">
-            {today.upcoming.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No deadlines in the next week.</p>
-            ) : (
-              <TaskList tasks={today.upcoming.slice(0, 8)} today={ctx.today} label="Upcoming" />
-            )}
-          </Card>
+    reflect: () => (
+      <Section key="reflect" title="Reflect" divider>
+        <JournalPromptCard prompt={dailyPrompt(ctx.today)} today={ctx.today} />
+      </Section>
+    ),
+  };
 
-          <Card
-            title="Active projects"
-            action={
-              <Link href="/projects" className="text-sm text-accent hover:underline">
-                All projects
-              </Link>
-            }
-          >
-            {projects.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active projects.</p>
-            ) : (
-              <ul className="space-y-3">
-                {projects.slice(0, 6).map((p) => (
-                  <li key={p.id}>
-                    <Link href={`/projects/${p.id}`} className="text-sm hover:underline">
-                      {p.name}
-                    </Link>
-                    <ProgressBar progress={p.progress} label={`${p.name} progress`} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
-      </div>
-    </>
+  const visible = DASHBOARD_SECTIONS.filter((s) => show(s.key));
+
+  return (
+    // One width for header and sections, so Customize lines up with the content's right edge.
+    <div className="max-w-4xl">
+      <PageHeader
+        title="Dashboard"
+        description={formatDate(ctx.today)}
+        meta={<p className="max-w-prose text-[0.9375rem] text-foreground">{summary}</p>}
+        actions={<CustomizeDashboard hidden={[...prefs.hidden]} available={prefs.available} />}
+      />
+      {visible.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          All sections are hidden. Use Customize to show them again.
+        </p>
+      ) : (
+        <div className="space-y-8">{visible.map((s) => sections[s.key]())}</div>
+      )}
+    </div>
   );
 }

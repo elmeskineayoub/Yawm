@@ -889,6 +889,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string;
+          dashboard_prefs: Json;
           display_name: string | null;
           id: string;
           timezone: string;
@@ -898,6 +899,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           created_at?: string;
+          dashboard_prefs?: Json;
           display_name?: string | null;
           id: string;
           timezone?: string;
@@ -906,6 +908,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          dashboard_prefs?: Json;
           display_name?: string | null;
           id?: string;
           timezone?: string;

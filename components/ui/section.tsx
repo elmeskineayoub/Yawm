@@ -59,7 +59,7 @@ export function Section({
           )}
         </h2>
         {actions && (
-          <div className="flex shrink-0 items-center gap-2 text-sm whitespace-nowrap">
+          <div className="flex shrink-0 items-center gap-3 text-sm whitespace-nowrap">
             {actions}
           </div>
         )}
