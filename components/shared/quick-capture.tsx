@@ -2,13 +2,23 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Plus } from "lucide-react";
-import { useEffect, useId, useState, useTransition } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { dialogClass, overlayClass } from "@/components/ui/surfaces";
 import { createIdea } from "@/features/inbox/actions";
 import { createTask } from "@/features/tasks/actions";
+import type { ShellLayout } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 function isTypingTarget(target: EventTarget | null) {
@@ -18,13 +28,84 @@ function isTypingTarget(target: EventTarget | null) {
   );
 }
 
+type QuickCaptureContextValue = { open: () => void };
+const QuickCaptureContext = createContext<QuickCaptureContextValue | null>(null);
+
+function useQuickCapture(): QuickCaptureContextValue {
+  const value = useContext(QuickCaptureContext);
+  if (!value) throw new Error("QuickCaptureButton must be inside QuickCaptureProvider.");
+  return value;
+}
+
 /**
- * Persistent capture for an idea or a task, available on every page. Press "q" anywhere outside a
- * text field to open it. The dialog closes only after the server has saved the entry.
+ * Persistent capture for an idea or a task, available on every page. One dialog per app shell,
+ * opened by any QuickCaptureButton or by pressing "q" anywhere outside a text field. The dialog
+ * closes only after the server has saved the entry.
  */
-export function QuickCapture({ collapsed = false }: { collapsed?: boolean }) {
-  const id = useId();
+export function QuickCaptureProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const value = useMemo(() => ({ open: () => setOpen(true) }), []);
+  return (
+    <QuickCaptureContext.Provider value={value}>
+      {children}
+      <QuickCaptureDialog open={open} onOpenChange={setOpen} />
+    </QuickCaptureContext.Provider>
+  );
+}
+
+/** Opens the shell's quick-capture dialog. */
+export function QuickCaptureButton({
+  layout = "full",
+  variant = "sidebar",
+}: {
+  /** Follows the sidebar: icon only in the rail. */
+  layout?: ShellLayout;
+  /** "tab" renders the round central button of the mobile tab bar. */
+  variant?: "sidebar" | "tab";
+}) {
+  const { open } = useQuickCapture();
+  if (variant === "tab") {
+    return (
+      <button
+        type="button"
+        onClick={open}
+        aria-label="Quick capture"
+        className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-overlay transition-colors duration-150 hover:bg-accent/90"
+      >
+        <Plus aria-hidden className="size-5" />
+      </button>
+    );
+  }
+  return (
+    <Button
+      onClick={open}
+      className={cn(
+        "w-full",
+        layout === "rail" && "px-0",
+        layout === "responsive" && "max-lg:px-0",
+      )}
+      aria-keyshortcuts="q"
+      title="Quick capture (q)"
+    >
+      <Plus aria-hidden className="size-4" />
+      <span
+        className={cn(layout === "rail" && "sr-only", layout === "responsive" && "max-lg:sr-only")}
+      >
+        Quick capture
+      </span>
+    </Button>
+  );
+}
+
+function QuickCaptureDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const setOpen = onOpenChange;
+  const id = useId();
   const [kind, setKind] = useState<"idea" | "task">("idea");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -33,12 +114,14 @@ export function QuickCapture({ collapsed = false }: { collapsed?: boolean }) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "q" || event.metaKey || event.ctrlKey || event.altKey) return;
       if (isTypingTarget(event.target)) return;
+      // Not on top of another dialog or side panel.
+      if (document.querySelector("[role=dialog]")) return;
       event.preventDefault();
       setOpen(true);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [setOpen]);
 
   return (
     <Dialog.Root
@@ -48,16 +131,6 @@ export function QuickCapture({ collapsed = false }: { collapsed?: boolean }) {
         if (!next) setError(null);
       }}
     >
-      <Dialog.Trigger asChild>
-        <Button
-          className={cn("w-full", collapsed && "px-0")}
-          aria-keyshortcuts="q"
-          title={collapsed ? "Quick capture (q)" : "Shortcut: q"}
-        >
-          <Plus aria-hidden className="size-4" />
-          <span className={cn(collapsed && "sr-only")}>Quick capture</span>
-        </Button>
-      </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className={overlayClass} />
         <Dialog.Content className={cn(dialogClass, "top-[15%] max-w-lg translate-y-0 p-5")}>

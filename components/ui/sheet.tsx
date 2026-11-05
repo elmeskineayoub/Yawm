@@ -11,7 +11,10 @@ type SheetProps = {
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
   /** Wider panels for detail views; default is 28rem. */
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "nav";
+  /** Right for detail panels; left for the mobile navigation menu. */
+  side?: "right" | "left";
+  id?: string;
   className?: string;
 };
 
@@ -20,15 +23,27 @@ type SheetProps = {
  * full-page navigation. Modal (focus is trapped, Escape closes). Content provides its own
  * `SheetTitle` so the dialog has an accessible name.
  */
-export function Sheet({ open, onOpenChange, children, size = "md", className }: SheetProps) {
+export function Sheet({
+  open,
+  onOpenChange,
+  children,
+  size = "md",
+  side = "right",
+  id,
+  className,
+}: SheetProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className={overlayClass} />
         <Dialog.Content
+          id={id}
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex w-full flex-col overflow-y-auto border-l border-border bg-surface p-5 shadow-overlay data-[state=open]:animate-[sheet-in_180ms_ease-out] sm:p-6",
-            size === "md" ? "max-w-md" : "max-w-xl",
+            "fixed inset-y-0 z-50 flex w-full flex-col overflow-y-auto border-border bg-surface shadow-overlay",
+            side === "right"
+              ? "right-0 border-l p-5 data-[state=open]:animate-[sheet-in_180ms_ease-out] sm:p-6"
+              : "left-0 border-r data-[state=open]:animate-[sheet-in-left_180ms_ease-out]",
+            size === "md" ? "max-w-md" : size === "lg" ? "max-w-xl" : "max-w-72",
             className,
           )}
         >

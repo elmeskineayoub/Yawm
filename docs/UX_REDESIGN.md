@@ -1,6 +1,6 @@
 # Yawm UX Redesign — Audit and Plan
 
-**Status:** Stage 1 (audit) complete, 2026-11-05. Stage 2a (tokens, type, inputs) and 2b (UI primitives) complete; 2c (app shell) next.
+**Status:** Stage 1 (audit) complete, 2026-11-05. Stage 2a (tokens, type, inputs), 2b (UI primitives), and 2c (app shell) complete; 2d (global search) next.
 **Scope:** UI/UX only. The backend, schema, RLS, and data access stay as they are unless a step
 below says otherwise. `REQUIREMENTS.md` remains the product source of truth; where this document
 and the requirements disagree, the requirements win.

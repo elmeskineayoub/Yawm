@@ -87,6 +87,59 @@ export type RunningTimer = {
   running: boolean;
 };
 
+/** localStorage key holding the RunningTimer (shared by the timer page and the shell's chip). */
+export const FOCUS_TIMER_STORAGE_KEY = "yawm.focus.timer";
+
+const PHASES: readonly FocusPhase[] = ["focus", "short_break", "long_break"];
+
+/**
+ * Parses the stored timer, returning null for anything missing or malformed. The value comes
+ * from browser storage, so it is validated field by field rather than trusted.
+ */
+export function parseStoredTimer(raw: string | null): RunningTimer | null {
+  if (!raw) return null;
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof value !== "object" || value === null) return null;
+  const v = value as Record<string, unknown>;
+  const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
+  if (
+    typeof v.id !== "string" ||
+    !PHASES.includes(v.phase as FocusPhase) ||
+    !(v.taskId === null || typeof v.taskId === "string") ||
+    !finite(v.plannedSeconds) ||
+    v.plannedSeconds <= 0 ||
+    !finite(v.startedAt) ||
+    !finite(v.accumulatedSeconds) ||
+    v.accumulatedSeconds < 0 ||
+    typeof v.running !== "boolean"
+  ) {
+    return null;
+  }
+  return {
+    id: v.id,
+    phase: v.phase as FocusPhase,
+    taskId: v.taskId as string | null,
+    plannedSeconds: v.plannedSeconds,
+    startedAt: v.startedAt,
+    accumulatedSeconds: v.accumulatedSeconds,
+    running: v.running,
+  };
+}
+
+/**
+ * Whether the shell should show the timer: running, or paused part-way through. A fresh, untouched
+ * timer and a finished one are not shown.
+ */
+export function isTimerActive(timer: RunningTimer | null, now: number): timer is RunningTimer {
+  if (!timer || isComplete(timer, now)) return false;
+  return timer.running || timer.accumulatedSeconds > 0;
+}
+
 /** Total elapsed seconds, including the currently-running segment. */
 export function elapsedSeconds(timer: RunningTimer, now: number): number {
   const live = timer.running ? Math.max(0, (now - timer.startedAt) / 1000) : 0;

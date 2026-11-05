@@ -11,6 +11,8 @@ function ThemedToaster() {
     <Toaster
       theme={resolvedTheme === "dark" ? "dark" : "light"}
       position="bottom-right"
+      // On phones, clear the bottom tab bar (4rem) and the home-indicator inset.
+      mobileOffset={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
       closeButton
     />
   );

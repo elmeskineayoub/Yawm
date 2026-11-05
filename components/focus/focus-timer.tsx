@@ -19,11 +19,12 @@ import {
   type FocusConfig,
   type FocusPhase,
   type RunningTimer,
+  FOCUS_TIMER_STORAGE_KEY,
 } from "@/features/focus/logic";
 import { cn } from "@/lib/utils";
 
 const CONFIG_KEY = "yawm.focus.config";
-const TIMER_KEY = "yawm.focus.timer";
+const TIMER_KEY = FOCUS_TIMER_STORAGE_KEY;
 const CYCLE_KEY = "yawm.focus.cycle";
 
 const newId = () => crypto.randomUUID();

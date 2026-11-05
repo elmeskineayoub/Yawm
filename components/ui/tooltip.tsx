@@ -15,11 +15,14 @@ export function Tooltip({
   children,
   side = "top",
   shortcut,
+  contentClassName,
 }: {
   content: ReactNode;
   children: ReactNode;
   side?: "top" | "right" | "bottom" | "left";
   shortcut?: string;
+  /** e.g. hide the tooltip at breakpoints where the label is already visible. */
+  contentClassName?: string | undefined;
 }) {
   return (
     <RadixTooltip.Root>
@@ -31,6 +34,7 @@ export function Tooltip({
           className={cn(
             "z-50 flex items-center gap-2 rounded-md bg-foreground px-2 py-1 text-xs text-background shadow-overlay",
             "data-[state=delayed-open]:animate-[fade-in_120ms_ease-out]",
+            contentClassName,
           )}
         >
           {content}
