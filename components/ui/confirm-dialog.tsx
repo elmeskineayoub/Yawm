@@ -7,7 +7,11 @@ import { Button } from "./button";
 import { dialogClass, overlayClass } from "./surfaces";
 
 type ConfirmDialogProps = {
-  trigger: ReactNode;
+  /** The button that opens it. Omit when opening it from elsewhere (e.g. a menu item). */
+  trigger?: ReactNode;
+  /** Controlled open state, for dialogs opened from a menu. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   description: ReactNode;
   confirmLabel: string;
@@ -25,8 +29,15 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   destructive = true,
+  open: controlledOpen,
+  onOpenChange,
 }: ConfirmDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -38,7 +49,7 @@ export function ConfirmDialog({
         if (!next) setError(null);
       }}
     >
-      <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+      {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
       <Dialog.Portal>
         <Dialog.Overlay className={overlayClass} />
         <Dialog.Content className={cn(dialogClass, "max-w-md")}>

@@ -27,21 +27,14 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <PageHeader title={idea.data.title} breadcrumb={[{ label: "Inbox", href: "/inbox" }]} />
-      <div className="space-y-6">
-        <section
-          aria-label="Idea details"
-          className="rounded-lg border border-border bg-surface p-5"
-        >
-          <IdeaEditForm idea={idea.data} tagNames={tagNames} />
-        </section>
-        <section
-          aria-label="Idea actions"
-          className="rounded-lg border border-border bg-surface p-5"
-        >
-          <IdeaActions idea={idea.data} afterDelete="/inbox" />
-        </section>
-      </div>
+      <PageHeader
+        title={idea.data.title}
+        breadcrumb={[{ label: "Inbox", href: "/inbox" }]}
+        actions={<IdeaActions idea={idea.data} afterDelete="/inbox" visible />}
+      />
+      <section aria-label="Idea details" className="max-w-3xl">
+        <IdeaEditForm idea={idea.data} tagNames={tagNames} />
+      </section>
     </>
   );
 }

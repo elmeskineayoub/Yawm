@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { createIdea } from "@/features/inbox/actions";
+import { safeAction } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 
 /** Capture needs only a title; details are optional. Cleared only after the server saved it. */
@@ -18,10 +19,11 @@ export function CaptureIdeaForm() {
   return (
     <form
       ref={formRef}
-      className="space-y-2 rounded-lg border border-border bg-surface p-3"
+      aria-label="Capture an idea"
+      className="space-y-2"
       action={(formData) =>
         startTransition(async () => {
-          const result = await createIdea(formData);
+          const result = await safeAction(() => createIdea(formData));
           if (result.ok) {
             setError(null);
             setShowBody(false);

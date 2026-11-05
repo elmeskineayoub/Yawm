@@ -203,7 +203,8 @@ test("goals: milestones, linked work, year outcomes, and ideas", async ({ page }
     await page.goto("/inbox");
     await page.getByLabel("Idea", { exact: true }).fill("Visit Andalusia");
     await page.getByRole("button", { name: "Capture", exact: true }).click();
-    await page.getByRole("button", { name: "Convert “Visit Andalusia” to a goal" }).click();
+    await page.getByRole("button", { name: "Convert “Visit Andalusia”" }).click();
+    await page.getByRole("menuitem", { name: "Convert “Visit Andalusia” to a goal" }).click();
     await expect(page).toHaveURL(/\/goals\//);
     await expect(page.getByRole("button", { name: "Goal", exact: true })).toHaveText(
       "Visit Andalusia",

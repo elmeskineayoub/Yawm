@@ -19,14 +19,19 @@ test("capture an idea, plan it, and get it done", async ({ page }) => {
   await test.step("convert the idea into a project, keeping the original", async () => {
     await page.goto("/inbox");
     await expect(page.getByRole("link", { name: "Launch a newsletter" })).toBeVisible();
-    await page.getByRole("button", { name: "Convert “Launch a newsletter” to a project" }).click();
+    await page.getByRole("button", { name: "Convert “Launch a newsletter”" }).click();
+    await page
+      .getByRole("menuitem", { name: "Convert “Launch a newsletter” to a project" })
+      .click();
     await expect(page).toHaveURL(/\/projects\/[0-9a-f-]+$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Launch a newsletter");
     await expect(page.getByLabel("Outcome / description")).toHaveValue("Monthly, short, honest");
 
     await page.goto("/inbox?status=archived");
     await expect(page.getByRole("link", { name: "Launch a newsletter" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Open project" })).toBeVisible();
+    await page.getByRole("button", { name: "Convert “Launch a newsletter”" }).click();
+    await expect(page.getByRole("menuitem", { name: "Open project" })).toBeVisible();
+    await page.keyboard.press("Escape");
   });
 
   await test.step("add tasks to the project and see progress", async () => {

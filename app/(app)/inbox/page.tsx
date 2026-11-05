@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import { CaptureIdeaForm } from "@/components/inbox/capture-idea-form";
 import { IdeaActions } from "@/components/inbox/idea-actions";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LinkTabs } from "@/components/ui/link-tabs";
 import { controlClass } from "@/components/ui/field";
@@ -64,9 +65,15 @@ export default async function InboxPage({
     <>
       <PageHeader
         title="Inbox"
-        description="Capture first, sort later. Turn ideas into tasks or projects when they're ready."
+        description={
+          status === "inbox" && !q && !tagId
+            ? total === 0
+              ? "Capture first, sort later."
+              : `${total} idea${total === 1 ? "" : "s"} to sort. Convert, file for later, or archive.`
+            : "Capture first, sort later. Turn ideas into tasks, projects, or goals when they're ready."
+        }
       />
-      <div className="space-y-4">
+      <div className="max-w-3xl space-y-5">
         <CaptureIdeaForm />
 
         <LinkTabs
@@ -79,19 +86,30 @@ export default async function InboxPage({
           }))}
         />
 
-        <form method="get" role="search" aria-label="Search ideas" className="flex flex-wrap gap-2">
+        <form
+          method="get"
+          role="search"
+          aria-label="Search ideas"
+          className="flex flex-wrap items-center gap-2"
+        >
           {status !== "inbox" && <input type="hidden" name="status" value={status} />}
           <label htmlFor="idea-search" className="sr-only">
             Search ideas
           </label>
-          <input
-            id="idea-search"
-            type="search"
-            name="q"
-            defaultValue={q ?? ""}
-            placeholder="Search ideas"
-            className={cn(controlClass, "min-w-0 flex-1 basis-48 py-1.5")}
-          />
+          <div className="relative min-w-0 flex-1 basis-48 sm:max-w-72">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              id="idea-search"
+              type="search"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Search ideas"
+              className={cn(controlClass, "h-8 rounded-full py-1 pl-8 text-[0.8125rem]")}
+            />
+          </div>
           {(tags.data ?? []).length > 0 && (
             <>
               <label htmlFor="idea-tag" className="sr-only">
@@ -101,7 +119,7 @@ export default async function InboxPage({
                 id="idea-tag"
                 name="tag"
                 defaultValue={tagId ?? ""}
-                className={cn(controlClass, "w-auto py-1.5")}
+                className={cn(controlClass, "h-8 w-auto rounded-full py-1 text-[0.8125rem]")}
               >
                 <option value="">Any tag</option>
                 {(tags.data ?? []).map((t) => (
@@ -112,7 +130,7 @@ export default async function InboxPage({
               </select>
             </>
           )}
-          <Button type="submit" variant="secondary">
+          <Button type="submit" variant="ghost" size="sm">
             Search
           </Button>
         </form>
@@ -125,32 +143,29 @@ export default async function InboxPage({
           </EmptyState>
         ) : (
           <>
-            <ul
-              aria-label="Ideas"
-              className="divide-y divide-border rounded-lg border border-border"
-            >
+            <ul aria-label="Ideas" className="divide-y divide-border border-y border-border">
               {ideas.map((idea) => (
-                <li key={idea.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
+                <li key={idea.id} className="group flex items-start gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/inbox/${idea.id}`}
-                      className="text-sm font-medium break-words hover:underline"
+                      className="text-sm break-words hover:underline"
                     >
                       {idea.title}
                     </Link>
-                    {idea.body && (
-                      <p className="mt-0.5 line-clamp-2 text-sm break-words text-muted-foreground">
-                        {idea.body}
-                      </p>
-                    )}
-                    <p className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span>
+                    <p className="mt-0.5 flex min-w-0 gap-2 text-xs text-muted-foreground">
+                      <span className="shrink-0">
                         {formatDate(dateOfInstant(idea.created_at, ctx.timezone), "short")}
                       </span>
-                      {status === "all" && <span>{IDEA_STATUS_LABELS[idea.status]}</span>}
+                      {status === "all" && (
+                        <span className="shrink-0">{IDEA_STATUS_LABELS[idea.status]}</span>
+                      )}
                       {idea.tags.map((t) => (
-                        <span key={t.id}>#{t.name}</span>
+                        <span key={t.id} className="shrink-0">
+                          #{t.name}
+                        </span>
                       ))}
+                      {idea.body && <span className="min-w-0 truncate">{idea.body}</span>}
                     </p>
                   </div>
                   <IdeaActions idea={idea} />
@@ -172,14 +187,18 @@ export default async function InboxPage({
                     <Link
                       href={inboxHref(status, page - 1)}
                       rel="prev"
-                      className="rounded-md border border-border px-3 py-1.5 hover:bg-surface-muted"
+                      className={buttonClass({ variant: "outline", size: "sm" })}
                     >
                       Previous
                     </Link>
                   ) : (
                     <span
                       aria-disabled="true"
-                      className="rounded-md border border-border px-3 py-1.5 opacity-50"
+                      className={buttonClass({
+                        variant: "outline",
+                        size: "sm",
+                        className: "opacity-50",
+                      })}
                     >
                       Previous
                     </span>
@@ -191,14 +210,18 @@ export default async function InboxPage({
                     <Link
                       href={inboxHref(status, page + 1)}
                       rel="next"
-                      className="rounded-md border border-border px-3 py-1.5 hover:bg-surface-muted"
+                      className={buttonClass({ variant: "outline", size: "sm" })}
                     >
                       Next
                     </Link>
                   ) : (
                     <span
                       aria-disabled="true"
-                      className="rounded-md border border-border px-3 py-1.5 opacity-50"
+                      className={buttonClass({
+                        variant: "outline",
+                        size: "sm",
+                        className: "opacity-50",
+                      })}
                     >
                       Next
                     </span>
