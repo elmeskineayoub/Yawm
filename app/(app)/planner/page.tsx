@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { MilestonesDue } from "@/components/goals/milestones-due";
 import { HabitList } from "@/components/habits/habit-row";
@@ -223,22 +224,44 @@ function FocusPanel({
   );
 }
 
-function ContextChips({ data }: { data: PlannerData }) {
+/**
+ * Where this period sits in the plan hierarchy, as a breadcrumb from the year down to the period
+ * being viewed. Each enclosing period links to its plan and shows its theme, so a week is planned
+ * in the light of its month's and year's direction.
+ */
+function PeriodTrail({
+  data,
+  view,
+  start,
+}: {
+  data: PlannerData;
+  view: PlanPeriod;
+  start: IsoDate;
+}) {
   if (data.context.length === 0) return null;
+  // context is nearest-first (week -> month -> year); show it year-first.
+  const trail = [...data.context].reverse();
   return (
-    <nav aria-label="Part of" className="mb-4 flex flex-wrap gap-1.5 text-xs">
-      {data.context.map((c) => (
-        <Link
-          key={c.period}
-          href={plannerHref(c.period, c.start)}
-          className="rounded-full border border-border px-2.5 py-1 text-muted-foreground hover:bg-surface-muted hover:text-foreground"
-        >
-          <span className="font-medium text-foreground">
-            {formatPeriodShort(c.period, c.start)}
-          </span>
-          {c.theme && <span> · {c.theme}</span>}
-        </Link>
-      ))}
+    <nav aria-label="Part of" className="mb-5">
+      <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+        {trail.map((c) => (
+          <li key={c.period} className="flex min-w-0 items-center gap-1.5">
+            <Link
+              href={plannerHref(c.period, c.start)}
+              className="min-w-0 truncate hover:text-foreground hover:underline"
+            >
+              <span className="font-medium text-foreground">
+                {formatPeriodShort(c.period, c.start)}
+              </span>
+              {c.theme && <span className="text-muted-foreground"> · {c.theme}</span>}
+            </Link>
+            <ChevronRight aria-hidden className="size-3.5 shrink-0" />
+          </li>
+        ))}
+        <li aria-current="page" className="font-medium text-foreground">
+          {formatPeriodShort(view, start)}
+        </li>
+      </ol>
     </nav>
   );
 }
@@ -343,7 +366,7 @@ export default async function PlannerPage({
         nextHref={plannerHref(view, next)}
         todayHref={plannerHref(view, ctx.today)}
       />
-      <ContextChips data={data} />
+      <PeriodTrail data={data} view={view} start={start} />
 
       {view === "year" || !data.calendar ? (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

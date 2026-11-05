@@ -104,8 +104,16 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
   };
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section aria-label="Calendar" className="order-2 min-w-0 lg:order-1">
+    // Below lg: plan, then calendar, then the scheduling lists (so the calendar is not pushed below
+    // long lists). From lg: calendar on the left; plan and lists stacked on the right.
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_1fr]">
+      <aside aria-label="Plan" className="order-1 min-w-0 lg:col-start-2 lg:row-start-1">
+        {props.focus}
+      </aside>
+      <section
+        aria-label="Calendar"
+        className="order-2 min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1"
+      >
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <SegmentedControl
             label="Calendar display"
@@ -156,6 +164,7 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
             </button>
           </div>
         </div>
+        <CalendarLegend google={props.google.state.available && props.google.state.connected} />
         {browserTz && browserTz !== timezone && (
           <p className="mb-2 text-xs text-muted-foreground">
             Times are shown in {timezone} (your profile timezone). This device is set to {browserTz}
@@ -185,8 +194,7 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
         </div>
       </section>
 
-      <aside aria-label="Plan" className="order-1 space-y-6 lg:order-2">
-        {props.focus}
+      <div className="order-3 min-w-0 space-y-6 lg:col-start-2 lg:row-start-2 lg:self-start">
         <RescheduleList items={props.reschedule} today={today} onSchedule={scheduleTask} />
         <UnscheduledTray
           tasks={props.unscheduled}
@@ -194,7 +202,7 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
           today={today}
           onSchedule={scheduleTask}
         />
-      </aside>
+      </div>
 
       <BlockPanel
         draft={draft}
@@ -208,5 +216,42 @@ export function PlannerWorkspace(props: PlannerWorkspaceProps) {
       />
       <ExternalEventPanel event={external} timezone={timezone} onClose={() => setExternal(null)} />
     </div>
+  );
+}
+
+/**
+ * What the calendar's marks mean. Scheduled time (when you plan to work) and deadlines (when it is
+ * due) look deliberately different; Google events are read-only busy time.
+ */
+function CalendarLegend({ google }: { google: boolean }) {
+  return (
+    <ul
+      aria-label="Calendar legend"
+      className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground"
+    >
+      <li className="flex items-center gap-1.5">
+        <span
+          aria-hidden
+          className="h-3 w-4 rounded-sm border-l-[3px] border-accent bg-accent/15"
+        />
+        Scheduled time
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span
+          aria-hidden
+          className="h-3 w-4 rounded-sm border border-dashed border-muted-foreground"
+        />
+        Deadline
+      </li>
+      {google && (
+        <li className="flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className="h-3 w-4 rounded-sm border-l-[3px] border-muted-foreground bg-surface-muted bg-[repeating-linear-gradient(135deg,transparent_0_3px,color-mix(in_srgb,var(--muted-foreground)_25%,transparent)_3px_6px)]"
+          />
+          Google Calendar (busy, read-only)
+        </li>
+      )}
+    </ul>
   );
 }

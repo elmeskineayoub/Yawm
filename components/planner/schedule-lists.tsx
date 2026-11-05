@@ -125,6 +125,9 @@ export function UnscheduledTray({
 }
 
 /** Unfinished work that needs a decision. Nothing moves until the user chooses. */
+/** Rescheduling suggestions shown before "Show all". */
+const RESCHEDULE_PREVIEW = 3;
+
 export function RescheduleList({
   items,
   today,
@@ -135,22 +138,22 @@ export function RescheduleList({
   onSchedule: (task: SchedulableTask) => void;
 }) {
   const id = useId();
+  const [showAll, setShowAll] = useState(false);
   if (items.length === 0) return null;
+  const shown = showAll ? items : items.slice(0, RESCHEDULE_PREVIEW);
   return (
-    <section
-      aria-labelledby={`${id}-h`}
-      className="rounded-lg border border-warning/25 bg-warning-soft p-3"
-    >
+    <section aria-labelledby={`${id}-h`}>
       <h2 id={`${id}-h`} className="flex items-center gap-1.5 text-sm font-semibold">
-        <CalendarClock aria-hidden className="size-4" />
+        <CalendarClock aria-hidden className="size-4 text-warning" />
         Needs rescheduling
+        <span className="font-normal text-muted-foreground tabular-nums">{items.length}</span>
       </h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
-        Unfinished work whose time or deadline has passed. Choose what to do with each.
+        Unfinished work whose time or deadline has passed. Nothing moves until you choose.
       </p>
-      <ul className="mt-2 space-y-2">
-        {items.map(({ task, reasons }) => (
-          <li key={task.id} className="text-sm">
+      <ul className="mt-2 divide-y divide-border">
+        {shown.map(({ task, reasons }) => (
+          <li key={task.id} className="py-2 text-sm first:pt-1">
             <Link href={`/tasks/${task.id}`} className="font-medium break-words hover:underline">
               {task.title}
             </Link>
@@ -172,6 +175,16 @@ export function RescheduleList({
           </li>
         ))}
       </ul>
+      {items.length > RESCHEDULE_PREVIEW && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          className="mt-1 text-xs text-accent hover:underline"
+        >
+          {showAll ? "Show fewer" : `Show all ${items.length}`}
+        </button>
+      )}
     </section>
   );
 }
