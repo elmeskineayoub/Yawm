@@ -197,6 +197,8 @@ affected e2e specs, and a production build. Accessible names used by e2e tests s
   delete); unboxed capture; idea page actions in the header.
 - **4.4** Notes: two panes (list beside the open note, one pane on phones); autosave through a
   shared `useAutosave` hook (honest states, empty title blocked, leave warning); details folded.
+- **4.5** Journal: month calendar navigator (week start aware; marked days open entries, empty
+  days start one), older/newer links on entries, editor on `useAutosave`, serif writing surface.
 
 Habits (checklist first, creation in a sheet), Goals & Vision (grouped by area, next
 milestone), Inbox (short rows, one Convert menu, undo on archive), Notes (two-pane, autosave),

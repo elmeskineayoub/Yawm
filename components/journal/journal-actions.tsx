@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { deleteEntry } from "@/features/journal/actions";
+import { safeAction } from "@/lib/safe-action";
 
 export function JournalActions({
   entry,
@@ -24,7 +25,7 @@ export function JournalActions({
       description={<p>This journal entry will be permanently deleted. This cannot be undone.</p>}
       confirmLabel="Delete"
       onConfirm={async () => {
-        const result = await deleteEntry(entry.id);
+        const result = await safeAction(() => deleteEntry(entry.id));
         if (!result.ok) return result.error;
         if (afterDelete) router.push(afterDelete);
         return null;

@@ -7,25 +7,33 @@ import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { createEntry } from "@/features/journal/actions";
 import { JOURNAL_PROMPTS } from "@/features/journal/logic";
+import { formatDate } from "@/lib/dates";
+import { safeAction } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 
 /** Start a new dated entry: pick a date and, optionally, a prompt or the daily template. */
-export function NewEntry({ today }: { today: string }) {
+export function NewEntry({ today, date: initialDate }: { today: string; date?: string }) {
   const router = useRouter();
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(initialDate ?? today);
   const [prompt, setPrompt] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   return (
     <form
-      className="flex flex-wrap items-end gap-2 rounded-lg border border-border bg-surface p-3"
+      id="new-entry"
+      aria-label="New journal entry"
+      className="flex scroll-mt-20 flex-wrap items-end gap-2"
       action={() =>
         startTransition(async () => {
-          const result = await createEntry({ entry_date: date, prompt: prompt || null });
+          const result = await safeAction(() =>
+            createEntry({ entry_date: date, prompt: prompt || null }),
+          );
           if (result.ok) {
             setError(null);
-            toast.success("Entry created");
+            toast.success(
+              date === today ? "Entry started" : `Entry started for ${formatDate(date)}`,
+            );
             router.push(`/journal/${result.data.id}`);
           } else {
             setError(result.error);
@@ -67,7 +75,7 @@ export function NewEntry({ today }: { today: string }) {
           ))}
         </select>
       </div>
-      <Button type="submit" disabled={pending} className="py-2">
+      <Button type="submit" disabled={pending || !date}>
         {pending ? "Creating…" : "New entry"}
       </Button>
       {error && (

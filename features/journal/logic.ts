@@ -1,4 +1,4 @@
-import type { IsoDate } from "@/lib/dates";
+import { addDays, addMonths, dayOfWeek, type IsoDate } from "@/lib/dates";
 
 /**
  * Journal reflection logic, kept pure so it is easy to test. Journal text is private and is never
@@ -69,4 +69,25 @@ export function entryPreview(body: string | null, max = 140): string {
   if (!body) return "";
   const flat = body.replace(/\s+/g, " ").trim();
   return flat.length <= max ? flat : `${flat.slice(0, max - 1)}…`;
+}
+
+/**
+ * The days of a month as calendar weeks, starting on the user's week start (0 = Sunday ... 6 =
+ * Saturday, as in profiles.week_start). Cells outside the month are null. Pure date-only
+ * arithmetic: no time zones are involved.
+ */
+export function monthGrid(month: string, weekStart = 1): (IsoDate | null)[][] {
+  const first = `${month}-01` as IsoDate;
+  const next = addMonths(first, 1);
+  const lead = (dayOfWeek(first) - (weekStart % 7) + 7) % 7;
+  const cells: (IsoDate | null)[] = Array.from({ length: lead }, () => null);
+  for (let d = first; d < next; d = addDays(d, 1)) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+}
+
+/** Short weekday names in calendar order for a week start (0 = Sunday ... 6 = Saturday). */
+export function weekdayInitials(weekStart = 1): string[] {
+  const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return Array.from({ length: 7 }, (_, i) => names[(weekStart + i) % 7]!);
 }

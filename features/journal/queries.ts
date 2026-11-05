@@ -148,3 +148,60 @@ export async function loadJournalMonths(ctx: WorkspaceContext): Promise<string[]
   const months = new Set(data.map((row) => row.entry_date.slice(0, 7)));
   return [...months];
 }
+
+/** Entry ids by date for one month (YYYY-MM), for the date navigator. */
+export async function loadJournalDays(
+  ctx: WorkspaceContext,
+  month: string,
+): Promise<Map<string, string[]>> {
+  const start = `${month}-01`;
+  const { data, error } = await ctx.supabase
+    .from("journal_entries")
+    .select("id, entry_date")
+    .eq("workspace_id", ctx.workspace.id)
+    .gte("entry_date", start)
+    .lt("entry_date", addMonths(start, 1))
+    .order("entry_date")
+    .order("created_at")
+    .limit(500);
+  if (error) throw new Error("Could not load journal days.");
+  const days = new Map<string, string[]>();
+  for (const row of data) days.set(row.entry_date, [...(days.get(row.entry_date) ?? []), row.id]);
+  return days;
+}
+
+type Neighbour = { id: string; entry_date: string; title: string | null } | null;
+
+/** The entries just before and after one entry, by date then creation time. */
+export async function loadAdjacentEntries(
+  ctx: WorkspaceContext,
+  entry: { id: string; entry_date: string; created_at: string },
+): Promise<{ older: Neighbour; newer: Neighbour }> {
+  const base = () =>
+    ctx.supabase
+      .from("journal_entries")
+      .select("id, entry_date, title")
+      .eq("workspace_id", ctx.workspace.id)
+      .neq("id", entry.id);
+  const at = `"${entry.created_at}"`;
+  const [older, newer] = await Promise.all([
+    base()
+      .or(
+        `entry_date.lt.${entry.entry_date},and(entry_date.eq.${entry.entry_date},created_at.lt.${at})`,
+      )
+      .order("entry_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    base()
+      .or(
+        `entry_date.gt.${entry.entry_date},and(entry_date.eq.${entry.entry_date},created_at.gt.${at})`,
+      )
+      .order("entry_date")
+      .order("created_at")
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  // Navigation is a convenience: if it fails, the entry still opens without it.
+  return { older: older.error ? null : older.data, newer: newer.error ? null : newer.data };
+}

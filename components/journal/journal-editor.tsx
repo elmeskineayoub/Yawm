@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { saveEntry } from "@/features/journal/actions";
 import { ENERGY_LABELS, MOOD_LABELS } from "@/features/journal/logic";
+import { isIsoDate } from "@/lib/dates";
 import { parseTagNames } from "@/lib/form";
+import { useAutosave } from "@/lib/use-autosave";
 import { cn } from "@/lib/utils";
 
 type EntryForm = {
@@ -16,8 +18,6 @@ type EntryForm = {
   energy: string;
   tags: string;
 };
-
-type Status = "idle" | "saving" | "saved" | "error" | "offline";
 
 export type JournalEntryInit = {
   id: string;
@@ -93,94 +93,28 @@ function ScaleSelect({
  */
 export function JournalEditor({ entry }: { entry: JournalEntryInit }) {
   const [form, setForm] = useState<EntryForm>(() => toForm(entry));
-  const [savedPayload, setSavedPayload] = useState(() => serialize(toForm(entry)));
-  const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  // Latest values for the async save, written in effects so render never reads a ref.
-  const formRef = useRef(form);
-  const savedRef = useRef(savedPayload);
-  const savingRef = useRef(false);
-  useEffect(() => {
-    formRef.current = form;
-  }, [form]);
-  useEffect(() => {
-    savedRef.current = savedPayload;
-  }, [savedPayload]);
-
-  const payload = serialize(form);
-  const dirty = payload !== savedPayload;
+  const { status, statusText, isError, dirty, flush } = useAutosave({
+    value: form,
+    serialize,
+    delay: AUTOSAVE_DELAY,
+    validate: (f) => (isIsoDate(f.entry_date) ? null : "Choose a date to save this entry."),
+    save: (current) =>
+      saveEntry(
+        entry.id,
+        {
+          entry_date: current.entry_date,
+          title: current.title,
+          body: current.body,
+          mood: current.mood === "0" ? null : Number(current.mood),
+          energy: current.energy === "0" ? null : Number(current.energy),
+          prompt: entry.prompt,
+        },
+        parseTagNames(current.tags),
+      ),
+  });
 
   const field = (key: keyof EntryForm) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
-
-  const flush = useCallback(async () => {
-    if (savingRef.current) return;
-    const current = formRef.current;
-    const snapshot = serialize(current);
-    if (snapshot === savedRef.current) return;
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setStatus("offline");
-      return;
-    }
-    savingRef.current = true;
-    setStatus("saving");
-    const result = await saveEntry(
-      entry.id,
-      {
-        entry_date: current.entry_date,
-        title: current.title,
-        body: current.body,
-        mood: current.mood === "0" ? null : Number(current.mood),
-        energy: current.energy === "0" ? null : Number(current.energy),
-        prompt: entry.prompt,
-      },
-      parseTagNames(current.tags),
-    );
-    savingRef.current = false;
-    if (result.ok) {
-      setSavedPayload(snapshot);
-      setStatus("saved");
-      setError(null);
-    } else {
-      setStatus("error");
-      setError(result.error);
-    }
-  }, [entry.id, entry.prompt]);
-
-  // Debounced autosave whenever the content changes. Depending on savedPayload reschedules a
-  // follow-up save if the user kept typing while the previous save was in flight.
-  useEffect(() => {
-    if (!dirty) return;
-    const id = setTimeout(() => void flush(), AUTOSAVE_DELAY);
-    return () => clearTimeout(id);
-  }, [payload, dirty, savedPayload, flush]);
-
-  // Retry when connectivity returns; flush before the tab is hidden.
-  useEffect(() => {
-    const onOnline = () => void flush();
-    const onHide = () => {
-      if (document.visibilityState === "hidden") void flush();
-    };
-    window.addEventListener("online", onOnline);
-    document.addEventListener("visibilitychange", onHide);
-    return () => {
-      window.removeEventListener("online", onOnline);
-      document.removeEventListener("visibilitychange", onHide);
-    };
-  }, [flush]);
-
-  let statusText = "";
-  let isError = false;
-  if (status === "saving") statusText = "Saving…";
-  else if (status === "offline") {
-    statusText = "Offline — not saved yet";
-    isError = true;
-  } else if (status === "error") {
-    statusText = error ?? "Could not save";
-    isError = true;
-  } else if (dirty) statusText = "Unsaved changes…";
-  else if (status === "saved") statusText = "Saved";
 
   return (
     <div className="space-y-4">
@@ -218,7 +152,7 @@ export function JournalEditor({ entry }: { entry: JournalEntryInit }) {
           placeholder="Optional title"
           onChange={(e) => field("title")(e.target.value)}
           onBlur={() => void flush()}
-          className={controlClass}
+          className={cn(controlClass, "font-serif text-lg")}
         />
       </div>
 
@@ -234,7 +168,7 @@ export function JournalEditor({ entry }: { entry: JournalEntryInit }) {
           placeholder="Write freely…"
           onChange={(e) => field("body")(e.target.value)}
           onBlur={() => void flush()}
-          className={cn(controlClass, "min-h-64")}
+          className={cn(controlClass, "min-h-72 font-serif text-[1.0625rem] leading-relaxed")}
         />
       </div>
 
@@ -270,7 +204,13 @@ export function JournalEditor({ entry }: { entry: JournalEntryInit }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button type="button" onClick={() => void flush()} disabled={!dirty || status === "saving"}>
+        <Button
+          type="button"
+          variant="secondary"
+          className="shrink-0 whitespace-nowrap"
+          onClick={() => void flush()}
+          disabled={!dirty || status === "saving"}
+        >
           Save now
         </Button>
         <span className="text-xs text-muted-foreground">
