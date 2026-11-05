@@ -1,6 +1,6 @@
 # Yawm UX Redesign — Audit and Plan
 
-**Status:** Stage 1 (audit) and Stage 2 (foundation) complete, 2026-11-05. Stage 3.1 (task side panel and rows) complete; 3.2 (Today) next.
+**Status:** Stage 1 (audit) and Stage 2 (foundation) complete, 2026-11-05. Stage 3.1 (task panel and rows) and 3.2 (Today) complete; 3.3 (Dashboard) next.
 **Scope:** UI/UX only. The backend, schema, RLS, and data access stay as they are unless a step
 below says otherwise. `REQUIREMENTS.md` remains the product source of truth; where this document
 and the requirements disagree, the requirements win.

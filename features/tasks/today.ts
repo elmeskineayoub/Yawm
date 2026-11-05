@@ -11,6 +11,8 @@ export type TodayData = {
   /** Time blocks overlapping today, in the user's timezone. */
   scheduled: CalendarBlock[];
   dayPlanId: string | null;
+  /** The day plan's intention ("What would make today a good day?"), if set. */
+  dayTheme: string | null;
   overdue: TaskView[];
   dueToday: TaskView[];
   upcoming: TaskView[];
@@ -54,6 +56,7 @@ export async function loadToday(ctx: WorkspaceContext, lookups: Lookups): Promis
     priorities: dayPlan.items,
     scheduled,
     dayPlanId: dayPlan.plan?.id ?? null,
+    dayTheme: dayPlan.plan?.theme ?? null,
     overdue: due.filter((t) => t.due_date! < today),
     dueToday: due.filter((t) => t.due_date === today),
     upcoming: due.filter((t) => t.due_date! > today),

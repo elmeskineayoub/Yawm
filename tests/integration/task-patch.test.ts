@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { patchTaskInWorkspace, setTaskTagsInWorkspace } from "@/features/tasks/mutations";
+import {
+  patchTaskInWorkspace,
+  setTaskDueDateInWorkspace,
+  setTaskTagsInWorkspace,
+} from "@/features/tasks/mutations";
 import { createConfirmedUser, deleteUsers, personalWorkspaceId, type TestUser } from "./helpers";
 
 /*
@@ -78,5 +82,18 @@ describe("setTaskTagsInWorkspace", () => {
     expect((await setTaskTagsInWorkspace(alice.client, aliceWs, bobTask, ["mine"])).ok).toBe(false);
     const bobTags = await bob.client.from("task_tags").select("tag_id").eq("task_id", bobTask);
     expect(bobTags.data).toHaveLength(0);
+  });
+});
+
+describe("setTaskDueDateInWorkspace (used by Today's Move all to today)", () => {
+  it("moves the caller's deadline and refuses another user's task", async () => {
+    expect(
+      (await setTaskDueDateInWorkspace(alice.client, aliceWs, aliceTask, "2026-11-05")).ok,
+    ).toBe(true);
+    expect((await setTaskDueDateInWorkspace(alice.client, aliceWs, bobTask, "2026-11-05")).ok).toBe(
+      false,
+    );
+    const { data } = await bob.client.from("tasks").select("due_date").eq("id", bobTask).single();
+    expect(data?.due_date).toBeNull();
   });
 });

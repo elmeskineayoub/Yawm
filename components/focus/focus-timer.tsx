@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
@@ -53,8 +53,16 @@ function read<T>(key: string, fallback: T): T {
 
 const subscribe = () => () => {};
 
-export function FocusTimer({ tasks }: { tasks: { id: string; title: string }[] }) {
+export function FocusTimer({
+  tasks,
+  compact = false,
+}: {
+  tasks: { id: string; title: string }[];
+  /** Smaller clock and no durations settings, for embedding (e.g. on Today). */
+  compact?: boolean;
+}) {
   const router = useRouter();
+  const taskSelectId = useId();
   // False during SSR and the first client render, true after mount: avoids a hydration mismatch
   // from values that only exist in localStorage.
   const mounted = useSyncExternalStore(
@@ -173,7 +181,7 @@ export function FocusTimer({ tasks }: { tasks: { id: string; title: string }[] }
   };
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6">
+    <div className={cn(!compact && "rounded-lg border border-border bg-surface p-6")}>
       <div className="flex items-center justify-between gap-2">
         <span
           className={cn(
@@ -191,7 +199,10 @@ export function FocusTimer({ tasks }: { tasks: { id: string; title: string }[] }
       </div>
 
       <p
-        className="mt-4 text-center font-mono text-6xl font-semibold tabular-nums"
+        className={cn(
+          "text-center font-sans font-semibold tracking-tight tabular-nums",
+          compact ? "mt-3 text-4xl" : "mt-4 text-6xl",
+        )}
         aria-label={`${formatClock(remaining)} remaining`}
       >
         {mounted ? formatClock(remaining) : "--:--"}
@@ -207,7 +218,12 @@ export function FocusTimer({ tasks }: { tasks: { id: string; title: string }[] }
         <div className="h-full bg-accent transition-[width]" style={{ width: `${percent}%` }} />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-center gap-2",
+          compact ? "mt-4" : "mt-6",
+        )}
+      >
         {timer.running ? (
           <Button onClick={pause}>Pause</Button>
         ) : (
@@ -224,12 +240,12 @@ export function FocusTimer({ tasks }: { tasks: { id: string; title: string }[] }
       </div>
 
       {timer.phase === "focus" && (
-        <div className="mt-6">
-          <label htmlFor="focus-task" className="block text-sm font-medium">
+        <div className={compact ? "mt-4" : "mt-6"}>
+          <label htmlFor={taskSelectId} className="block text-sm font-medium">
             Working on (optional)
           </label>
           <select
-            id="focus-task"
+            id={taskSelectId}
             value={timer.taskId ?? ""}
             onChange={(e) => setTimer((t) => ({ ...t, taskId: e.target.value || null }))}
             className={cn(controlClass, "mt-1")}
@@ -244,7 +260,7 @@ export function FocusTimer({ tasks }: { tasks: { id: string; title: string }[] }
         </div>
       )}
 
-      <div className="mt-6 border-t border-border pt-4">
+      <div className={cn("mt-6 border-t border-border pt-4", compact && "hidden")}>
         <button
           type="button"
           onClick={() => setSettingsOpen((v) => !v)}

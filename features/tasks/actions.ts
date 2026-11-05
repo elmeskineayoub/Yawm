@@ -147,3 +147,32 @@ export async function moveTaskDeadline(
   refresh();
   return ok();
 }
+
+const deadlineMoves = z
+  .array(z.object({ id: z.uuid(), due: z.string().nullable() }))
+  .min(1)
+  .max(100);
+
+/**
+ * Moves several deadlines at once (Today's "Move all to today", and its Undo). Always an explicit
+ * user action; nothing moves on its own. Each task is checked against the active workspace. Moves
+ * that fail are reported; the others still apply.
+ */
+export async function moveTaskDeadlines(
+  moves: unknown,
+): Promise<ActionResult<{ moved: number; failed: number }>> {
+  const parsed = deadlineMoves.safeParse(moves);
+  if (!parsed.success || parsed.data.some((m) => m.due !== null && !isIsoDate(m.due))) {
+    return fail("Invalid request.");
+  }
+  const { supabase, workspace } = await getWorkspaceContext();
+  let moved = 0;
+  for (const move of parsed.data) {
+    const result = await setTaskDueDateInWorkspace(supabase, workspace.id, move.id, move.due);
+    if (result.ok) moved += 1;
+  }
+  refresh();
+  const failed = parsed.data.length - moved;
+  if (moved === 0) return fail("Couldn't move those deadlines. Please try again.");
+  return ok({ moved, failed });
+}

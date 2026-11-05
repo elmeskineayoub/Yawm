@@ -42,7 +42,8 @@ const getServerSnapshot = () => "";
 export function FocusChip({ collapsed = false }: { collapsed?: boolean }) {
   const pathname = usePathname();
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  if (!snapshot || pathname === "/focus") return null;
+  // The timer itself is on screen on these pages.
+  if (!snapshot || pathname === "/focus" || pathname === "/today") return null;
 
   const separator = snapshot.indexOf("|");
   const now = Number(snapshot.slice(0, separator)) * 1000;
