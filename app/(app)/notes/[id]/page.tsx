@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { NoteActions } from "@/components/notes/note-actions";
-import { NoteEditForm, type NoteLinkOptions } from "@/components/notes/note-edit-form";
+import { NoteEditor, type NoteLinkOptions } from "@/components/notes/note-editor";
+import { NotesShell, noteListState } from "@/components/notes/notes-shell";
 import { loadNote } from "@/features/notes/queries";
 import { getWorkspaceContext } from "@/lib/workspace-context";
 
@@ -87,72 +87,50 @@ async function loadLinkOptions(
   };
 }
 
-export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function NotePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   if (!z.uuid().safeParse(id).success) notFound();
 
   const ctx = await getWorkspaceContext();
   const note = await loadNote(ctx, id);
   if (!note) notFound();
   const options = await loadLinkOptions(ctx, note);
+  const listQuery = noteListState(query).query;
 
   return (
-    <>
-      <PageHeader
-        title={note.title}
-        breadcrumb={[{ label: "Notes", href: "/notes" }]}
-        meta={note.archived_at ? "Archived" : undefined}
-      />
-      <div className="space-y-6">
-        <section
-          aria-label="Note details"
-          className="rounded-lg border border-border bg-surface p-5"
-        >
-          <NoteEditForm note={note} tagNames={note.tags} options={options} />
-        </section>
-        {(note.project || note.goal || note.task) && (
-          <section
-            aria-label="Linked work"
-            className="rounded-lg border border-border bg-surface p-5 text-sm"
-          >
-            <h2 className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Linked to
-            </h2>
-            <ul className="flex flex-wrap gap-x-4 gap-y-1">
-              {note.project && (
-                <li>
-                  <Link
-                    href={`/projects/${note.project.id}`}
-                    className="text-accent hover:underline"
-                  >
-                    Project: {note.project.name}
-                  </Link>
-                </li>
-              )}
-              {note.goal && (
-                <li>
-                  <Link href={`/goals/${note.goal.id}`} className="text-accent hover:underline">
-                    Goal: {note.goal.title}
-                  </Link>
-                </li>
-              )}
-              {note.task && (
-                <li>
-                  <Link href={`/tasks/${note.task.id}`} className="text-accent hover:underline">
-                    Task: {note.task.title}
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </section>
-        )}
-        <section
-          aria-label="Note actions"
-          className="rounded-lg border border-border bg-surface p-5"
-        >
-          <NoteActions note={note} afterDelete="/notes" />
-        </section>
+    <NotesShell ctx={ctx} params={query} selectedId={note.id} selectedTitle={note.title}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+        <p className="text-xs text-muted-foreground">
+          {note.archived_at ? "Archived · " : ""}
+          {[
+            note.project && (
+              <Link key="p" href={`/projects/${note.project.id}`} className="hover:underline">
+                Project: {note.project.name}
+              </Link>
+            ),
+            note.goal && (
+              <Link key="g" href={`/goals/${note.goal.id}`} className="hover:underline">
+                Goal: {note.goal.title}
+              </Link>
+            ),
+            note.task && (
+              <Link key="t" href={`/tasks/${note.task.id}`} className="hover:underline">
+                Task: {note.task.title}
+              </Link>
+            ),
+          ]
+            .filter(Boolean)
+            .flatMap((el, i) => (i === 0 ? [el] : [" · ", el]))}
+        </p>
+        <NoteActions note={note} afterDelete={`/notes${listQuery ? `?${listQuery}` : ""}`} />
       </div>
-    </>
+      <NoteEditor key={note.id} note={note} options={options} />
+    </NotesShell>
   );
 }
