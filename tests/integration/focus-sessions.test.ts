@@ -72,6 +72,7 @@ const ctx = (): WorkspaceContext =>
 const session = (over: Partial<FocusSessionInput> = {}): FocusSessionInput => ({
   id: randomUUID(),
   task_id: null,
+  project_id: null,
   session_type: "focus",
   started_at: "2026-10-12T09:00:00Z",
   ended_at: "2026-10-12T09:25:00Z",

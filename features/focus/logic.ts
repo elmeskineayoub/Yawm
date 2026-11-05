@@ -79,6 +79,10 @@ export type RunningTimer = {
   id: string;
   phase: FocusPhase;
   taskId: string | null;
+  /** The project this focus time counts toward (null: general focus). Fixed once started. */
+  projectId: string | null;
+  /** Epoch ms of the first start of this phase (the session's real start); null until started. */
+  firstStartedAt: number | null;
   plannedSeconds: number;
   /** Epoch ms when the current running segment began; meaningless while paused. */
   startedAt: number;
@@ -111,6 +115,9 @@ export function parseStoredTimer(raw: string | null): RunningTimer | null {
     typeof v.id !== "string" ||
     !PHASES.includes(v.phase as FocusPhase) ||
     !(v.taskId === null || typeof v.taskId === "string") ||
+    // projectId and firstStartedAt were added later: absent in timers stored before then.
+    !(v.projectId === undefined || v.projectId === null || typeof v.projectId === "string") ||
+    !(v.firstStartedAt === undefined || v.firstStartedAt === null || finite(v.firstStartedAt)) ||
     !finite(v.plannedSeconds) ||
     v.plannedSeconds <= 0 ||
     !finite(v.startedAt) ||
@@ -124,6 +131,8 @@ export function parseStoredTimer(raw: string | null): RunningTimer | null {
     id: v.id,
     phase: v.phase as FocusPhase,
     taskId: v.taskId as string | null,
+    projectId: typeof v.projectId === "string" ? v.projectId : null,
+    firstStartedAt: finite(v.firstStartedAt) ? v.firstStartedAt : null,
     plannedSeconds: v.plannedSeconds,
     startedAt: v.startedAt,
     accumulatedSeconds: v.accumulatedSeconds,
@@ -187,4 +196,133 @@ export function totalFocusSeconds(sessions: readonly FocusSessionLite[]): number
 /** Number of completed focus sessions. */
 export function focusCount(sessions: readonly FocusSessionLite[]): number {
   return sessions.filter((s) => s.session_type === "focus").length;
+}
+
+/** A finished session, in the shape logFocusSession accepts. */
+export type FocusSessionRecord = {
+  id: string;
+  task_id: string | null;
+  project_id: string | null;
+  session_type: FocusPhase;
+  started_at: string;
+  ended_at: string;
+  duration_seconds: number;
+};
+
+/** Whether a phase has been started (running now, or paused part-way). */
+export function hasStarted(timer: RunningTimer): boolean {
+  return timer.running || timer.accumulatedSeconds > 0;
+}
+
+/**
+ * The session to save when a phase ends, from the time actually spent: running time only (paused
+ * time is never counted), capped at the planned length.
+ *
+ * - "complete": the planned length was reached. Ends at the instant it was reached (which may be
+ *   in the past after a reload), and counts the full planned length.
+ * - "finish": stopped early by the user, who chose to keep the time. Ends now and counts the
+ *   elapsed running time.
+ *
+ * Breaks never count toward a project or task. Returns null when there is nothing to save (less
+ * than a second of focus).
+ */
+export function sessionFromTimer(
+  timer: RunningTimer,
+  now: number,
+  how: "complete" | "finish",
+): FocusSessionRecord | null {
+  const elapsed = Math.min(timer.plannedSeconds, elapsedSeconds(timer, now));
+  const duration = how === "complete" ? timer.plannedSeconds : Math.floor(elapsed);
+  if (duration < 1) return null;
+  const endMs =
+    how === "complete"
+      ? timer.running
+        ? timer.startedAt + (timer.plannedSeconds - timer.accumulatedSeconds) * 1000
+        : now
+      : now;
+  const startMs = Math.min(
+    timer.firstStartedAt ?? endMs - duration * 1000,
+    endMs - duration * 1000,
+  );
+  const isFocus = timer.phase === "focus";
+  return {
+    id: timer.id,
+    task_id: isFocus ? timer.taskId : null,
+    project_id: isFocus ? timer.projectId : null,
+    session_type: timer.phase,
+    started_at: new Date(startMs).toISOString(),
+    ended_at: new Date(endMs).toISOString(),
+    duration_seconds: duration,
+  };
+}
+
+/** Sessions waiting to be confirmed by the server, kept in this browser so none is lost. */
+export const FOCUS_PENDING_STORAGE_KEY = "yawm.focus.pending";
+
+const PENDING_LIMIT = 50;
+
+/** Reads the queue defensively (browser storage); anything malformed is dropped. */
+export function parsePending(raw: string | null): FocusSessionRecord[] {
+  if (!raw) return [];
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!Array.isArray(value)) return [];
+    return value.filter(
+      (s): s is FocusSessionRecord =>
+        typeof s === "object" &&
+        s !== null &&
+        typeof (s as FocusSessionRecord).id === "string" &&
+        PHASES.includes((s as FocusSessionRecord).session_type) &&
+        typeof (s as FocusSessionRecord).started_at === "string" &&
+        typeof (s as FocusSessionRecord).ended_at === "string" &&
+        Number.isInteger((s as FocusSessionRecord).duration_seconds),
+    );
+  } catch {
+    return [];
+  }
+}
+
+/** Adds a session once (by id); the server also ignores duplicate ids, so retries never double. */
+export function enqueuePending(queue: FocusSessionRecord[], session: FocusSessionRecord) {
+  if (queue.some((s) => s.id === session.id)) return queue;
+  return [...queue, session].slice(-PENDING_LIMIT);
+}
+
+export function removePending(queue: FocusSessionRecord[], id: string) {
+  return queue.filter((s) => s.id !== id);
+}
+
+export type ProjectFocusTotals = {
+  todaySeconds: number;
+  weekSeconds: number;
+  totalSeconds: number;
+};
+
+/**
+ * Focus time per project from session rows: today, this week, and all time. Only focus sessions
+ * count (breaks never do). Each row is one stored session (ids are unique, and logging the same
+ * session twice is a no-op), so time is never counted twice. Ranges are UTC instants [start, end).
+ */
+export function aggregateProjectFocus(
+  rows: readonly {
+    project_id: string | null;
+    session_type: FocusPhase;
+    duration_seconds: number;
+    started_at: string;
+  }[],
+  day: { start: string; end: string },
+  week: { start: string; end: string },
+): Record<string, ProjectFocusTotals> {
+  const totals: Record<string, ProjectFocusTotals> = {};
+  for (const row of rows) {
+    if (!row.project_id || row.session_type !== "focus") continue;
+    const at = Date.parse(row.started_at);
+    const t = (totals[row.project_id] ??= { todaySeconds: 0, weekSeconds: 0, totalSeconds: 0 });
+    t.totalSeconds += row.duration_seconds;
+    if (at >= Date.parse(week.start) && at < Date.parse(week.end))
+      t.weekSeconds += row.duration_seconds;
+    if (at >= Date.parse(day.start) && at < Date.parse(day.end))
+      t.todaySeconds += row.duration_seconds;
+  }
+  return totals;
 }

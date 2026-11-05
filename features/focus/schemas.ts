@@ -7,10 +7,16 @@ export const focusSessionSchema = z
   .object({
     id: z.uuid(),
     task_id: z.uuid().nullable().default(null),
+    project_id: z.uuid().nullable().default(null),
     session_type: focusPhaseSchema,
     started_at: z.iso.datetime({ offset: true }),
     ended_at: z.iso.datetime({ offset: true }),
     duration_seconds: z.number().int().min(1).max(86400),
+  })
+  // Breaks are rest, not work: they never count toward a project or task.
+  .refine((s) => s.session_type === "focus" || (s.task_id === null && s.project_id === null), {
+    message: "Only focus sessions can belong to a project or task.",
+    path: ["project_id"],
   })
   .refine((s) => Date.parse(s.ended_at) >= Date.parse(s.started_at), {
     message: "The session cannot end before it starts.",

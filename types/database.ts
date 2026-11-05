@@ -71,6 +71,7 @@ export type Database = {
           duration_seconds: number;
           ended_at: string;
           id: string;
+          project_id: string | null;
           session_type: Database["public"]["Enums"]["focus_session_type"];
           started_at: string;
           task_id: string | null;
@@ -83,6 +84,7 @@ export type Database = {
           duration_seconds: number;
           ended_at: string;
           id?: string;
+          project_id?: string | null;
           session_type?: Database["public"]["Enums"]["focus_session_type"];
           started_at: string;
           task_id?: string | null;
@@ -94,6 +96,7 @@ export type Database = {
           duration_seconds?: number;
           ended_at?: string;
           id?: string;
+          project_id?: string | null;
           session_type?: Database["public"]["Enums"]["focus_session_type"];
           started_at?: string;
           task_id?: string | null;

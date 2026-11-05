@@ -42,6 +42,8 @@ describe("parseStoredTimer", () => {
     id: "t1",
     phase: "focus",
     taskId: null,
+    projectId: null,
+    firstStartedAt: null,
     plannedSeconds: 1500,
     startedAt: 1_000_000,
     accumulatedSeconds: 0,

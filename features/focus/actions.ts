@@ -8,7 +8,9 @@ import { deleteFocusSessionInWorkspace, logFocusSessionInWorkspace } from "./mut
 import { focusSessionSchema } from "./schemas";
 
 /** Logs a finished focus or break session. Safe to call twice for the same id (idempotent). */
-export async function logFocusSession(input: unknown): Promise<ActionResult<{ id: string }>> {
+export async function logFocusSession(
+  input: unknown,
+): Promise<ActionResult<{ id: string; projectSaved: boolean }>> {
   const parsed = focusSessionSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]!.message);
   const { supabase, workspace } = await getWorkspaceContext();

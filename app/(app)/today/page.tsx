@@ -86,7 +86,8 @@ export default async function TodayPage() {
     ...data.dueToday,
   ]
     .filter((t, i, all) => t.status !== "done" && all.findIndex((x) => x.id === t.id) === i)
-    .map((t) => ({ id: t.id, title: t.title }));
+    .map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }));
+  const projectNames = Object.fromEntries(lookups.projects.map((p) => [p.id, p.name]));
   const dayHref = plannerHref("day", ctx.today);
   // "tomorrow", or "on Sat, Nov 7" for later dates.
   const whenLabel = (date: string) => {
@@ -223,7 +224,7 @@ export default async function TodayPage() {
         <DayAgenda items={agenda} timezone={ctx.timezone} today={ctx.today} />
       </Section>
       <Section title="Focus" variant="label" divider>
-        <FocusTimer tasks={focusTasks} compact />
+        <FocusTimer tasks={focusTasks} projectNames={projectNames} />
       </Section>
       <Section title="Reflect" variant="label" divider>
         <JournalPromptCard prompt={dailyPrompt(ctx.today)} today={ctx.today} />

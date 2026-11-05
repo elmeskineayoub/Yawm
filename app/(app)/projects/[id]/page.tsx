@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Section } from "@/components/ui/section";
+import { formatDuration } from "@/features/focus/logic";
+import { loadProjectFocusTotals } from "@/features/focus/queries";
 import { loadProjectDetail } from "@/features/projects/detail";
 import { PROJECT_STATUS_LABELS } from "@/features/projects/schemas";
 import { dateOfInstant, formatDate, relativeDateLabel } from "@/lib/dates";
@@ -28,8 +30,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const ctx = await getWorkspaceContext();
-  const detail = await loadProjectDetail(ctx, id);
+  const [detail, focus] = await Promise.all([
+    loadProjectDetail(ctx, id),
+    loadProjectFocusTotals(ctx, [id]),
+  ]);
   if (!detail) notFound();
+  const focusTime = focus.totals[id] ?? { todaySeconds: 0, weekSeconds: 0, totalSeconds: 0 };
   const { project, open, finished, progress, goal, milestones, notes, lookups } = detail;
   const area = lookups.areas.find((a) => a.id === project.area_id) ?? null;
   const overdue =
@@ -197,7 +203,43 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
 
         <aside aria-label="Project details" className="min-w-0 space-y-8">
-          <Section title="Details" variant="label">
+          <Section
+            title="Focus time"
+            variant="label"
+            actions={
+              <Link
+                href={`/focus?project=${project.id}`}
+                className="text-xs text-accent hover:underline"
+              >
+                Focus on this project
+              </Link>
+            }
+          >
+            {focus.available ? (
+              <dl className="grid grid-cols-3 gap-3">
+                {(
+                  [
+                    ["Today", focusTime.todaySeconds],
+                    ["This week", focusTime.weekSeconds],
+                    ["Total", focusTime.totalSeconds],
+                  ] as const
+                ).map(([label, seconds]) => (
+                  <div key={label}>
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                    <dd className="text-lg font-semibold tabular-nums">
+                      {formatDuration(seconds)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Focus time per project appears once the database update (migration 20261107090000)
+                is applied.
+              </p>
+            )}
+          </Section>
+          <Section title="Details" variant="label" divider>
             <ProjectEditForm project={project} areas={lookups.areas} />
           </Section>
           {/* The picker carries its own "Goal" label; no section heading on top of it. */}

@@ -182,6 +182,9 @@ affected e2e specs, and a production build. Accessible names used by e2e tests s
 - **3.5** Tasks: quick-view tabs, instant filter chips (GET form kept as fallback), task sheet,
   board drag-and-drop (status select kept for keyboard users).
 - **3.6** Projects: compact rows; detail shows Area › Goal › Project, milestones, linked notes.
+- **3.7** Focus: one timer engine (`use-focus-timer`) behind a ring-based standard view, a
+  full-screen immersive view, and Today's compact timer; sessions count toward a project (actual
+  running time only) with per-project totals on Focus and the project page.
 
 ### Stage 4 — Personal development
 

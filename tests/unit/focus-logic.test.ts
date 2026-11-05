@@ -18,6 +18,8 @@ const timer = (over: Partial<RunningTimer> = {}): RunningTimer => ({
   id: "t",
   phase: "focus",
   taskId: null,
+  projectId: null,
+  firstStartedAt: null,
   plannedSeconds: 60,
   startedAt: 0,
   accumulatedSeconds: 0,

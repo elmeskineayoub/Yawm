@@ -9,13 +9,19 @@ import { formatDuration, PHASE_LABELS, type FocusPhase } from "@/features/focus/
 import type { RecentFocusSession } from "@/features/focus/queries";
 import { formatDate } from "@/lib/dates";
 import { formatTimeRange, instantToLocal } from "@/lib/dates/zoned";
+import { safeAction } from "@/lib/safe-action";
 
 export function FocusHistory({
   sessions,
   timezone,
+  sessionProjects = {},
+  projectNames = {},
 }: {
   sessions: RecentFocusSession[];
   timezone: string;
+  /** Session id -> project id, for sessions that counted toward a project. */
+  sessionProjects?: Record<string, string>;
+  projectNames?: Record<string, string>;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -27,6 +33,8 @@ export function FocusHistory({
     <ul aria-label="Recent focus sessions" className="divide-y divide-border">
       {sessions.map((s) => {
         const day = instantToLocal(s.started_at, timezone).date;
+        const projectId = sessionProjects[s.id];
+        const project = projectId ? projectNames[projectId] : undefined;
         return (
           <li key={s.id} className="flex items-center justify-between gap-3 py-2 text-sm">
             <div className="min-w-0">
@@ -35,6 +43,14 @@ export function FocusHistory({
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDate(day, "short")} · {formatTimeRange(s.started_at, s.ended_at, timezone)}
+                {project && projectId && (
+                  <>
+                    {" · "}
+                    <Link href={`/projects/${projectId}`} className="hover:underline">
+                      {project}
+                    </Link>
+                  </>
+                )}
                 {s.task && (
                   <>
                     {" · "}
@@ -49,10 +65,10 @@ export function FocusHistory({
               variant="ghost"
               size="xs"
               disabled={pending}
-              aria-label="Delete session"
+              aria-label={`Remove the ${formatDuration(s.duration_seconds)} session`}
               onClick={() =>
                 startTransition(async () => {
-                  const result = await deleteFocusSession(s.id);
+                  const result = await safeAction(() => deleteFocusSession(s.id));
                   if (!result.ok) toast.error(result.error);
                 })
               }
