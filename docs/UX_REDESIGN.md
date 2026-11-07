@@ -214,6 +214,15 @@ Settings (section sub-navigation).
 Route skeletons, keyboard-shortcut help (`?`) and j/k list navigation, accessibility pass,
 Playwright checks at 390px and 1440px including horizontal overflow, e2e updates, README update.
 
+- **5.1** Route skeletons: `PageSkeleton` shapes (list, split, sections, grid, timer) in a
+  `loading.tsx` per route and detail page; Notes keeps only the general fallback on entry.
+- **5.2** `?` shortcut help (also from the sidebar) and j/k row navigation via `data-nav-item`;
+  one shared shortcut guard in `lib/keyboard.ts`.
+- **5.3** axe-core WCAG 2.1 A/AA pass in both themes: in-text links underlined, contrast fixes,
+  reduced motion stops endless animations; FullCalendar-internal items documented.
+- **5.4** `tests/e2e/layout.spec.ts`: every route at 390 and 1440px without sideways scrolling,
+  one h1 per page, skip link, `?`, j/Enter, and shortcuts ignored while typing.
+
 ## 8. Decisions
 
 | Decision                    | Choice                                                     | Reason                                                              |
