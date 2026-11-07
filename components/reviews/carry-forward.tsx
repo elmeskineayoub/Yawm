@@ -118,14 +118,14 @@ export function CarryForward({
               variant="ghost"
               size="xs"
               disabled={pending}
-              aria-label={`Remove the due date from “${t.title}”`}
+              aria-label={`No date for “${t.title}”: keep it without a deadline`}
               title="Keep the task, without a deadline"
               onClick={() =>
                 run([{ id: t.id, due: null }], "Due date removed", [{ id: t.id, due: t.due_date }])
               }
             >
               <CalendarMinus aria-hidden className="size-3.5" />
-              <span className="sr-only sm:not-sr-only">No date</span>
+              No date
             </Button>
           </li>
         ))}

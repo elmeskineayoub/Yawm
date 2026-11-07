@@ -62,9 +62,7 @@ describe("Carry forward (weekly review, Decide)", () => {
 
   it("can keep a task without a deadline", async () => {
     render(<CarryForward tasks={open} total={2} target="2026-11-09" />);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Remove the due date from “Call plumber”" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /^No date for “Call plumber”/ }));
     expect(tasks.moveTaskDeadline).toHaveBeenCalledWith(open[1]!.id, null);
   });
 

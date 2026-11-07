@@ -95,7 +95,7 @@ export function DateNavigator({
                 return (
                   <td key={d} className="py-0.5">
                     {future ? (
-                      <span className={cn(cell, "text-muted-foreground/50")}>{day}</span>
+                      <span className={cn(cell, "text-muted-foreground")}>{day}</span>
                     ) : ids.length > 0 ? (
                       <Link
                         href={`/journal/${ids[0]}`}

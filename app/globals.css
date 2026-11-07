@@ -162,6 +162,19 @@ body {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+
+  /*
+   * A link inside running text must not rely on colour alone (WCAG 1.4.1): underline it. Links
+   * that stand on their own (navigation, rows, buttons) keep their own styling.
+   */
+  p a.text-accent {
+    text-decoration-line: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    text-underline-offset: 2px;
+  }
+  p a.text-accent:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 ::selection {
@@ -209,6 +222,9 @@ select.control {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    /* Without this, endless animations (skeleton pulse) would flicker at 0.01ms per cycle. */
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -261,7 +277,8 @@ select.control {
 }
 .planner-calendar .fc .planner-block-time {
   font-size: 0.7rem;
-  color: var(--muted-foreground);
+  /* Stronger than muted text: the block's tinted background needs 4.5:1 at this size. */
+  color: color-mix(in srgb, var(--foreground) 78%, transparent);
 }
 .planner-calendar .fc .planner-block-title {
   font-weight: 500;
@@ -348,4 +365,13 @@ select.control {
   from {
     transform: translateX(-100%);
   }
+}
+
+/*
+ * Days from the neighbouring months in the Month view: FullCalendar fades them to 30% opacity,
+ * which is unreadable (under 2:1). Muted text keeps them clearly secondary at a readable 4.5:1.
+ */
+.planner-calendar .fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+  color: var(--muted-foreground);
 }
