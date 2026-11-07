@@ -184,6 +184,7 @@ export default async function JournalPage({
                           </span>
                           <div className="min-w-0 flex-1">
                             <Link
+                              data-nav-item
                               href={`/journal/${entry.id}`}
                               className="text-sm font-medium break-words hover:underline"
                             >

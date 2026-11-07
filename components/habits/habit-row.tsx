@@ -126,6 +126,7 @@ export function HabitRow({
       )}
       <div className="min-w-0 flex-1">
         <Link
+          data-nav-item
           href={`/habits/${habit.id}`}
           className={cn("block truncate text-sm hover:underline", done && "text-muted-foreground")}
         >

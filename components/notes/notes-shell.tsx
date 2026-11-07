@@ -156,6 +156,7 @@ export async function NotesShell({
               return (
                 <li key={note.id}>
                   <Link
+                    data-nav-item
                     href={noteHref(note.id)}
                     aria-current={current ? "page" : undefined}
                     className={cn(

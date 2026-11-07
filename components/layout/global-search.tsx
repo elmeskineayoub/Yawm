@@ -27,6 +27,7 @@ import {
 } from "@/features/search/logic";
 import type { ShellLayout } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { isTypingTarget } from "@/lib/keyboard";
 
 const DEBOUNCE_MS = 200;
 
@@ -37,13 +38,6 @@ function useGlobalSearch(): Context {
   const value = useContext(SearchContext);
   if (!value) throw new Error("SearchButton must be inside GlobalSearchProvider.");
   return value;
-}
-
-function isTypingTarget(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
 }
 
 /**

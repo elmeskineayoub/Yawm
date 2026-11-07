@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import type { PlanPeriod } from "@/lib/dates";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
+import { isTypingTarget } from "@/lib/keyboard";
 
 const VIEWS: { value: PlanPeriod; label: string; key: string }[] = [
   { value: "day", label: "Day", key: "d" },
@@ -26,13 +27,6 @@ type PlannerHeaderProps = {
   todayHref: string;
 };
 
-function isTyping(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
-}
-
 /**
  * Period switcher and navigation. Shortcuts outside text fields: d / w / m / y switch views,
  * t jumps to today, and ← / → move to the previous or next period.
@@ -51,7 +45,7 @@ export function PlannerHeader({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
       if (document.querySelector("[role=dialog]")) return;
       const match = VIEWS.find((v) => v.key === event.key);
       if (match) router.push(viewHrefs[match.value]);

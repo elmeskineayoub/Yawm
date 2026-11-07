@@ -93,6 +93,7 @@ export function GoalRow({ goal, today }: { goal: GoalSummary; today: IsoDate }) 
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <Link
+            data-nav-item
             href={`/goals/${goal.id}`}
             className="min-w-0 text-sm font-medium break-words hover:underline"
           >

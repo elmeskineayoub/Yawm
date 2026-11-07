@@ -32,6 +32,7 @@ export function TaskRow({
       </div>
       <div className="min-w-0 flex-1">
         <Link
+          data-nav-item
           href={`/tasks/${task.id}`}
           className={cn(
             "block text-sm break-words hover:underline",

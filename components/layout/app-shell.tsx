@@ -15,6 +15,7 @@ import { AccountMenu } from "./account-menu";
 import { BrandLogo } from "./brand-logo";
 import { FocusChip } from "./focus-chip";
 import { GlobalSearchProvider, SearchButton } from "./global-search";
+import { KeyboardShortcuts } from "./keyboard-shortcuts";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { NavigationProgress } from "./navigation-progress";
 import { OfflineBanner } from "./offline-banner";
@@ -210,6 +211,7 @@ export function AppShell({
       {account ? (
         <QuickCaptureProvider today={today}>
           <GlobalSearchProvider>{content}</GlobalSearchProvider>
+          <KeyboardShortcuts />
         </QuickCaptureProvider>
       ) : (
         content

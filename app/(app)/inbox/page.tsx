@@ -148,6 +148,7 @@ export default async function InboxPage({
                 <li key={idea.id} className="group flex items-start gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
                     <Link
+                      data-nav-item
                       href={`/inbox/${idea.id}`}
                       className="text-sm break-words hover:underline"
                     >

@@ -32,13 +32,7 @@ import {
 import { addDays, type IsoDate } from "@/lib/dates";
 import type { ShellLayout } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-
-function isTypingTarget(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
-}
+import { isTypingTarget } from "@/lib/keyboard";
 
 type QuickCaptureContextValue = { open: () => void };
 const QuickCaptureContext = createContext<QuickCaptureContextValue | null>(null);

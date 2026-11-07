@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { signOut } from "@/features/auth/actions";
 import type { ShellLayout } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { ShortcutsButton } from "./keyboard-shortcuts";
 import { ThemeToggle } from "./theme-toggle";
 
 const LABEL: Record<ShellLayout, string> = {
@@ -33,6 +34,7 @@ export function AccountMenu({ email, layout }: { email: string | null; layout: S
         )}
         <ThemeToggle />
       </div>
+      <ShortcutsButton className={ROW[layout]} labelClass={LABEL[layout]} />
       <form action={signOut}>
         <button
           type="submit"

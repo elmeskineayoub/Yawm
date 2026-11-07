@@ -61,6 +61,7 @@ export default async function ProjectsPage() {
               />
             )}
             <Link
+              data-nav-item
               href={`/projects/${project.id}`}
               className="min-w-0 truncate text-sm font-medium hover:underline"
             >
