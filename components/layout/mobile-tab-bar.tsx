@@ -30,7 +30,7 @@ function Tab({ item, pathname, badge }: { item: NavItem; pathname: string; badge
         {badge !== undefined && badge > 0 && (
           <span
             aria-hidden
-            className="absolute -top-1 -right-2 min-w-4 rounded-full bg-accent px-1 text-center text-[0.625rem] leading-4 text-accent-foreground tabular-nums"
+            className="absolute -top-1 -right-2 min-w-4 rounded-full bg-primary px-1 text-center text-[0.625rem] leading-4 text-primary-foreground tabular-nums"
           >
             {badge > 99 ? "99+" : badge}
           </span>

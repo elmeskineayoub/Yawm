@@ -106,22 +106,31 @@ A calm personal workspace, closer to a refined journal than a SaaS dashboard.
   - Section label: Inter 11–12px, semibold, letter-spaced, muted
   - List row: Inter 14/20 · Metadata: Inter 12px
   - Writing: serif 17/28, about 68-character measure
-- **Colour:** one accent; everything else is warm neutral.
+- **Colour:** Yawm's navy-and-blue identity: Deep Navy `#031130`, Electric Blue `#185DF1`, Ice
+  White `#F3F7FE`. Every other value is a tint or shade of these; blue is reserved for actions,
+  active navigation, selection, links, and progress. Status hues stay green / amber / red so a
+  state is never read as "the accent". Tokens live in `app/globals.css`.
 
-  | Token                   | Light                 | Dark             |
-  | ----------------------- | --------------------- | ---------------- |
-  | background              | `#F7F5F0`             | `#1A1A18`        |
-  | surface                 | `#FCFBF8`             | `#22221F`        |
-  | surface-muted           | `#EFECE5`             | `#2B2A27`        |
-  | border                  | `#E4E0D7`             | `#34332F`        |
-  | foreground              | `#23221F`             | `#EBE8E1`        |
-  | muted-foreground        | `#6B675F`             | `#A19D94`        |
-  | accent (forest sage)    | `#3D5A47`             | `#8FAE96`        |
-  | accent-soft             | `#E3E9E2`             | `#2C3A30`        |
-  | danger / warning / info | brick / ochre / slate | lighter variants |
+  | Token                      | Light                             | Dark                              | Role                                |
+  | -------------------------- | --------------------------------- | --------------------------------- | ----------------------------------- |
+  | background                 | `#F3F7FE`                         | `#031130`                         | Page ground                         |
+  | surface                    | `#FFFFFF`                         | `#0A1C45`                         | Inputs, panels, cards, toasts       |
+  | surface-muted              | `#E7EDF8`                         | `#13285A`                         | Hover, tracks, quiet fills          |
+  | foreground                 | `#031130`                         | `#F3F7FE`                         | Text                                |
+  | muted-foreground           | `#4B5874`                         | `#A7B4CE`                         | Secondary text                      |
+  | border                     | `#DCE4F1`                         | `#1B3164`                         | Decorative hairlines                |
+  | input-border               | `#7F8CA6`                         | `#5A6E99`                         | Control edges (3:1)                 |
+  | primary / -foreground      | `#185DF1` / white                 | `#185DF1` / white                 | Filled actions (buttons, badges)    |
+  | primary-hover              | `#1450D4`                         | `#2C6AF3`                         | Hover on filled actions             |
+  | accent / -foreground       | `#185DF1` / white                 | `#6E9BFF` / navy                  | Blue text, indicators, ring, checks |
+  | accent-soft                | `#E2EBFD`                         | `#102A66`                         | Active navigation, selected chips   |
+  | success / warning / danger | `#0E7A52` / `#8A5300` / `#B42318` | `#4CC79A` / `#F2B65A` / `#FF8A80` | States                              |
+  | info                       | `#2D4A80`                         | `#9DB6E6`                         | Neutral information                 |
 
-  Priorities reuse these: urgent = danger, high = warning, medium = accent, low = neutral.
-  Every text/background pair must meet WCAG AA.
+  Electric Blue is 3.4:1 on Deep Navy: enough for a filled button, not for text. That is why
+  dark mode lifts `accent` to a lighter tint while `primary` stays Electric Blue. Priorities reuse
+  the semantic colours: urgent = danger, high = warning, medium = accent, low = neutral. Every
+  text/background pair meets WCAG AA; indicators and control edges meet 3:1.
 
 - **Density:** 4px spacing step; list rows 36px desktop / 44px touch; whitespace goes into page
   margins and section gaps (32–40px), not inside lists.

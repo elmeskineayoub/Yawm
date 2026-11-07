@@ -73,7 +73,7 @@ export function ReminderCenter({
       >
         <Bell aria-hidden className="size-5" />
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground tabular-nums">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
             {count > 9 ? "9+" : count}
           </span>
         )}

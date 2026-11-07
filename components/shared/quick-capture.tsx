@@ -83,7 +83,7 @@ export function QuickCaptureButton({
         type="button"
         onClick={open}
         aria-label="Quick capture"
-        className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-overlay transition-colors duration-150 hover:bg-accent/90"
+        className="flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-overlay transition-colors duration-150 hover:bg-primary-hover"
       >
         <Plus aria-hidden className="size-5" />
       </button>

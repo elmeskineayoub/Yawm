@@ -6,7 +6,7 @@ export type ButtonSize = "xs" | "sm" | "md" | "icon" | "icon-sm";
 
 const variants: Record<ButtonVariant, string> = {
   /** The one main action in a region. */
-  primary: "bg-accent text-accent-foreground hover:bg-accent/90",
+  primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
   /** Quiet filled button for secondary actions. */
   secondary: "border border-border bg-surface text-foreground hover:bg-surface-muted",
   /** Bordered button that reads clearly next to form controls. */
