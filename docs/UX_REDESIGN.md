@@ -106,35 +106,36 @@ A calm personal workspace, closer to a refined journal than a SaaS dashboard.
   - Section label: Inter 11–12px, semibold, letter-spaced, muted
   - List row: Inter 14/20 · Metadata: Inter 12px
   - Writing: serif 17/28, about 68-character measure
-- **Colour:** Yawm's cool-neutral and midnight-navy identity: Pure White `#FEFEFE`, Cool Mist
-  `#F0F3F3`, Silver Gray `#D6DCE0`, Soft Slate `#B5C1C8`, Slate Gray `#727A84`, Midnight Navy
-  `#0C1629`. Every other value is a tint or shade of these; there is no bright accent. Hierarchy
-  comes from navy against the neutrals: filled navy (light) or silver (dark) marks actions, and
-  medium weight plus a tint marks the active item. Status hues stay muted green / amber / red so
-  a state is never ambiguous. Tokens live in `app/globals.css`.
+- **Colour:** Yawm's charcoal, soft-ivory, warm-greige, and muted-taupe identity: Charcoal
+  `#353535`, Soft Ivory `#F4F3EF`, Cool Gray `#D2D7DF`, Warm Greige `#BDBBB0`, Muted Taupe
+  `#8A897C`. Every other value is a tint or shade of these; there is no bright accent. Charcoal
+  (light) or Cool Gray (dark) fills mark actions; medium weight plus a greige tint marks the
+  active item; Cool Gray tints carry hover and tracks. Status hues stay muted green / amber / red
+  so a state is never ambiguous. Tokens live in `app/globals.css`.
 
   | Token                      | Light                             | Dark                              | Role                                 |
   | -------------------------- | --------------------------------- | --------------------------------- | ------------------------------------ |
-  | background                 | `#FEFEFE`                         | `#0C1629`                         | Page ground                          |
-  | surface                    | `#FEFEFE`                         | `#152139`                         | Inputs, panels, cards, toasts        |
-  | surface-muted              | `#F0F3F3`                         | `#1E2C47`                         | Hover, tracks, quiet fills           |
-  | foreground                 | `#0C1629`                         | `#FEFEFE`                         | Text                                 |
-  | muted-foreground           | `#58606B`                         | `#B5C1C8`                         | Secondary text                       |
-  | border                     | `#D6DCE0`                         | `#26354F`                         | Decorative hairlines                 |
-  | input-border               | `#7D8791`                         | `#6A778C`                         | Control edges (3:1)                  |
-  | primary / -foreground      | `#0C1629` / `#FEFEFE`             | `#D6DCE0` / `#0C1629`             | Filled actions                       |
-  | primary-hover              | `#1F2B42`                         | `#FEFEFE`                         | Hover on filled actions              |
-  | accent / -foreground       | `#2C3B57` / `#FEFEFE`             | `#D6DCE0` / `#0C1629`             | Links, active text, progress, checks |
-  | accent-soft                | `#DFE5E8`                         | `#2A3A57`                         | Active navigation, selected chips    |
-  | ring                       | `#0C1629`                         | `#D6DCE0`                         | Focus outline                        |
-  | success / warning / danger | `#2E6B4E` / `#87580F` / `#A3362E` | `#7CC6A1` / `#E3B46A` / `#F19A8F` | States                               |
-  | info                       | `#46566B`                         | `#AFBDCE`                         | Neutral information                  |
+  | background                 | `#F4F3EF`                         | `#353535`                         | Page ground                          |
+  | surface                    | `#FAF9F6`                         | `#3F3F3E`                         | Sidebar, inputs, cards, toasts       |
+  | surface-muted              | `#E6E9EE`                         | `#4A4A48`                         | Hover, tracks, quiet fills           |
+  | foreground                 | `#353535`                         | `#F4F3EF`                         | Text                                 |
+  | muted-foreground           | `#5C5B54`                         | `#D2D7DF`                         | Secondary text                       |
+  | border                     | `#D2D7DF`                         | `#565651`                         | Decorative hairlines                 |
+  | input-border               | `#85857D`                         | `#A3A298`                         | Control edges (3:1)                  |
+  | primary / -foreground      | `#353535` / `#F4F3EF`             | `#D2D7DF` / `#353535`             | Filled actions                       |
+  | primary-hover              | `#4A4A48`                         | `#F4F3EF`                         | Hover on filled actions              |
+  | accent / -foreground       | `#353535` / `#F4F3EF`             | `#DAD7CC` / `#353535`             | Links, active text, progress, checks |
+  | accent-soft                | `#E4E2DA`                         | `#57564F`                         | Active navigation, selected chips    |
+  | ring                       | `#353535`                         | `#DAD7CC`                         | Focus outline                        |
+  | success / warning / danger | `#3B6A4C` / `#7B5717` / `#9B3A2F` | `#A3D1B4` / `#E5C283` / `#F2AA9F` | States                               |
+  | info                       | `#4C5868`                         | `#C3CCD8`                         | Neutral information                  |
 
-  Slate Gray `#727A84` is 4.3:1 on white, under the 4.5:1 small text needs, so secondary text
-  uses a slightly deeper slate; Slate Gray serves icons, placeholders, and low priority. Silver
-  Gray and Soft Slate are too light for control edges (1.4:1 and 1.8:1), so inputs use a darker
-  slate. Because the accent sits close to the text colour, every text link keeps a soft
-  underline. Priorities: urgent = danger, high = warning, medium = accent, low = slate.
+  Muted Taupe is 3.2:1 on ivory and Warm Greige 1.7:1, both under the 4.5:1 small text needs, so
+  secondary text uses a deeper taupe (`#5C5B54`); taupe itself serves icons and low priority
+  (3:1), greige serves tints. Cool Gray is too light for control edges, so inputs use darker
+  (light) or lighter (dark) greige. Because the accent equals the text colour, every text link
+  keeps a soft underline. Priorities: urgent = danger, high = warning, medium = accent, low =
+  taupe (light) / greige (dark).
 
 - **Density:** 4px spacing step; list rows 36px desktop / 44px touch; whitespace goes into page
   margins and section gaps (32–40px), not inside lists.

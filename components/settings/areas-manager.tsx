@@ -178,7 +178,7 @@ export function AreasManager({ areas }: { areas: Area[] }) {
           id={`${id}-color`}
           type="color"
           name="color"
-          defaultValue="#727a84"
+          defaultValue="#8a897c"
           className="h-9 w-10 cursor-pointer rounded-md border border-input-border bg-surface"
         />
         <label htmlFor={`${id}-name`} className="sr-only">

@@ -3,101 +3,103 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens — editorial minimalism in Yawm's cool-neutral and midnight-navy identity
- * (docs/UX_REDESIGN.md §5).
+ * Design tokens — editorial minimalism in Yawm's charcoal, soft-ivory, warm-greige, and
+ * muted-taupe identity (docs/UX_REDESIGN.md §5).
  *
- * Palette: Pure White #FEFEFE, Cool Mist #F0F3F3, Silver Gray #D6DCE0, Soft Slate #B5C1C8,
- * Slate Gray #727A84, Midnight Navy #0C1629. Every other value is a tint or shade of these,
- * except the status hues (success, warning, danger), which stay muted green / amber / red so a
- * state is never ambiguous. No bright or saturated accent.
+ * Palette: Charcoal #353535, Soft Ivory #F4F3EF, Cool Gray #D2D7DF, Warm Greige #BDBBB0, Muted
+ * Taupe #8A897C. Every other value is a tint or shade of these, except the status hues (success,
+ * warning, danger), which stay muted green / amber / red so a state is never ambiguous. No bright
+ * or saturated accent.
  *
  * Roles:
- *   --primary  filled actions (primary buttons, the capture button, count badges): Midnight Navy
- *              with white text in light; Silver Gray with navy text in dark.
+ *   --primary  filled actions (primary buttons, the capture button, count badges): Charcoal with
+ *              ivory text in light; Cool Gray with charcoal text in dark.
  *   --accent   emphasis used as text or an indicator (links, active navigation, progress,
- *              checked boxes, focus ring): a navy tone in light, Silver Gray in dark.
- * Slate Gray #727A84 is 4.3:1 on white, under the 4.5:1 that small text needs, so secondary text
- * uses a slightly deeper slate (#58606B); Slate Gray itself serves icons and placeholders. Silver
- * Gray is a decorative hairline; control edges use a darker slate to reach 3:1.
+ *              checked boxes, focus ring): Charcoal in light, a light greige in dark.
+ * Contrast-driven derivations: Muted Taupe is 3.2:1 on ivory and Warm Greige 1.7:1, both under
+ * the 4.5:1 small text needs, so secondary text is a deeper taupe (#5C5B54); taupe itself serves
+ * icons and low priority (3:1), greige serves tints. Cool Gray is a decorative hairline; control
+ * edges use darker (light) or lighter (dark) greige to reach 3:1.
  *
  * Every text colour meets WCAG AA (4.5:1) on background, surface, and surface-muted;
  * --input-border, --ring, and indicator colours meet 3:1.
  */
 :root {
-  --background: #fefefe;
-  --surface: #fefefe;
-  --surface-muted: #f0f3f3;
-  --foreground: #0c1629;
-  --muted-foreground: #58606b;
-  --border: #d6dce0;
-  --input-border: #7d8791;
+  --background: #f4f3ef;
+  --surface: #faf9f6;
+  --surface-muted: #e6e9ee;
+  --foreground: #353535;
+  --muted-foreground: #5c5b54;
+  --border: #d2d7df;
+  --input-border: #85857d;
 
-  --primary: #0c1629;
-  --primary-foreground: #fefefe;
-  --primary-hover: #1f2b42;
+  --primary: #353535;
+  --primary-foreground: #f4f3ef;
+  --primary-hover: #4a4a48;
 
-  --accent: #2c3b57;
-  --accent-foreground: #fefefe;
-  --accent-soft: #dfe5e8;
+  --accent: #353535;
+  --accent-foreground: #f4f3ef;
+  --accent-soft: #e4e2da;
 
-  --success: #2e6b4e;
-  --success-soft: #e3efe8;
-  --danger: #a3362e;
-  --danger-foreground: #fefefe;
-  --danger-soft: #f7e6e3;
-  --warning: #87580f;
-  --warning-soft: #f6eddd;
-  --info: #46566b;
-  --info-soft: #e8ecef;
+  --success: #3b6a4c;
+  --success-soft: #e1ebe3;
+  --danger: #9b3a2f;
+  --danger-foreground: #f4f3ef;
+  --danger-soft: #f3e3df;
+  --warning: #7b5717;
+  --warning-soft: #f2eadb;
+  --info: #4c5868;
+  --info-soft: #e4e8ee;
 
   /* Priority reuses the semantic palette; no extra hues. */
   --priority-urgent: var(--danger);
   --priority-high: var(--warning);
   --priority-medium: var(--accent);
-  --priority-low: #727a84;
+  --priority-low: #8a897c;
 
   --ring: var(--foreground);
-  --overlay: rgb(12 22 41 / 0.32);
-  --shadow-overlay: 0 12px 32px -12px rgb(12 22 41 / 0.2), 0 2px 6px -2px rgb(12 22 41 / 0.07);
+  --overlay: rgb(53 53 53 / 0.34);
+  --shadow-overlay: 0 12px 32px -12px rgb(53 53 53 / 0.22), 0 2px 6px -2px rgb(53 53 53 / 0.08);
 }
 
 /*
- * Dark: Midnight Navy is the ground; surfaces step up in lighter navy so elevation reads without
- * heavy shadows. Not an inversion of light: actions turn light (Silver Gray on navy), secondary
- * text is Soft Slate, and borders are navy-slate rather than grey.
+ * Dark: Charcoal is the ground, and surfaces step up in distinct levels (sidebar and cards
+ * #3F3F3E, hover and tracks #4A4A48, selection a greige-tinted #57564F) so elevation reads
+ * without heavy shadows. Not an inversion of light: actions turn light (Cool Gray on charcoal),
+ * secondary text is Cool Gray, and the accent is a warm light greige.
  */
 .dark {
-  --background: #0c1629;
-  --surface: #152139;
-  --surface-muted: #1e2c47;
-  --foreground: #fefefe;
-  --muted-foreground: #b5c1c8;
-  --border: #26354f;
-  --input-border: #6a778c;
+  --background: #353535;
+  --surface: #3f3f3e;
+  --surface-muted: #4a4a48;
+  --foreground: #f4f3ef;
+  --muted-foreground: #d2d7df;
+  --border: #565651;
+  --input-border: #a3a298;
 
-  --primary: #d6dce0;
-  --primary-foreground: #0c1629;
-  --primary-hover: #fefefe;
+  --primary: #d2d7df;
+  --primary-foreground: #353535;
+  --primary-hover: #f4f3ef;
 
-  --accent: #d6dce0;
-  --accent-foreground: #0c1629;
-  --accent-soft: #2a3a57;
+  --accent: #dad7cc;
+  --accent-foreground: #353535;
+  --accent-soft: #57564f;
 
-  --success: #7cc6a1;
-  --success-soft: #143229;
-  --danger: #f19a8f;
-  --danger-foreground: #0c1629;
-  --danger-soft: #3a1d24;
-  --warning: #e3b46a;
-  --warning-soft: #302818;
-  --info: #afbdce;
-  --info-soft: #1e2c47;
+  --success: #a3d1b4;
+  --success-soft: #32453a;
+  --danger: #f2aa9f;
+  --danger-foreground: #353535;
+  --danger-soft: #4e3633;
+  --warning: #e5c283;
+  --warning-soft: #4a4130;
+  --info: #c3ccd8;
+  --info-soft: #4a4a48;
 
-  --priority-low: #b5c1c8;
+  --priority-low: #bdbbb0;
 
   --ring: var(--accent);
-  --overlay: rgb(4 8 16 / 0.62);
-  --shadow-overlay: 0 12px 32px -12px rgb(4 8 16 / 0.7), 0 2px 6px -2px rgb(4 8 16 / 0.5);
+  --overlay: rgb(18 18 18 / 0.6);
+  --shadow-overlay: 0 12px 32px -12px rgb(18 18 18 / 0.6), 0 2px 6px -2px rgb(18 18 18 / 0.4);
 }
 
 @theme inline {
@@ -177,7 +179,7 @@ body {
   /* Form controls (see controlClass): a quiet chevron replaces the platform select arrow. */
   select.control {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23727a84' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f8e82' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.625rem center;
     background-size: 0.875rem;
