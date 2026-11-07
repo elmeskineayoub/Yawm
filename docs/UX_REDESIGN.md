@@ -106,31 +106,35 @@ A calm personal workspace, closer to a refined journal than a SaaS dashboard.
   - Section label: Inter 11–12px, semibold, letter-spaced, muted
   - List row: Inter 14/20 · Metadata: Inter 12px
   - Writing: serif 17/28, about 68-character measure
-- **Colour:** Yawm's navy-and-blue identity: Deep Navy `#031130`, Electric Blue `#185DF1`, Ice
-  White `#F3F7FE`. Every other value is a tint or shade of these; blue is reserved for actions,
-  active navigation, selection, links, and progress. Status hues stay green / amber / red so a
-  state is never read as "the accent". Tokens live in `app/globals.css`.
+- **Colour:** Yawm's cool-neutral and midnight-navy identity: Pure White `#FEFEFE`, Cool Mist
+  `#F0F3F3`, Silver Gray `#D6DCE0`, Soft Slate `#B5C1C8`, Slate Gray `#727A84`, Midnight Navy
+  `#0C1629`. Every other value is a tint or shade of these; there is no bright accent. Hierarchy
+  comes from navy against the neutrals: filled navy (light) or silver (dark) marks actions, and
+  medium weight plus a tint marks the active item. Status hues stay muted green / amber / red so
+  a state is never ambiguous. Tokens live in `app/globals.css`.
 
-  | Token                      | Light                             | Dark                              | Role                                |
-  | -------------------------- | --------------------------------- | --------------------------------- | ----------------------------------- |
-  | background                 | `#F3F7FE`                         | `#031130`                         | Page ground                         |
-  | surface                    | `#FFFFFF`                         | `#0A1C45`                         | Inputs, panels, cards, toasts       |
-  | surface-muted              | `#E7EDF8`                         | `#13285A`                         | Hover, tracks, quiet fills          |
-  | foreground                 | `#031130`                         | `#F3F7FE`                         | Text                                |
-  | muted-foreground           | `#4B5874`                         | `#A7B4CE`                         | Secondary text                      |
-  | border                     | `#DCE4F1`                         | `#1B3164`                         | Decorative hairlines                |
-  | input-border               | `#7F8CA6`                         | `#5A6E99`                         | Control edges (3:1)                 |
-  | primary / -foreground      | `#185DF1` / white                 | `#185DF1` / white                 | Filled actions (buttons, badges)    |
-  | primary-hover              | `#1450D4`                         | `#2C6AF3`                         | Hover on filled actions             |
-  | accent / -foreground       | `#185DF1` / white                 | `#6E9BFF` / navy                  | Blue text, indicators, ring, checks |
-  | accent-soft                | `#E2EBFD`                         | `#102A66`                         | Active navigation, selected chips   |
-  | success / warning / danger | `#0E7A52` / `#8A5300` / `#B42318` | `#4CC79A` / `#F2B65A` / `#FF8A80` | States                              |
-  | info                       | `#2D4A80`                         | `#9DB6E6`                         | Neutral information                 |
+  | Token                      | Light                             | Dark                              | Role                                 |
+  | -------------------------- | --------------------------------- | --------------------------------- | ------------------------------------ |
+  | background                 | `#FEFEFE`                         | `#0C1629`                         | Page ground                          |
+  | surface                    | `#FEFEFE`                         | `#152139`                         | Inputs, panels, cards, toasts        |
+  | surface-muted              | `#F0F3F3`                         | `#1E2C47`                         | Hover, tracks, quiet fills           |
+  | foreground                 | `#0C1629`                         | `#FEFEFE`                         | Text                                 |
+  | muted-foreground           | `#58606B`                         | `#B5C1C8`                         | Secondary text                       |
+  | border                     | `#D6DCE0`                         | `#26354F`                         | Decorative hairlines                 |
+  | input-border               | `#7D8791`                         | `#6A778C`                         | Control edges (3:1)                  |
+  | primary / -foreground      | `#0C1629` / `#FEFEFE`             | `#D6DCE0` / `#0C1629`             | Filled actions                       |
+  | primary-hover              | `#1F2B42`                         | `#FEFEFE`                         | Hover on filled actions              |
+  | accent / -foreground       | `#2C3B57` / `#FEFEFE`             | `#D6DCE0` / `#0C1629`             | Links, active text, progress, checks |
+  | accent-soft                | `#DFE5E8`                         | `#2A3A57`                         | Active navigation, selected chips    |
+  | ring                       | `#0C1629`                         | `#D6DCE0`                         | Focus outline                        |
+  | success / warning / danger | `#2E6B4E` / `#87580F` / `#A3362E` | `#7CC6A1` / `#E3B46A` / `#F19A8F` | States                               |
+  | info                       | `#46566B`                         | `#AFBDCE`                         | Neutral information                  |
 
-  Electric Blue is 3.4:1 on Deep Navy: enough for a filled button, not for text. That is why
-  dark mode lifts `accent` to a lighter tint while `primary` stays Electric Blue. Priorities reuse
-  the semantic colours: urgent = danger, high = warning, medium = accent, low = neutral. Every
-  text/background pair meets WCAG AA; indicators and control edges meet 3:1.
+  Slate Gray `#727A84` is 4.3:1 on white, under the 4.5:1 small text needs, so secondary text
+  uses a slightly deeper slate; Slate Gray serves icons, placeholders, and low priority. Silver
+  Gray and Soft Slate are too light for control edges (1.4:1 and 1.8:1), so inputs use a darker
+  slate. Because the accent sits close to the text colour, every text link keeps a soft
+  underline. Priorities: urgent = danger, high = warning, medium = accent, low = slate.
 
 - **Density:** 4px spacing step; list rows 36px desktop / 44px touch; whitespace goes into page
   margins and section gaps (32–40px), not inside lists.

@@ -3,94 +3,101 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens — editorial minimalism in Yawm's navy-and-blue identity (docs/UX_REDESIGN.md §5).
+ * Design tokens — editorial minimalism in Yawm's cool-neutral and midnight-navy identity
+ * (docs/UX_REDESIGN.md §5).
  *
- * Brand colours: Deep Navy #031130, Electric Blue #185DF1, Ice White #F3F7FE. Every other value
- * is a tint or shade of these, except the status hues (success, warning, danger), which stay
- * green / amber / red so a state is never mistaken for the blue accent.
+ * Palette: Pure White #FEFEFE, Cool Mist #F0F3F3, Silver Gray #D6DCE0, Soft Slate #B5C1C8,
+ * Slate Gray #727A84, Midnight Navy #0C1629. Every other value is a tint or shade of these,
+ * except the status hues (success, warning, danger), which stay muted green / amber / red so a
+ * state is never ambiguous. No bright or saturated accent.
  *
- * Two blue roles, because Electric Blue is 3.4:1 on Deep Navy (fine for a fill, too dark for
- * text):
- *   --primary  filled actions (primary buttons, the capture button, count badges). #185DF1 in
- *              both themes, always with white text (5.4:1).
- *   --accent   blue used as text or an indicator (links, active navigation, progress, checked
- *              boxes, focus ring). #185DF1 in light; a lighter tint (#6E9BFF, 6.9:1) in dark.
+ * Roles:
+ *   --primary  filled actions (primary buttons, the capture button, count badges): Midnight Navy
+ *              with white text in light; Silver Gray with navy text in dark.
+ *   --accent   emphasis used as text or an indicator (links, active navigation, progress,
+ *              checked boxes, focus ring): a navy tone in light, Silver Gray in dark.
+ * Slate Gray #727A84 is 4.3:1 on white, under the 4.5:1 that small text needs, so secondary text
+ * uses a slightly deeper slate (#58606B); Slate Gray itself serves icons and placeholders. Silver
+ * Gray is a decorative hairline; control edges use a darker slate to reach 3:1.
  *
  * Every text colour meets WCAG AA (4.5:1) on background, surface, and surface-muted;
- * --input-border, --ring, and indicator colours meet 3:1. --border is a decorative hairline.
+ * --input-border, --ring, and indicator colours meet 3:1.
  */
 :root {
-  --background: #f3f7fe;
-  --surface: #ffffff;
-  --surface-muted: #e7edf8;
-  --foreground: #031130;
-  --muted-foreground: #4b5874;
-  --border: #dce4f1;
-  --input-border: #7f8ca6;
+  --background: #fefefe;
+  --surface: #fefefe;
+  --surface-muted: #f0f3f3;
+  --foreground: #0c1629;
+  --muted-foreground: #58606b;
+  --border: #d6dce0;
+  --input-border: #7d8791;
 
-  --primary: #185df1;
-  --primary-foreground: #ffffff;
-  --primary-hover: #1450d4;
+  --primary: #0c1629;
+  --primary-foreground: #fefefe;
+  --primary-hover: #1f2b42;
 
-  --accent: #185df1;
-  --accent-foreground: #ffffff;
-  --accent-soft: #e2ebfd;
+  --accent: #2c3b57;
+  --accent-foreground: #fefefe;
+  --accent-soft: #dfe5e8;
 
-  --success: #0e7a52;
-  --success-soft: #dff2e9;
-  --danger: #b42318;
-  --danger-foreground: #ffffff;
-  --danger-soft: #fce7e4;
-  --warning: #8a5300;
-  --warning-soft: #fbeedb;
-  --info: #2d4a80;
-  --info-soft: #e3e9f5;
+  --success: #2e6b4e;
+  --success-soft: #e3efe8;
+  --danger: #a3362e;
+  --danger-foreground: #fefefe;
+  --danger-soft: #f7e6e3;
+  --warning: #87580f;
+  --warning-soft: #f6eddd;
+  --info: #46566b;
+  --info-soft: #e8ecef;
 
   /* Priority reuses the semantic palette; no extra hues. */
   --priority-urgent: var(--danger);
   --priority-high: var(--warning);
   --priority-medium: var(--accent);
-  --priority-low: var(--muted-foreground);
+  --priority-low: #727a84;
 
-  --ring: var(--accent);
-  --overlay: rgb(3 17 48 / 0.36);
-  --shadow-overlay: 0 12px 32px -12px rgb(3 17 48 / 0.24), 0 2px 6px -2px rgb(3 17 48 / 0.08);
+  --ring: var(--foreground);
+  --overlay: rgb(12 22 41 / 0.32);
+  --shadow-overlay: 0 12px 32px -12px rgb(12 22 41 / 0.2), 0 2px 6px -2px rgb(12 22 41 / 0.07);
 }
 
 /*
- * Dark: Deep Navy is the ground; surfaces step up in lighter navy so elevation reads without
- * heavy shadows. Not an inversion of light: the accent is lifted for legibility, borders are
- * navy-blue rather than grey.
+ * Dark: Midnight Navy is the ground; surfaces step up in lighter navy so elevation reads without
+ * heavy shadows. Not an inversion of light: actions turn light (Silver Gray on navy), secondary
+ * text is Soft Slate, and borders are navy-slate rather than grey.
  */
 .dark {
-  --background: #031130;
-  --surface: #0a1c45;
-  --surface-muted: #13285a;
-  --foreground: #f3f7fe;
-  --muted-foreground: #a7b4ce;
-  --border: #1b3164;
-  --input-border: #5a6e99;
+  --background: #0c1629;
+  --surface: #152139;
+  --surface-muted: #1e2c47;
+  --foreground: #fefefe;
+  --muted-foreground: #b5c1c8;
+  --border: #26354f;
+  --input-border: #6a778c;
 
-  --primary: #185df1;
-  --primary-foreground: #ffffff;
-  --primary-hover: #2c6af3;
+  --primary: #d6dce0;
+  --primary-foreground: #0c1629;
+  --primary-hover: #fefefe;
 
-  --accent: #6e9bff;
-  --accent-foreground: #031130;
-  --accent-soft: #102a66;
+  --accent: #d6dce0;
+  --accent-foreground: #0c1629;
+  --accent-soft: #2a3a57;
 
-  --success: #4cc79a;
-  --success-soft: #0b3335;
-  --danger: #ff8a80;
-  --danger-foreground: #031130;
-  --danger-soft: #3a1428;
-  --warning: #f2b65a;
-  --warning-soft: #33260f;
-  --info: #9db6e6;
-  --info-soft: #13285a;
+  --success: #7cc6a1;
+  --success-soft: #143229;
+  --danger: #f19a8f;
+  --danger-foreground: #0c1629;
+  --danger-soft: #3a1d24;
+  --warning: #e3b46a;
+  --warning-soft: #302818;
+  --info: #afbdce;
+  --info-soft: #1e2c47;
 
-  --overlay: rgb(1 6 20 / 0.66);
-  --shadow-overlay: 0 12px 32px -12px rgb(1 6 20 / 0.7), 0 2px 6px -2px rgb(1 6 20 / 0.5);
+  --priority-low: #b5c1c8;
+
+  --ring: var(--accent);
+  --overlay: rgb(4 8 16 / 0.62);
+  --shadow-overlay: 0 12px 32px -12px rgb(4 8 16 / 0.7), 0 2px 6px -2px rgb(4 8 16 / 0.5);
 }
 
 @theme inline {
@@ -170,7 +177,7 @@ body {
   /* Form controls (see controlClass): a quiet chevron replaces the platform select arrow. */
   select.control {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%237f8ca6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23727a84' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.625rem center;
     background-size: 0.875rem;
@@ -193,14 +200,18 @@ body {
   }
 
   /*
-   * A link inside running text must not rely on colour alone (WCAG 1.4.1): underline it. Links
-   * that stand on their own (navigation, rows, buttons) keep their own styling.
+   * Text links must not rely on colour alone (WCAG 1.4.1), and in this neutral palette the accent
+   * is close to the text colour: every text link (accent colour, underline on hover) keeps a soft
+   * underline, and any accent link inside running text does too. Navigation items, chips, and
+   * buttons don't use this pattern and keep their own styling.
    */
+  a.text-accent.hover\:underline,
   p a.text-accent {
     text-decoration-line: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
     text-underline-offset: 2px;
   }
+  a.text-accent.hover\:underline:hover,
   p a.text-accent:hover {
     text-decoration-color: currentColor;
   }
