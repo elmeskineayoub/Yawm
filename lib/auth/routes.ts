@@ -4,8 +4,12 @@ export const SETUP_PATH = "/setup";
 
 /** Pages for signed-out users; signed-in users are sent to the app instead. */
 const AUTH_PAGES = ["/login", "/sign-up", "/forgot-password"];
-/** Reachable with or without a session. */
-const PUBLIC_PREFIXES = ["/auth/", "/api/health", "/setup"];
+/**
+ * Reachable with or without a session. `/preview/` holds design previews rendered from synthetic
+ * fixtures; those pages answer 404 unless previews are switched on in development
+ * (lib/design-preview.ts), and they never read workspace data.
+ */
+const PUBLIC_PREFIXES = ["/auth/", "/api/health", "/setup", "/preview/"];
 
 export type RouteAccess = "auth-page" | "public" | "protected";
 

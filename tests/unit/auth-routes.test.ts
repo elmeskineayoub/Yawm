@@ -10,6 +10,7 @@ describe("classifyRoute", () => {
     ["/auth/error", "public"],
     ["/api/health", "public"],
     ["/setup", "public"],
+    ["/preview/dashboard", "public"],
     ["/", "protected"],
     ["/dashboard", "protected"],
     ["/settings", "protected"],
@@ -18,6 +19,8 @@ describe("classifyRoute", () => {
     ["/login-history", "protected"],
     ["/authors", "protected"],
     ["/api/healthcheck-admin", "protected"],
+    ["/preview", "protected"],
+    ["/previews", "protected"],
   ])("%s → %s", (path, expected) => {
     expect(classifyRoute(path)).toBe(expected);
   });

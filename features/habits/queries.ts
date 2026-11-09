@@ -81,7 +81,7 @@ export type HabitSummary = {
   week: WeekProgress | null;
 };
 
-function summarize(
+export function summarizeHabit(
   habit: Habit,
   logs: HabitLog[],
   date: IsoDate,
@@ -126,7 +126,7 @@ export async function loadHabitSummaries(
     habits.map((h) => h.id),
     addDays(ctx.today, -HISTORY_DAYS),
   );
-  return habits.map((h) => summarize(h, logs.get(h.id) ?? [], date, ctx.today, ctx.weekStart));
+  return habits.map((h) => summarizeHabit(h, logs.get(h.id) ?? [], date, ctx.today, ctx.weekStart));
 }
 
 /** Habits that apply to `date`: scheduled that day and active (for the Planner, Today, Dashboard). */
@@ -227,7 +227,7 @@ export async function loadHabitDetail(
   const weekFrom = periodStart("week", today, weekStart);
   const monthFrom = periodStart("month", today);
   return {
-    ...summarize(habit, logs, today, today, weekStart),
+    ...summarizeHabit(habit, logs, today, today, weekStart),
     logs,
     rates: {
       week: completionRate(habit, logs, weekFrom, addDays(weekFrom, 6), today, weekStart),

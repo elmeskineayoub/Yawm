@@ -21,6 +21,7 @@ export default async function FocusPage({
 }) {
   const params = await searchParams;
   const rawProject = Array.isArray(params.project) ? params.project[0] : params.project;
+  const rawTask = Array.isArray(params.task) ? params.task[0] : params.task;
   const ctx = await getWorkspaceContext();
   const [summary, areas, projectRows, tasks] = await Promise.all([
     loadFocusSummary(ctx),
@@ -62,6 +63,11 @@ export default async function FocusPage({
     z.uuid().safeParse(rawProject).success && projects.some((p) => p.id === rawProject)
       ? (rawProject as string)
       : null;
+  // ?task= preselects an open task (and, through it, its project), e.g. from the Dashboard.
+  const initialTaskId =
+    z.uuid().safeParse(rawTask).success && tasks.data.some((t) => t.id === rawTask)
+      ? (rawTask as string)
+      : null;
 
   return (
     <FocusWorkspace
@@ -75,6 +81,7 @@ export default async function FocusPage({
       sessionProjects={sessionProjects}
       timezone={ctx.timezone}
       initialProjectId={initialProjectId}
+      initialTaskId={initialTaskId}
     />
   );
 }

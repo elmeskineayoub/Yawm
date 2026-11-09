@@ -40,6 +40,8 @@ type Props = {
   timezone: string;
   /** From ?project=: preselect a project (only if no session is under way). */
   initialProjectId: string | null;
+  /** From ?task=: preselect a task and its project (only if no session is under way). */
+  initialTaskId?: string | null;
 };
 
 /**
@@ -55,16 +57,19 @@ export function FocusWorkspace(props: Props) {
   const taskProject = (taskId: string) =>
     props.tasks.find((t) => t.id === taskId)?.project_id ?? null;
 
-  // Preselect a project from the link (e.g. "Focus on this project"), once, if nothing is running.
+  // Preselect a task or project from the link (e.g. "Start focus" on the Dashboard), once, if
+  // nothing is running. A task brings its own project.
   const applied = useRef(false);
-  const { mounted, started, setProject } = f;
+  const { mounted, started, setProject, setTask } = f;
   useEffect(() => {
-    if (applied.current || !mounted || !props.initialProjectId) return;
+    if (applied.current || !mounted || (!props.initialProjectId && !props.initialTaskId)) return;
     applied.current = true;
-    if (!started) setProject(props.initialProjectId, taskProject);
+    if (started) return;
+    if (props.initialTaskId) setTask(props.initialTaskId, taskProject(props.initialTaskId));
+    else if (props.initialProjectId) setProject(props.initialProjectId, taskProject);
     // taskProject only reads props; running this once on mount is intended.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, started, props.initialProjectId]);
+  }, [mounted, started, props.initialProjectId, props.initialTaskId]);
 
   const settings = (
     <Popover.Root open={settingsOpen} onOpenChange={setSettingsOpen}>

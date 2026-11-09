@@ -8,14 +8,18 @@ export const DASHBOARD_SECTIONS = [
   {
     key: "attention",
     label: "Needs attention",
-    description: "Overdue work, milestones due soon, ideas to sort.",
+    description: "Next up, overdue and upcoming work, milestones, ideas to sort.",
   },
   {
     key: "today",
     label: "Today at a glance",
-    description: "Due, scheduled, habits, and focus for today.",
+    description: "Today's counts, the next time block, and habits.",
   },
-  { key: "week", label: "This week", description: "Theme, completion, habit rate, focus time." },
+  {
+    key: "week",
+    label: "This week",
+    description: "Theme, tasks done, habits kept, focus per day.",
+  },
   {
     key: "progress",
     label: "Projects & goals",

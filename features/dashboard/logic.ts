@@ -71,3 +71,26 @@ export function summarizeOverview({
   const sentence = parts.join(", ");
   return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
 }
+
+export type DaySeconds = { date: IsoDate; seconds: number };
+
+/**
+ * Sums seconds into `days` contiguous local-date buckets from `startDate`, oldest first. Each row's
+ * date is already timezone-local; rows outside the window are ignored.
+ */
+export function sumByDay(
+  rows: readonly { date: IsoDate; seconds: number }[],
+  startDate: IsoDate,
+  days: number,
+): DaySeconds[] {
+  const buckets: DaySeconds[] = Array.from({ length: days }, (_, i) => ({
+    date: addDays(startDate, i),
+    seconds: 0,
+  }));
+  const index = new Map(buckets.map((b, i) => [b.date, i]));
+  for (const row of rows) {
+    const i = index.get(row.date);
+    if (i !== undefined) buckets[i]!.seconds += row.seconds;
+  }
+  return buckets;
+}
