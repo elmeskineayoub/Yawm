@@ -5,7 +5,7 @@ export default function IdeaNotFound() {
   return (
     <EmptyState title="Idea not found">
       It may have been deleted.{" "}
-      <Link href="/inbox" className="text-accent hover:underline">
+      <Link href="/inbox" className="text-link">
         Back to the inbox
       </Link>
     </EmptyState>

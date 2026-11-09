@@ -48,7 +48,7 @@ export default async function ProjectsPage() {
     return (
       <li
         key={project.id}
-        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto]"
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_7rem]"
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2">

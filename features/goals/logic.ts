@@ -99,3 +99,40 @@ export function isGoalOverdue(
     (goal.status === "active" || goal.status === "paused")
   );
 }
+
+export type HeadlineProgress = {
+  kind: "target" | "milestones" | "tasks";
+  percent: number;
+  /** "27/40 customers", "2 of 5 milestones", "4 of 9 tasks". */
+  text: string;
+};
+
+/**
+ * The one progress figure to show where a goal gets a single line (goal list, Dashboard): the
+ * measurable target first (it is the goal's own definition of done), then milestones, then linked
+ * tasks. Null when the goal has nothing to measure yet. The goal page shows every signal.
+ */
+export function headlineProgress({
+  measure,
+  milestones,
+  work,
+}: GoalProgress): HeadlineProgress | null {
+  if (measure) {
+    return {
+      kind: "target",
+      percent: measure.percent,
+      text: `${measure.current}/${measure.target}${measure.unit ? ` ${measure.unit}` : ""}`,
+    };
+  }
+  if (milestones.total > 0) {
+    return {
+      kind: "milestones",
+      percent: milestones.percent,
+      text: `${milestones.done} of ${milestones.total} milestones`,
+    };
+  }
+  if (work.total > 0) {
+    return { kind: "tasks", percent: work.percent, text: `${work.done} of ${work.total} tasks` };
+  }
+  return null;
+}

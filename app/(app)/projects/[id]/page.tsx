@@ -71,7 +71,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               {goal && (
                 <span>
                   {area ? "› " : ""}Goal:{" "}
-                  <Link href={`/goals/${goal.id}`} className="text-accent hover:underline">
+                  <Link href={`/goals/${goal.id}`} className="text-link">
                     {goal.title}
                   </Link>
                 </span>
@@ -119,7 +119,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               title="Toward a goal"
               divider
               actions={
-                <Link href={`/goals/${goal.id}`} className="text-accent hover:underline">
+                <Link href={`/goals/${goal.id}`} className="text-link">
                   Open goal
                 </Link>
               }
@@ -165,7 +165,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             count={notes.length || undefined}
             divider
             actions={
-              <Link href="/notes" className="text-accent hover:underline">
+              <Link href="/notes" className="text-link">
                 All notes
               </Link>
             }
@@ -207,10 +207,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             title="Focus time"
             variant="label"
             actions={
-              <Link
-                href={`/focus?project=${project.id}`}
-                className="text-xs text-accent hover:underline"
-              >
+              <Link href={`/focus?project=${project.id}`} className="text-xs text-link">
                 Focus on this project
               </Link>
             }

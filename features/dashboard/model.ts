@@ -1,5 +1,6 @@
 import type { ProjectFocusTotals } from "@/features/focus/logic";
 import type { FocusSummary } from "@/features/focus/queries";
+import { headlineProgress } from "@/features/goals/logic";
 import type { GoalSummary, MilestoneDue } from "@/features/goals/queries";
 import { isDone, streakText } from "@/features/habits/logic";
 import type { HabitSummary } from "@/features/habits/queries";
@@ -235,22 +236,13 @@ function habitLines(habits: HabitSummary[]): HabitLine[] {
 }
 
 function goalLine(goal: GoalSummary): GoalLine {
-  const { measure, milestones, work } = goal.progress;
-  let percent = work.percent;
-  let progressLabel = `${work.done} of ${work.total} tasks`;
-  if (measure) {
-    percent = measure.percent;
-    progressLabel = `${measure.current}/${measure.target}${measure.unit ? ` ${measure.unit}` : ""}`;
-  } else if (milestones.total > 0) {
-    percent = milestones.percent;
-    progressLabel = `${milestones.done} of ${milestones.total} milestones`;
-  }
+  const headline = headlineProgress(goal.progress);
   return {
     id: goal.id,
     title: goal.title,
     targetDate: goal.target_date,
-    percent,
-    progressLabel,
+    percent: headline?.percent ?? 0,
+    progressLabel: headline?.text ?? "Nothing to measure yet",
     next: goal.next ? { title: goal.next.title, dueDate: goal.next.due_date } : null,
   };
 }

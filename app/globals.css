@@ -200,23 +200,6 @@ body {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
-
-  /*
-   * Text links must not rely on colour alone (WCAG 1.4.1), and in this neutral palette the accent
-   * is close to the text colour: every text link (accent colour, underline on hover) keeps a soft
-   * underline, and any accent link inside running text does too. Navigation items, chips, and
-   * buttons don't use this pattern and keep their own styling.
-   */
-  a.text-accent.hover\:underline,
-  p a.text-accent {
-    text-decoration-line: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
-    text-underline-offset: 2px;
-  }
-  a.text-accent.hover\:underline:hover,
-  p a.text-accent:hover {
-    text-decoration-color: currentColor;
-  }
 }
 
 ::selection {
@@ -256,6 +239,24 @@ select.control {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+}
+
+/*
+ * Text links. Links must not rely on colour alone (WCAG 1.4.1), and the accent is close to the
+ * text colour, so every text link keeps a soft underline at rest that firms up on hover. Use this
+ * for links in running or secondary text; titles in lists keep their own hover underline, and
+ * navigation items, chips, and buttons have their own styling.
+ */
+@utility text-link {
+  color: var(--accent);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms ease-out;
+  &:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -369,6 +370,10 @@ select.control {
 .planner-calendar .fc .fc-list .planner-block-title {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+/* In the agenda list a deadline already starts with its ◆ marker; drop FullCalendar's dot. */
+.planner-calendar .fc tr.planner-deadline .fc-list-event-dot {
+  visibility: hidden;
 }
 .planner-calendar .fc .planner-deadline-done .planner-deadline-label {
   text-decoration: line-through;

@@ -130,6 +130,12 @@ const formatters = {
     year: "numeric",
   }),
   short: new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric" }),
+  shortYear: new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }),
   month: new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", year: "numeric" }),
 };
 
@@ -150,13 +156,18 @@ export function formatPeriod(period: PlanPeriod, start: IsoDate): string {
   }
 }
 
-/** "Today", "Tomorrow", "Yesterday", or a short date, relative to `today`. */
+/**
+ * "Today", "Tomorrow", "Yesterday", or a short date relative to `today`: "Nov 2" this year,
+ * "Jan 2, 2027" in another (no weekday, so it fits in badges and row columns).
+ */
 export function relativeDateLabel(date: IsoDate, today: IsoDate): string {
   const diff = daysBetween(today, date);
   if (diff === 0) return "Today";
   if (diff === 1) return "Tomorrow";
   if (diff === -1) return "Yesterday";
-  return date.slice(0, 4) === today.slice(0, 4) ? formatDate(date, "short") : formatDate(date);
+  return formatters[date.slice(0, 4) === today.slice(0, 4) ? "short" : "shortYear"].format(
+    toUtc(date),
+  );
 }
 
 /** The calendar date of a UTC instant (e.g. `created_at`) in the user's timezone. */

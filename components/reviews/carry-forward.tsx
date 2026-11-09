@@ -133,7 +133,7 @@ export function CarryForward({
       {total > tasks.length && (
         <p className="mt-2 text-xs text-muted-foreground">
           Showing the first {tasks.length} of {total}.{" "}
-          <Link href="/tasks" className="text-accent hover:underline">
+          <Link href="/tasks" className="text-link">
             See all in Tasks
           </Link>
         </p>

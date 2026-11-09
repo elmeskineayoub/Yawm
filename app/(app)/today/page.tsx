@@ -103,7 +103,7 @@ export default async function TodayPage() {
         title="Priorities"
         count={data.priorities.length || undefined}
         actions={
-          <Link href={dayHref} className="text-accent hover:underline">
+          <Link href={dayHref} className="text-link">
             {data.dayPlanId ? "Edit day plan" : "Plan the day"}
           </Link>
         }
@@ -111,7 +111,7 @@ export default async function TodayPage() {
         {data.priorities.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No priorities yet. Pick one to three things that matter most in the{" "}
-            <Link href={dayHref} className="text-accent hover:underline">
+            <Link href={dayHref} className="text-link">
               day plan
             </Link>
             .
@@ -182,7 +182,7 @@ export default async function TodayPage() {
           title="Habits"
           count={`${habitsDone}/${habits.length}`}
           actions={
-            <Link href="/habits" className="text-accent hover:underline">
+            <Link href="/habits" className="text-link">
               All habits
             </Link>
           }
@@ -216,7 +216,7 @@ export default async function TodayPage() {
         title="Schedule"
         variant="label"
         actions={
-          <Link href={dayHref} className="text-accent hover:underline">
+          <Link href={dayHref} className="text-link">
             Open in Planner
           </Link>
         }

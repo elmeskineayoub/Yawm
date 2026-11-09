@@ -7,8 +7,11 @@ describe("contentWidthFor", () => {
   it("gives the Planner the full width", () => {
     expect(contentWidthFor("/planner")).toBe("wide");
   });
+  it("keeps notes in their two-pane width when one is open", () => {
+    expect(contentWidthFor("/notes/7c1a")).toBe("standard");
+  });
+
   it("keeps text detail pages at a reading measure", () => {
-    expect(contentWidthFor("/notes/7c1a")).toBe("reading");
     expect(contentWidthFor("/journal/7c1a")).toBe("reading");
     expect(contentWidthFor("/inbox/7c1a")).toBe("reading");
     expect(contentWidthFor("/tasks/7c1a")).toBe("reading");

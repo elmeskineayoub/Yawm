@@ -1,6 +1,7 @@
 # Yawm UX Redesign — Audit and Plan
 
 **Status:** Stages 1–3 complete (audit, foundation, core experience: task panel and rows, Today, Dashboard, Planner, Tasks, Projects), 2026-11-05. Stage 4 (Habits, Goals & Vision, Inbox, Notes, Journal, Reviews) next. Carry-over: wrap the remaining server-action calls on not-yet-redesigned screens in safeAction (lib/safe-action.ts) as each is redesigned.
+**Consistency pass (2026-11-10):** every route rendered against a seeded local stack (light/dark × 1440/768/390) and aligned to the Dashboard: one `text-link` utility for all text links; one meter (`components/ui/meter.tsx`) behind every progress bar; `StandaloneShell` for sign-in, setup, and the new root 404; goal progress shows the measurable target first everywhere (`headlineProgress`); other-year dates as "Jan 2, 2027"; inline-edit text aligned with its label; measurable habit rows keep titles aligned; open notes keep the two-pane width; touch-size Inbox actions; muted default life areas for new accounts (migration `20261110090000`).
 **Scope:** UI/UX only. The backend, schema, RLS, and data access stay as they are unless a step
 below says otherwise. `REQUIREMENTS.md` remains the product source of truth; where this document
 and the requirements disagree, the requirements win.

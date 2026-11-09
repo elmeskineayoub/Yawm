@@ -1,24 +1,37 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { GOAL_STATUSES, isGoalOverdue } from "@/features/goals/logic";
+import { Meter } from "@/components/ui/meter";
+import { GOAL_STATUSES, headlineProgress, isGoalOverdue } from "@/features/goals/logic";
 import type { GoalSummary } from "@/features/goals/queries";
 import { formatDate, type IsoDate } from "@/lib/dates";
 
-function Meter({ label, percent, text }: { label: string; percent: number; text: string }) {
+/** A shared meter with its value as text beside it. */
+function LabelledMeter({
+  label,
+  percent,
+  text,
+  fixed = false,
+}: {
+  label: string;
+  percent: number;
+  text: string;
+  /** In list rows: a fixed-length bar, so bars line up whatever the label's length. */
+  fixed?: boolean;
+}) {
   return (
     <div className="flex items-center gap-2">
-      <div
-        role="progressbar"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-valuetext={text}
-        className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-muted"
+      <Meter
+        percent={percent}
+        label={label}
+        valueText={text}
+        className={fixed ? "w-20 shrink-0" : "flex-1"}
+      />
+      <span
+        title={text}
+        className="min-w-0 truncate text-xs whitespace-nowrap text-muted-foreground tabular-nums"
       >
-        <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
-      </div>
-      <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">{text}</span>
+        {text}
+      </span>
     </div>
   );
 }
@@ -29,21 +42,21 @@ export function GoalMeters({ goal }: { goal: Pick<GoalSummary, "title" | "progre
   return (
     <div className="space-y-1.5">
       {milestones.total > 0 && (
-        <Meter
+        <LabelledMeter
           label={`${goal.title}: milestones`}
           percent={milestones.percent}
           text={`${milestones.done}/${milestones.total} milestones`}
         />
       )}
       {measure && (
-        <Meter
+        <LabelledMeter
           label={`${goal.title}: target`}
           percent={measure.percent}
           text={`${measure.current}/${measure.target}${measure.unit ? ` ${measure.unit}` : ""}`}
         />
       )}
       {work.total > 0 && (
-        <Meter
+        <LabelledMeter
           label={`${goal.title}: linked tasks`}
           percent={work.percent}
           text={`${work.done}/${work.total} tasks`}
@@ -53,31 +66,12 @@ export function GoalMeters({ goal }: { goal: Pick<GoalSummary, "title" | "progre
   );
 }
 
-/** The single most telling progress signal for a list row: milestones, then target, then work. */
+/** The single most telling progress signal for a list row (see headlineProgress). */
 function primaryMeter(goal: GoalSummary) {
-  const { milestones, measure, work } = goal.progress;
-  if (milestones.total > 0) {
-    return {
-      label: `${goal.title}: milestones`,
-      percent: milestones.percent,
-      text: `${milestones.done}/${milestones.total} milestones`,
-    };
-  }
-  if (measure) {
-    return {
-      label: `${goal.title}: target`,
-      percent: measure.percent,
-      text: `${measure.current}/${measure.target}${measure.unit ? ` ${measure.unit}` : ""}`,
-    };
-  }
-  if (work.total > 0) {
-    return {
-      label: `${goal.title}: linked tasks`,
-      percent: work.percent,
-      text: `${work.done}/${work.total} tasks`,
-    };
-  }
-  return null;
+  const headline = headlineProgress(goal.progress);
+  if (!headline) return null;
+  const what = { target: "target", milestones: "milestones", tasks: "linked tasks" }[headline.kind];
+  return { label: `${goal.title}: ${what}`, percent: headline.percent, text: headline.text };
 }
 
 /**
@@ -89,7 +83,7 @@ export function GoalRow({ goal, today }: { goal: GoalSummary; today: IsoDate }) 
   const meter = primaryMeter(goal);
   const nextOverdue = goal.next?.due_date != null && goal.next.due_date < today;
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)] gap-x-6 gap-y-1.5 py-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
+    <li className="grid grid-cols-[minmax(0,1fr)] gap-x-6 gap-y-1.5 py-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <Link
@@ -137,7 +131,7 @@ export function GoalRow({ goal, today }: { goal: GoalSummary; today: IsoDate }) 
       </div>
       <div className="self-center">
         {meter ? (
-          <Meter label={meter.label} percent={meter.percent} text={meter.text} />
+          <LabelledMeter label={meter.label} percent={meter.percent} text={meter.text} fixed />
         ) : (
           <span className="text-xs text-muted-foreground">Nothing to measure yet</span>
         )}

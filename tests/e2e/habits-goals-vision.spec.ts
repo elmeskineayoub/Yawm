@@ -58,7 +58,9 @@ test("habits: track, rest, correct history, and see them in the Planner", async 
       page.getByRole("checkbox", { name: "Mark “Morning walk” not done" }),
     ).toBeChecked();
     // The tick is optimistic; the streak is rendered by the server once the save is confirmed.
-    const walk = page.getByRole("listitem").filter({ hasText: "Morning walk" });
+    // Scoped to the habit list: the "“Morning walk” added" toast is a list item too.
+    const dueToday = page.getByRole("list", { name: "Habits due today" });
+    const walk = dueToday.getByRole("listitem").filter({ hasText: "Morning walk" });
     await expect(walk).toContainText("1-day streak");
     await page.reload();
     await expect(walk).toContainText("1-day streak");
@@ -74,7 +76,12 @@ test("habits: track, rest, correct history, and see them in the Planner", async 
     // The 7-day strip is server-rendered: it shows the rest day once the save is confirmed.
     await expect(page.getByRole("list", { name: "Read, last 7 days" })).toContainText("rest day");
     await page.reload();
-    await expect(page.getByRole("listitem").filter({ hasText: "Read" })).toContainText("Rest day");
+    await expect(
+      page
+        .getByRole("list", { name: "Habits due today" })
+        .getByRole("listitem")
+        .filter({ hasText: "Read" }),
+    ).toContainText("Rest day");
   });
 
   await test.step("make a habit measurable and log an amount", async () => {
@@ -206,9 +213,8 @@ test("goals: milestones, linked work, year outcomes, and ideas", async ({ page }
     await page.getByRole("button", { name: "Convert “Visit Andalusia”" }).click();
     await page.getByRole("menuitem", { name: "Convert “Visit Andalusia” to a goal" }).click();
     await expect(page).toHaveURL(/\/goals\//);
-    await expect(page.getByRole("button", { name: "Goal", exact: true })).toHaveText(
-      "Visit Andalusia",
-    );
+    // The goal page shows its title as the heading (the name is edited under Details).
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Visit Andalusia");
   });
 });
 

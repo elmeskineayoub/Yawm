@@ -81,3 +81,32 @@ describe("overdue goals", () => {
     expect(isGoalOverdue({ target_date: null, status: "active" }, "2026-10-12")).toBe(false);
   });
 });
+
+describe("headlineProgress", () => {
+  const none = { done: 0, total: 0, percent: 0 };
+  it("prefers the measurable target, then milestones, then tasks", async () => {
+    const { headlineProgress } = await import("@/features/goals/logic");
+    expect(
+      headlineProgress({
+        measure: { current: 27, target: 40, unit: "customers", percent: 68 },
+        milestones: { done: 0, total: 1, percent: 0 },
+        work: none,
+      }),
+    ).toEqual({ kind: "target", percent: 68, text: "27/40 customers" });
+    expect(
+      headlineProgress({
+        measure: null,
+        milestones: { done: 2, total: 5, percent: 40 },
+        work: none,
+      }),
+    ).toEqual({ kind: "milestones", percent: 40, text: "2 of 5 milestones" });
+    expect(
+      headlineProgress({
+        measure: null,
+        milestones: none,
+        work: { done: 4, total: 9, percent: 44 },
+      }),
+    ).toEqual({ kind: "tasks", percent: 44, text: "4 of 9 tasks" });
+    expect(headlineProgress({ measure: null, milestones: none, work: none })).toBeNull();
+  });
+});

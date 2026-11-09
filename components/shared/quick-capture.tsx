@@ -246,7 +246,7 @@ function CaptureForm({ today, onClose }: { today: IsoDate | null; onClose: () =>
           Draft restored from earlier.
           <button
             type="button"
-            className="text-accent underline-offset-2 hover:underline"
+            className="text-link"
             onClick={() => {
               const cleared = { ...EMPTY_DRAFT, kind };
               setDraft(cleared);

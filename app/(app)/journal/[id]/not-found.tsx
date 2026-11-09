@@ -5,7 +5,7 @@ export default function JournalEntryNotFound() {
   return (
     <EmptyState title="Entry not found">
       It may have been deleted.{" "}
-      <Link href="/journal" className="text-accent hover:underline">
+      <Link href="/journal" className="text-link">
         Back to the journal
       </Link>
     </EmptyState>

@@ -130,7 +130,7 @@ export function DateNavigator({
       </table>
       <p className="mt-2 flex justify-between text-xs">
         {month !== thisMonth ? (
-          <Link href={`/journal?month=${thisMonth}`} className="text-accent hover:underline">
+          <Link href={`/journal?month=${thisMonth}`} className="text-link">
             This month
           </Link>
         ) : (

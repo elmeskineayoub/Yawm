@@ -164,6 +164,8 @@ npm run db:types   # regenerate types/database.ts after changing migrations
 npm run db:stop
 ```
 
+**Design review data (local only):** `node scripts/seed-design.mjs` (re)creates `design@example.test` / `design-preview-only` with a synthetic workspace covering every module (areas, goals and milestones, projects, ~25 open and ~29 done tasks with subtasks, a dependency and a recurring task, habits with two months of logs, year→day plans, time blocks, focus sessions, ideas, notes, journal entries, vision cards with images, a weekly review). Dates are relative to today; `SEED_TZ=Pacific/Kiritimati` sets the profile's timezone so that "now" falls mid-day for screenshots. It refuses to run unless `supabase status` reports a loopback URL, and it backdates completion times directly in the local database container (the tasks trigger always stamps `completed_at` with `now()`), so it needs Docker access.
+
 Storage is required from Phase 4 (vision-board images). To skip the services the app does not use (faster start, less disk):
 `npx supabase start -x realtime,imgproxy,edge-runtime,logflare,vector,supavisor,studio,postgres-meta`
 
@@ -208,6 +210,15 @@ Migrations are never applied to a hosted project automatically (not by CI and no
 1. **Back up first.** The Free plan has no managed backups you can restore yourself. Run `npx supabase db dump --linked -f backup-schema.sql` and `npx supabase db dump --linked --data-only -f backup-data.sql`, and keep the files outside the repository. They contain your personal data.
 2. `npx supabase db push --dry-run` lists the pending migrations without changing anything.
 3. `npx supabase db push` applies the pending migrations in order, each in its own transaction, and records them in `supabase_migrations.schema_migrations` so they never run twice.
+
+What `20261110090000_muted_default_areas.sql` does to a hosted database:
+
+- It **replaces** the body of `private.handle_new_user()` (the signup trigger function) with an
+  identical one whose four default life areas use muted colours (slate, sage, ochre, warm taupe)
+  instead of violet, sky blue, bright green, and amber. `create or replace` keeps the function's
+  owner, privileges, and trigger. No tables, rows, policies, or grants change.
+- Only accounts created afterwards are affected; existing areas keep their colours (change them in
+  Settings → Life areas). Undo: a new migration restoring the previous colours.
 
 What Phase 5's migrations do to a hosted database:
 

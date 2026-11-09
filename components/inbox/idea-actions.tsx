@@ -58,7 +58,8 @@ const TARGETS = [
 
 const iconButton = (visible: boolean) =>
   cn(
-    "inline-flex h-7 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground transition-opacity duration-150 hover:bg-surface-muted hover:text-foreground disabled:opacity-50",
+    // Touch screens (no hover) get full-size targets; pointer screens keep the compact row.
+    "inline-flex h-7 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground transition-opacity duration-150 hover:bg-surface-muted hover:text-foreground disabled:opacity-50 [@media(hover:none)]:h-11 [@media(hover:none)]:min-w-11 [@media(hover:none)]:justify-center",
     !visible &&
       "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-100",
   );

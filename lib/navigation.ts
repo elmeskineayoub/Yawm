@@ -93,6 +93,8 @@ export type ContentWidth = "wide" | "standard" | "reading";
  */
 export function contentWidthFor(pathname: string): ContentWidth {
   if (isActivePath(pathname, "/planner")) return "wide";
-  if (/^\/(notes|journal|inbox|tasks)\/[^/]+$/.test(pathname)) return "reading";
+  // Notes open in the same two panes as the index (the editor sets its own measure), so only
+  // single-column detail pages narrow to a reading width.
+  if (/^\/(journal|inbox|tasks)\/[^/]+$/.test(pathname)) return "reading";
   return "standard";
 }

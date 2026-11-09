@@ -148,10 +148,7 @@ export default async function GoalPage({ params }: { params: Promise<{ id: strin
             title="Vision"
             divider
             actions={
-              <Link
-                href={`/goals/vision?goal=${goal.id}`}
-                className="text-sm text-accent hover:underline"
-              >
+              <Link href={`/goals/vision?goal=${goal.id}`} className="text-sm text-link">
                 {cards.length ? "Open on the board" : "Add to the vision board"}
               </Link>
             }

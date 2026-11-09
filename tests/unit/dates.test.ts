@@ -89,7 +89,7 @@ describe("periods", () => {
     expect(relativeDateLabel("2026-10-13", "2026-10-12")).toBe("Tomorrow");
     expect(relativeDateLabel("2026-10-11", "2026-10-12")).toBe("Yesterday");
     expect(relativeDateLabel("2026-11-02", "2026-10-12")).toBe("Nov 2");
-    expect(relativeDateLabel("2027-01-02", "2026-10-12")).toBe("Sat, Jan 2, 2027");
+    expect(relativeDateLabel("2027-01-02", "2026-10-12")).toBe("Jan 2, 2027");
   });
 });
 

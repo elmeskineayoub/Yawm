@@ -172,7 +172,7 @@ function FocusPanel({
             >
               Habits
             </h2>
-            <Link href="/habits" className="text-xs text-accent hover:underline">
+            <Link href="/habits" className="text-xs text-link">
               All habits
             </Link>
           </div>

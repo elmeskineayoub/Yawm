@@ -27,7 +27,7 @@ export function DayAgenda({
     return (
       <p className="text-sm text-muted-foreground">
         Nothing scheduled.{" "}
-        <Link href={dayHref} className="text-accent hover:underline">
+        <Link href={dayHref} className="text-link">
           Give your priorities time on the timeline
         </Link>
         .
@@ -62,7 +62,7 @@ export function DayAgenda({
                 <span className="w-[4.75rem] shrink-0 tabular-nums">{time(item.start)}</span>
                 <span className="flex flex-1 items-center justify-between gap-2 rounded-md border border-dashed border-border px-2 py-1">
                   <span>Free · {formatMinutes(item.minutes)}</span>
-                  <Link href={dayHref} className="text-accent hover:underline">
+                  <Link href={dayHref} className="text-link">
                     Plan it
                   </Link>
                 </span>

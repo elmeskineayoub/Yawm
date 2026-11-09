@@ -14,7 +14,7 @@ import { relativeDateLabel, type IsoDate } from "@/lib/dates";
 import { formatTimeRange } from "@/lib/dates/zoned";
 import { cn } from "@/lib/utils";
 import { FocusWeekChart } from "./focus-week-chart";
-import { Meter } from "./meter";
+import { Meter } from "@/components/ui/meter";
 import { NextUp } from "./next-up";
 
 /** How many tasks each attention group lists before pointing elsewhere. */
@@ -32,8 +32,7 @@ function targetLabel(date: IsoDate, today: IsoDate): string {
   return MONTH_YEAR.format(new Date(`${date}T00:00:00Z`));
 }
 
-const linkClass =
-  "text-accent underline decoration-border underline-offset-4 hover:decoration-current";
+const linkClass = "text-link";
 
 function MoreLink({ count, href, label }: { count: number; href: string; label: string }) {
   if (count <= 0) return null;

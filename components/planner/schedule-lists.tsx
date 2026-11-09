@@ -114,7 +114,7 @@ export function UnscheduledTray({
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
-              className="mt-1 px-1 text-xs text-accent hover:underline"
+              className="mt-1 px-1 text-xs text-link"
             >
               {showAll ? "Show fewer" : `Show all ${tasks.length}`}
             </button>
@@ -181,7 +181,7 @@ export function RescheduleList({
           type="button"
           onClick={() => setShowAll((v) => !v)}
           aria-expanded={showAll}
-          className="mt-1 text-xs text-accent hover:underline"
+          className="mt-1 text-xs text-link"
         >
           {showAll ? "Show fewer" : `Show all ${items.length}`}
         </button>

@@ -13,13 +13,13 @@ export default function AuthErrorPage() {
         description="It may have expired or already been used. Links are valid for one hour."
       />
       <div className="flex flex-col gap-2 text-sm">
-        <Link href="/login" className="text-accent hover:underline">
+        <Link href="/login" className="text-link">
           Sign in
         </Link>
-        <Link href="/forgot-password" className="text-accent hover:underline">
+        <Link href="/forgot-password" className="text-link">
           Request a new password reset link
         </Link>
-        <Link href="/sign-up" className="text-accent hover:underline">
+        <Link href="/sign-up" className="text-link">
           Sign up again to get a new confirmation link
         </Link>
       </div>

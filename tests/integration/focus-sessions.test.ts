@@ -124,7 +124,7 @@ describe("logging focus sessions", () => {
   it("refuses a task from another workspace", async () => {
     expect(
       await logFocusSessionInWorkspace(alice.client, ws, session({ task_id: bobTask })),
-    ).toEqual({ ok: false, error: "That task is not in this workspace." });
+    ).toEqual({ ok: false, error: "That project or task is not in this workspace." });
   });
 });
 

@@ -5,7 +5,7 @@ export default function ProjectNotFound() {
   return (
     <EmptyState title="Project not found">
       It may have been deleted.{" "}
-      <Link href="/projects" className="text-accent hover:underline">
+      <Link href="/projects" className="text-link">
         Back to projects
       </Link>
     </EmptyState>

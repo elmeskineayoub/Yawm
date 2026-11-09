@@ -32,8 +32,11 @@ export function ProfileForm({
   );
   const errors = state.status === "error" ? state.fieldErrors : undefined;
   const timezones = useMemo(() => {
-    const zones = Intl.supportedValuesOf("timeZone");
-    return zones.includes(profile.timezone) ? zones : [profile.timezone, ...zones];
+    // Recent ICU versions list only canonical zones and leave out plain "UTC", which is still a
+    // valid choice (and the default for new accounts), so it is always offered first.
+    const zones = Intl.supportedValuesOf("timeZone").filter((z) => z !== "UTC");
+    const withUtc = ["UTC", ...zones];
+    return withUtc.includes(profile.timezone) ? withUtc : [profile.timezone, ...withUtc];
   }, [profile.timezone]);
 
   return (

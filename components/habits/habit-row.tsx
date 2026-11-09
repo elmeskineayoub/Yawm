@@ -113,16 +113,26 @@ export function HabitRow({
           {done && <Check aria-hidden className="size-3" strokeWidth={3} />}
         </button>
       ) : (
-        <AmountInput
-          key={`${log?.value ?? ""}`}
-          title={habit.title}
-          value={log?.value ?? null}
-          target={habit.target_value ?? 1}
-          unit={habit.unit}
-          done={done}
-          disabled={pending || future}
-          onSave={(value) => save(value === null ? { type: "clear" } : { type: "value", value })}
-        />
+        // Same slot and size as the checkbox, so every title lines up; the amount field (right) is
+        // the control. Filled with a check once the target is met, a partial fill until then.
+        <span
+          aria-hidden
+          className={cn(
+            "relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-md border-2 border-muted-foreground/60",
+            done && "border-accent bg-accent text-accent-foreground",
+          )}
+        >
+          {done ? (
+            <Check className="size-3" strokeWidth={3} />
+          ) : (
+            <span
+              className="absolute inset-x-0 bottom-0 bg-accent/35"
+              style={{
+                height: `${Math.min(100, Math.round(((log?.value ?? 0) / (habit.target_value || 1)) * 100))}%`,
+              }}
+            />
+          )}
+        </span>
       )}
       <div className="min-w-0 flex-1">
         <Link
@@ -141,6 +151,18 @@ export function HabitRow({
           {rest && " · Rest day"}
         </p>
       </div>
+      {habit.kind === "measurable" && (
+        <AmountInput
+          key={`${log?.value ?? ""}`}
+          title={habit.title}
+          value={log?.value ?? null}
+          target={habit.target_value ?? 1}
+          unit={habit.unit}
+          done={done}
+          disabled={pending || future}
+          onSave={(value) => save(value === null ? { type: "clear" } : { type: "value", value })}
+        />
+      )}
       {showStrip && (
         <div className="hidden sm:block">
           <RecentStrip recent={summary.recent} title={habit.title} />

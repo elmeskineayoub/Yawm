@@ -109,7 +109,7 @@ export default async function ReviewsPage({
               <ChevronRight aria-hidden className="size-4" />
             </Link>
             {weekStart !== thisWeek && (
-              <Link href="/reviews" className="text-accent hover:underline">
+              <Link href="/reviews" className="text-link">
                 This week
               </Link>
             )}

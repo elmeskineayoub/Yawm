@@ -90,7 +90,7 @@ export default async function VisionPage({
         {goalName && (
           <p className="text-sm">
             Showing cards for <span className="font-medium">{goalName}</span> ·{" "}
-            <Link href={href({ area })} className="text-accent hover:underline">
+            <Link href={href({ area })} className="text-link">
               Show all goals
             </Link>
           </p>

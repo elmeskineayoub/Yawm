@@ -86,7 +86,9 @@ export function InlineEdit({
           ? error
           : "";
 
-  const editorClass = "mt-1 block w-full rounded-md border border-accent bg-background px-2 py-1.5";
+  // -mx-2 + the wider width keep the text on the label's left edge while the box keeps its padding.
+  const editorClass =
+    "mt-1 -mx-2 block w-[calc(100%+1rem)] rounded-md border border-accent bg-background px-2 py-1.5";
 
   return (
     <div className={className}>
@@ -148,7 +150,7 @@ export function InlineEdit({
           type="button"
           onClick={() => setEditing(true)}
           className={cn(
-            "group mt-1 flex w-full items-start justify-between gap-2 rounded-md px-2 py-1.5 text-left hover:bg-surface-muted",
+            "group mt-1 -mx-2 flex w-[calc(100%+1rem)] items-start justify-between gap-2 rounded-md px-2 py-1.5 text-left hover:bg-surface-muted",
             multiline ? "text-sm whitespace-pre-wrap" : "text-base font-medium",
             !saved && "font-normal text-muted-foreground",
           )}

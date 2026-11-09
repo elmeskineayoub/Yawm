@@ -40,7 +40,7 @@ export function JournalPromptCard({ prompt, today }: { prompt: string; today: st
         >
           {pending ? "Starting…" : "Write about this"}
         </Button>
-        <Link href="/journal" className="text-sm text-accent hover:underline">
+        <Link href="/journal" className="text-sm text-link">
           Open journal
         </Link>
       </div>

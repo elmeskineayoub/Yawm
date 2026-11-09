@@ -417,7 +417,7 @@ function ProjectContext({
       title="Counts toward"
       variant="label"
       actions={
-        <Link href={`/projects/${projectId}`} className="text-xs text-accent hover:underline">
+        <Link href={`/projects/${projectId}`} className="text-xs text-link">
           Open project
         </Link>
       }

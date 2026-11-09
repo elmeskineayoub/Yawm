@@ -35,7 +35,9 @@ test("capture an idea, plan it, and get it done", async ({ page }) => {
   });
 
   await test.step("add tasks to the project and see progress", async () => {
-    await page.getByRole("link", { name: "Open project" }).click();
+    // A converted idea links to its project from the Convert menu (Inbox redesign, 4.3).
+    await page.getByRole("button", { name: "Convert “Launch a newsletter”" }).click();
+    await page.getByRole("menuitem", { name: "Open project" }).click();
     for (const title of ["Pick a platform", "Write first issue"]) {
       await page.getByPlaceholder("Add a task to this project").fill(title);
       await page.getByRole("button", { name: "Add", exact: true }).click();

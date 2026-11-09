@@ -177,7 +177,7 @@ export function TaskDetailView({
           {detail.scheduledBlocks.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               None yet.{" "}
-              <Link href={plannerHref("day", today)} className="text-accent hover:underline">
+              <Link href={plannerHref("day", today)} className="text-link">
                 Schedule it in the Planner
               </Link>
               .
@@ -203,7 +203,7 @@ export function TaskDetailView({
           {detail.plans.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Not linked to a plan. Add it from the{" "}
-              <Link href="/planner" className="text-accent hover:underline">
+              <Link href="/planner" className="text-link">
                 Planner
               </Link>
               .

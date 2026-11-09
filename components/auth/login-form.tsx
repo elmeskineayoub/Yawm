@@ -34,7 +34,7 @@ export function LoginForm({ next }: { next?: string | undefined }) {
         errors={fieldErrors?.password}
       />
       <div className="text-right text-sm">
-        <Link href="/forgot-password" className="text-accent hover:underline">
+        <Link href="/forgot-password" className="text-link">
           Forgot password?
         </Link>
       </div>
