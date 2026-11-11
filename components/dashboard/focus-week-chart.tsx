@@ -33,7 +33,7 @@ export function FocusWeekChart({ days }: { days: FocusDay[] }) {
             >
               <span
                 className={cn(
-                  "pointer-events-none mb-1 text-[0.6875rem] text-muted-foreground tabular-nums",
+                  "pointer-events-none mb-1 text-caption text-muted-foreground tabular-nums",
                   d.isToday
                     ? "opacity-100"
                     : "opacity-0 transition-opacity group-hover:opacity-100",
@@ -41,10 +41,10 @@ export function FocusWeekChart({ days }: { days: FocusDay[] }) {
               >
                 {d.isFuture ? "" : formatDuration(d.seconds)}
               </span>
-              <div className="flex h-full w-full max-w-5 items-end overflow-hidden rounded-t-[4px] bg-surface-muted">
+              <div className="flex h-full w-full max-w-5 items-end overflow-hidden rounded-t-bar bg-surface-muted">
                 <div
                   className={cn(
-                    "w-full rounded-t-[4px] transition-[height] duration-300",
+                    "w-full rounded-t-bar transition-[height] duration-300",
                     d.isToday ? "bg-accent" : "bg-muted-foreground/60",
                   )}
                   style={{ height: `${height}%` }}
@@ -59,7 +59,7 @@ export function FocusWeekChart({ days }: { days: FocusDay[] }) {
           <span
             key={d.date}
             className={cn(
-              "flex-1 text-center text-[0.6875rem]",
+              "flex-1 text-center text-caption",
               d.isToday ? "font-semibold text-foreground" : "text-muted-foreground",
             )}
           >

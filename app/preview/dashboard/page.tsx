@@ -28,7 +28,13 @@ export default function DashboardPreviewPage() {
         timezone={FIXTURE_TIMEZONE}
         dateLabel={formatDate(FIXTURE_TODAY)}
         hidden={new Set()}
-        reflect={<JournalPromptCard prompt={dailyPrompt(FIXTURE_TODAY)} today={FIXTURE_TODAY} />}
+        reflect={
+          <JournalPromptCard
+            prompt={dailyPrompt(FIXTURE_TODAY)}
+            today={FIXTURE_TODAY}
+            variant="secondary"
+          />
+        }
       />
     </AppShell>
   );

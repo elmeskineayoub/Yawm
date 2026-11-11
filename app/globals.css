@@ -146,6 +146,29 @@
   --text-label--line-height: 1rem;
   --text-prose: 1.0625rem;
   --text-prose--line-height: 1.75rem;
+
+  /*
+   * Design-standards tokens (docs/DESIGN_TOKENS.md). Named steps so pages reference a role, not a
+   * raw value: `text-display`, `text-h2`, `text-caption`, `p-card`, `gap-gutter`, `space-y-section`,
+   * `rounded-card`.
+   */
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.125rem;
+  --text-h2: 1.125rem;
+  --text-h2--line-height: 1.5rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+
+  --spacing-card: 1.5rem; /* card padding, desktop (min 24px) */
+  --spacing-card-sm: 1rem; /* card padding, phone (min 16px) */
+  --spacing-gutter: 1.5rem; /* gap between cards in a grid */
+  --spacing-section: 4rem; /* between page sections, desktop (min 64px) */
+  --spacing-section-sm: 3rem; /* between page sections, phone (min 48px) */
+  --spacing-tap: 2.75rem; /* minimum touch target (44px) */
+
+  --radius-card: 0.5rem;
+  --radius-control: 0.375rem;
+  --radius-bar: 0.25rem;
 }
 
 html {
@@ -256,6 +279,19 @@ select.control {
   transition: text-decoration-color 150ms ease-out;
   &:hover {
     text-decoration-color: currentColor;
+  }
+}
+
+/*
+ * A standalone link or small control that must be a full touch target on touch screens (44px),
+ * while staying compact with a mouse. Not for links inside a sentence.
+ */
+@utility tap-target {
+  @media (pointer: coarse) {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--spacing-tap);
+    min-width: var(--spacing-tap);
   }
 }
 

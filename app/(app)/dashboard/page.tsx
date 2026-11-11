@@ -89,7 +89,9 @@ export default async function DashboardPage() {
       dateLabel={formatDate(ctx.today)}
       hidden={prefs.hidden}
       customize={<CustomizeDashboard hidden={[...prefs.hidden]} available={prefs.available} />}
-      reflect={<JournalPromptCard prompt={dailyPrompt(ctx.today)} today={ctx.today} />}
+      reflect={
+        <JournalPromptCard prompt={dailyPrompt(ctx.today)} today={ctx.today} variant="secondary" />
+      }
     />
   );
 }

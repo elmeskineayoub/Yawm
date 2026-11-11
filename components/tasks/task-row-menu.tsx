@@ -27,12 +27,15 @@ export function TaskRowMenu({
   dueDate,
   today,
   finished,
+  comfortable = false,
 }: {
   taskId: string;
   title: string;
   dueDate: IsoDate | null;
   today: IsoDate;
   finished: boolean;
+  /** Give the trigger a 44px hit area on touch screens. */
+  comfortable?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -69,7 +72,8 @@ export function TaskRowMenu({
           aria-label={`Actions for “${title}”`}
           disabled={pending}
           className={cn(
-            "rounded-md p-1 text-muted-foreground transition-opacity duration-150 hover:bg-surface-muted hover:text-foreground",
+            "flex items-center justify-center rounded-md p-1 text-muted-foreground transition-opacity duration-150 hover:bg-surface-muted hover:text-foreground",
+            comfortable && "pointer-coarse:-my-2.5 pointer-coarse:size-tap",
             // Revealed on row hover or keyboard focus; always visible on touch screens.
             "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-100",
           )}

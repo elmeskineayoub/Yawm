@@ -47,7 +47,7 @@ describe("DashboardView", () => {
     expect(screen.getByText(model.summary)).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Overdue" }).children).toHaveLength(2);
     expect(screen.getByRole("list", { name: "Due today" }).children).toHaveLength(3);
-    expect(screen.getByText("Overdue · 2")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Overdue 2" })).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument(); // ideas waiting
   });
 

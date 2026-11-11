@@ -52,7 +52,7 @@ export function CustomizeDashboard({
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className="pointer-coarse:min-h-tap">
           <SlidersHorizontal aria-hidden className="size-4" />
           Customize
         </Button>

@@ -1,5 +1,6 @@
 import { Ban, GitBranch, Lock, Repeat } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { relativeDateLabel, type IsoDate } from "@/lib/dates";
 import { isOverdue, PRIORITY_LABELS, STATUS_LABELS } from "@/features/tasks/logic";
 import type { TaskView } from "@/features/tasks/queries";
@@ -8,16 +9,23 @@ export function TaskMeta({
   task,
   today,
   showProject = true,
+  className,
 }: {
   task: TaskView;
   today: IsoDate;
   showProject?: boolean;
+  className?: string;
 }) {
   const overdue = isOverdue(task, today);
   const dueToday = task.due_date === today && task.status !== "done";
 
   return (
-    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+    <div
+      className={cn(
+        "mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground",
+        className,
+      )}
+    >
       {task.priority === "urgent" || task.priority === "high" ? (
         <Badge tone={task.priority === "urgent" ? "danger" : "warning"}>
           {PRIORITY_LABELS[task.priority]}

@@ -9,7 +9,16 @@ import { createEntry } from "@/features/journal/actions";
 import { safeAction } from "@/lib/safe-action";
 
 /** Surfaces today's reflection prompt and starts a journal entry seeded with it. */
-export function JournalPromptCard({ prompt, today }: { prompt: string; today: string }) {
+export function JournalPromptCard({
+  prompt,
+  today,
+  variant = "primary",
+}: {
+  prompt: string;
+  today: string;
+  /** "secondary" where the page already has its one primary action (the Dashboard). */
+  variant?: "primary" | "secondary";
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +34,8 @@ export function JournalPromptCard({ prompt, today }: { prompt: string; today: st
       <div className="mt-3 flex items-center gap-3">
         <Button
           size="sm"
-          className="text-sm"
+          variant={variant}
+          className="text-sm pointer-coarse:min-h-tap"
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
@@ -40,7 +50,7 @@ export function JournalPromptCard({ prompt, today }: { prompt: string; today: st
         >
           {pending ? "Starting…" : "Write about this"}
         </Button>
-        <Link href="/journal" className="text-sm text-link">
+        <Link href="/journal" className="tap-target text-sm text-link">
           Open journal
         </Link>
       </div>

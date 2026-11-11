@@ -29,12 +29,15 @@ export function TaskCheckbox({
   status,
   priority = "medium",
   recurring = false,
+  comfortable = false,
 }: {
   taskId: string;
   title: string;
   status: TaskStatus;
   priority?: TaskPriority;
   recurring?: boolean;
+  /** Give the control a 44px hit area on touch screens (the circle stays the same size). */
+  comfortable?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [optimisticDone, setOptimisticDone] = useOptimistic(status === "done");
@@ -76,11 +79,19 @@ export function TaskCheckbox({
       disabled={pending || status === "cancelled"}
       onClick={toggle}
       className={cn(
-        "flex size-[1.125rem] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors duration-150 disabled:opacity-50",
-        optimisticDone ? "border-accent bg-accent text-accent-foreground" : RING[priority],
+        "group/check flex shrink-0 items-center justify-center rounded-full disabled:opacity-50",
+        // Touch screens: a 44px hit area around the same 18px circle, without moving the row.
+        comfortable && "pointer-coarse:-m-3 pointer-coarse:size-tap",
       )}
     >
-      {optimisticDone && <Check aria-hidden className="size-3" strokeWidth={3} />}
+      <span
+        className={cn(
+          "flex size-[1.125rem] items-center justify-center rounded-full border-[1.5px] transition-colors duration-150",
+          optimisticDone ? "border-accent bg-accent text-accent-foreground" : RING[priority],
+        )}
+      >
+        {optimisticDone && <Check aria-hidden className="size-3" strokeWidth={3} />}
+      </span>
     </button>
   );
 }
